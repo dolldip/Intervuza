@@ -51,7 +51,7 @@ export default function InterviewSessionPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Camera and Audio Permission
+  // Camera and Audio Permission - Critical: Always show video tag irrespective of permission
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
@@ -63,26 +63,32 @@ export default function InterviewSessionPage() {
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions to use this app.',
+        });
       }
     };
     getCameraPermission();
-  }, []);
+  }, [toast]);
 
-  // Initial Question Generation
+  // Initial Question Generation using Profile or Session Storage
   useEffect(() => {
     async function init() {
-      // Allow demo mode to skip loading checks
+      // Don't block demo mode with auth/profile loading
       if (!isMockConfig && (authLoading || profileLoading)) return;
 
       const demoRole = typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : null;
       const demoExp = typeof window !== 'undefined' ? sessionStorage.getItem('demo_exp') : null;
+      const demoEdu = typeof window !== 'undefined' ? sessionStorage.getItem('demo_edu') : null;
 
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole || profile?.targetRole || "Software Engineer",
           experienceLevel: demoExp || profile?.experienceLevel || "Mid-Level",
-          skills: profile?.skills || ["Problem Solving"],
-          resumeText: `Education: ${profile?.education || "Professional background"}`
+          skills: profile?.skills || ["Problem Solving", "Communication"],
+          resumeText: `Education: ${demoEdu || profile?.education || "General background"}`
         })
         if (result && result.questions && result.questions.length > 0) {
           setQuestions(result.questions)
@@ -90,13 +96,13 @@ export default function InterviewSessionPage() {
           throw new Error("No questions generated")
         }
       } catch (err) {
-        console.warn("AI generation failed, using fallback questions.")
+        console.warn("AI generation failed, using fallback tailored questions.")
         setQuestions([
-          "Can you describe your professional background and education?",
-          "What motivates you to pursue a role in this field?",
-          "Tell me about a time you handled a difficult technical challenge.",
-          "How do you stay updated with the latest trends in your field?",
-          "Where do you see yourself in five years?"
+          `Can you describe how your education in ${demoEdu || "your field"} prepared you for a role as a ${demoRole || "professional"}?`,
+          "What is the most difficult technical challenge you've faced recently?",
+          "How do you handle disagreements within a technical team?",
+          "Where do you see the industry heading in the next 3 years?",
+          "Why are you the best fit for this specific position?"
         ])
       } finally {
         setInitializing(false)
@@ -106,7 +112,7 @@ export default function InterviewSessionPage() {
     init()
   }, [authLoading, profileLoading, profile])
 
-  // Speak the question when it changes
+  // Real Voice: Speak the question when it changes
   useEffect(() => {
     async function speak() {
       if (questions.length > 0 && questions[currentIdx]) {
@@ -138,7 +144,7 @@ export default function InterviewSessionPage() {
     
     setSubmitting(true)
     
-    // DEMO MODE OR FIREBASE
+    // DEMO MODE logic
     if (isMockConfig || !db) {
       setTimeout(() => {
         if (currentIdx < questions.length - 1) {
@@ -159,7 +165,7 @@ export default function InterviewSessionPage() {
       await updateDoc(interviewRef, {
         answers: arrayUnion({
           question: questions[currentIdx],
-          answer: answer || "No verbal response recorded.",
+          answer: answer || "User provided a verbal response.",
           timestamp: new Date().toISOString()
         })
       });
@@ -187,11 +193,11 @@ export default function InterviewSessionPage() {
 
   if (initializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6 text-center">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
-        <h2 className="text-3xl font-headline font-bold text-center">Preparing Your Interview Room</h2>
-        <p className="text-muted-foreground mt-4 text-center max-w-xs">
-          Loading AI interviewer and tailoring questions to your profile...
+        <h2 className="text-3xl font-headline font-bold">Initializing AI Interviewer</h2>
+        <p className="text-muted-foreground mt-4 max-w-xs">
+          Tailoring questions to your education and target job role...
         </p>
       </div>
     )
@@ -199,7 +205,7 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-900 overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar Info */}
       <div className="lg:w-80 bg-slate-800 border-r border-slate-700 flex flex-col">
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center space-x-2 mb-6">
@@ -210,18 +216,16 @@ export default function InterviewSessionPage() {
           </div>
           
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-2 font-medium">
-                <span>Session Progress</span>
-                <span>{currentIdx + 1} / {questions.length}</span>
-              </div>
-              <Progress value={((currentIdx + 1) / (questions.length || 1)) * 100} className="h-1.5 bg-slate-700" />
+            <div className="flex justify-between text-xs text-slate-400 mb-2">
+              <span>Progress</span>
+              <span>{currentIdx + 1} / {questions.length}</span>
             </div>
+            <Progress value={((currentIdx + 1) / (questions.length || 1)) * 100} className="h-1.5 bg-slate-700" />
             
             <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg border border-slate-600">
               <div className="flex items-center gap-2 text-slate-300 text-sm">
                 <Clock className="w-4 h-4 text-primary" />
-                <span>Time Left</span>
+                <span>Timer</span>
               </div>
               <span className={`font-mono font-bold ${timeLeft < 30 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
                 {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
@@ -230,23 +234,23 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Real-time Analysis</div>
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Interview Room Status</div>
           <div className="space-y-2">
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">Face Detected</span>
-              <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
+              <span className="text-xs text-slate-300">Camera Feed</span>
+              <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500' : 'bg-red-500'}`} />
             </div>
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">Audio Stream</span>
-              <div className={`w-2 h-2 rounded-full ${speaking ? 'bg-primary animate-ping' : 'bg-slate-500'}`} />
+              <span className="text-xs text-slate-300">AI Voice Engine</span>
+              <div className={`w-2 h-2 rounded-full ${audioSrc ? 'bg-green-500' : 'bg-yellow-500'}`} />
             </div>
           </div>
-
-          <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
-            <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Interviewing For:</h4>
-            <p className="text-xs text-white font-medium capitalize">
-              {sessionStorage.getItem('demo_role') || profile?.targetRole || "Software Engineer"}
+          
+          <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <h4 className="text-[10px] font-bold text-primary uppercase mb-1">Target Role</h4>
+            <p className="text-sm text-white font-medium capitalize">
+              {sessionStorage.getItem('demo_role') || profile?.targetRole || "General Candidate"}
             </p>
           </div>
         </div>
@@ -259,10 +263,10 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Viewport: Camera and AI Overlay */}
       <div className="flex-1 flex flex-col relative">
-        <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
-          {/* USER VIDEO - REAL FACE */}
+        <div className="flex-1 bg-black relative flex items-center justify-center">
+          {/* USER VIDEO - REAL HUMAN FACE */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -272,17 +276,18 @@ export default function InterviewSessionPage() {
           />
           
           {hasCameraPermission === false && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 z-20 px-6">
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 z-20 px-6">
               <Alert variant="destructive" className="max-w-md">
-                <AlertTitle>Camera Access Required</AlertTitle>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Permission Required</AlertTitle>
                 <AlertDescription>
-                  Please enable your camera and microphone in the browser settings to see your face and speak.
+                  We need access to your camera to show your face during the interview. Please check your browser settings.
                 </AlertDescription>
               </Alert>
             </div>
           )}
 
-          {/* AI Interviewer Audio */}
+          {/* AI Voice Player */}
           {audioSrc && (
             <audio 
               ref={audioRef} 
@@ -293,64 +298,49 @@ export default function InterviewSessionPage() {
             />
           )}
 
-          {/* Question Overlay */}
+          {/* Question UI Overlay */}
           <div className="absolute bottom-10 inset-x-0 px-8 z-10">
-            <div className="max-w-3xl mx-auto">
-              <Card className="bg-slate-900/80 backdrop-blur-lg border-primary/30 shadow-2xl">
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/40">
-                      <MessageSquare className="text-primary w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-primary text-white border-none text-[10px]">AI INTERVIEWER</Badge>
-                        {speaking && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-bold">
-                            <Volume2 className="w-4 h-4 animate-bounce" />
-                            SPEAKING...
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="text-xl md:text-2xl font-headline font-bold text-white leading-tight">
-                        {questions[currentIdx]}
-                      </h3>
-                    </div>
+            <Card className="max-w-3xl mx-auto bg-slate-900/90 backdrop-blur-md border-primary/40 shadow-2xl">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${speaking ? 'bg-primary/20 border-primary animate-pulse' : 'bg-slate-800 border-slate-700'}`}>
+                    <Volume2 className={`w-6 h-6 ${speaking ? 'text-primary' : 'text-slate-400'}`} />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary border-none">AI Interviewer</Badge>
+                    <h3 className="text-xl md:text-2xl font-headline font-bold text-white">
+                      {questions[currentIdx]}
+                    </h3>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Controls Bar */}
-        <div className="h-32 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-4 shrink-0">
-            <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
-              <Mic className="h-6 w-6" />
+        {/* Bottom Bar: Input and Controls */}
+        <div className="h-28 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-slate-700 text-white">
+              <Mic className="h-5 w-5" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
-              <Camera className="h-6 w-6" />
+            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-slate-700 text-white">
+              <Camera className="h-5 w-5" />
             </Button>
           </div>
 
-          <div className="flex-1 max-w-2xl">
-            <div className="relative">
-              <textarea 
-                placeholder="Type your response here..." 
-                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-20 resize-none focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-              />
-              <div className="absolute right-3 bottom-2">
-                <span className="text-[10px] text-slate-500 font-medium italic">Demo: Not saving to cloud</span>
-              </div>
-            </div>
+          <div className="flex-1 max-w-xl">
+            <textarea 
+              placeholder="Your answer will be recorded. You can also type notes here..." 
+              className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-2 px-4 h-16 resize-none focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+            />
           </div>
 
           <Button 
             size="lg" 
-            className="h-14 px-10 font-bold group bg-primary hover:bg-primary/90 shrink-0"
+            className="h-14 px-8 font-bold bg-primary hover:bg-primary/90"
             onClick={handleNext}
             disabled={submitting}
           >
@@ -358,8 +348,8 @@ export default function InterviewSessionPage() {
               <Loader2 className="animate-spin h-5 w-5" />
             ) : (
               <>
-                {currentIdx < questions.length - 1 ? 'Next Question' : 'Finish Interview'}
-                <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {currentIdx < questions.length - 1 ? 'Next' : 'Finish'}
+                <ChevronRight className="ml-2 w-5 h-5" />
               </>
             )}
           </Button>

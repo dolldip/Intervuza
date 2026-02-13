@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -10,8 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Save, UserCircle } from "lucide-react"
+import { Loader2, Save, UserCircle, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { isMockConfig } from "@/firebase/config"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -28,17 +29,41 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    // Load from profile if connected
     if (profile) {
       setFullName(profile.fullName || "")
       setEducation(profile.education || "")
       setTargetRole(profile.targetRole || "")
       setExperienceLevel(profile.experienceLevel || "")
+    } else {
+      // Fallback to session storage for demo persistence
+      setFullName(sessionStorage.getItem('demo_name') || "")
+      setEducation(sessionStorage.getItem('demo_edu') || "")
+      setTargetRole(sessionStorage.getItem('demo_role') || "")
+      setExperienceLevel(sessionStorage.getItem('demo_exp') || "")
     }
   }, [profile])
 
   const handleSave = async () => {
-    if (!user || !db) return
     setSaving(true)
+    
+    // Always save to session storage for demo/AI prompt context
+    sessionStorage.setItem('demo_name', fullName)
+    sessionStorage.setItem('demo_edu', education)
+    sessionStorage.setItem('demo_role', targetRole)
+    sessionStorage.setItem('demo_exp', experienceLevel)
+
+    if (isMockConfig || !user || !db) {
+      setTimeout(() => {
+        toast({
+          title: "Demo Profile Updated",
+          description: "Data saved locally. Questions will now be tailored to this role.",
+        })
+        setSaving(false)
+      }, 500)
+      return
+    }
+
     try {
       await setDoc(doc(db, "users", user.uid), {
         userId: user.uid,
@@ -48,22 +73,22 @@ export default function ProfilePage() {
         experienceLevel,
       }, { merge: true })
       toast({
-        title: "Profile Updated",
-        description: "Your information has been saved successfully.",
+        title: "Profile Saved",
+        description: "Your information has been synced to the cloud.",
       })
     } catch (error) {
       console.error(error)
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not save your profile. Please try again.",
+        title: "Cloud Sync Failed",
+        description: "Saved locally only. Connect Firebase for permanent storage.",
       })
     } finally {
       setSaving(false)
     }
   }
 
-  if (profileLoading) {
+  if (profileLoading && !isMockConfig) {
     return (
       <div className="flex h-full items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -78,15 +103,25 @@ export default function ProfilePage() {
           <UserCircle className="w-10 h-10" />
         </div>
         <div>
-          <h1 className="text-3xl font-headline font-bold">Your Profile</h1>
-          <p className="text-muted-foreground">Manage your education and job preferences for AI tailoring.</p>
+          <h1 className="text-3xl font-headline font-bold">Your AI Profile</h1>
+          <p className="text-muted-foreground">Tailor questions based on your background and goals.</p>
         </div>
       </div>
 
+      {isMockConfig && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">Local Mode Active</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            You can still save your details! We'll store them in your browser session so the AI can use them.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card className="shadow-lg border-primary/10">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Personal & Career Details</CardTitle>
-          <CardDescription>This information helps our AI interviewer create the perfect session for you.</CardDescription>
+          <CardTitle className="font-headline text-xl">Target Role & Education</CardTitle>
+          <CardDescription>AI will use these details to generate technical and behavioral questions.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -100,24 +135,24 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="education">Education</Label>
+            <Label htmlFor="education">Your Education</Label>
             <Textarea 
               id="education" 
               value={education}
               onChange={(e) => setEducation(e.target.value)}
-              placeholder="e.g. Bachelor of Science in Computer Science, Stanford University"
-              className="min-h-[80px]"
+              placeholder="e.g. Master's in Data Science from MIT, focused on AI Ethics"
+              className="min-h-[100px]"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="targetRole">Target Job Role</Label>
+              <Label htmlFor="targetRole">The Job You Want</Label>
               <Input 
                 id="targetRole" 
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. Senior Product Manager"
+                placeholder="e.g. Senior Backend Engineer"
               />
             </div>
             <div className="space-y-2">
@@ -137,16 +172,16 @@ export default function ProfilePage() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-end border-t pt-6">
-          <Button onClick={handleSave} disabled={saving} className="min-w-[120px]">
+          <Button onClick={handleSave} disabled={saving} className="min-w-[140px] h-11 font-bold">
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                Updating...
               </>
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                Save AI Profile
               </>
             )}
           </Button>
