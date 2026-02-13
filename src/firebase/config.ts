@@ -12,12 +12,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "mock-app-id",
 };
 
-const isMockConfig = firebaseConfig.apiKey === "mock-api-key";
+const isMockConfig = firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.apiKey === "";
 
 if (isMockConfig && typeof window !== 'undefined') {
   console.warn(
     "Firebase is running with MOCK configuration. " +
-    "Please click 'Connect to Firebase' in the Studio panel to use real authentication and database features."
+    "Real database features will be simulated. Please click 'Connect to Firebase' in the Studio panel when available."
   );
 }
 

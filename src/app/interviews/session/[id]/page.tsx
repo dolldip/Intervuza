@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { 
   Mic, 
-  Video, 
+  Video as VideoIcon, 
   MessageSquare, 
   Clock,
   ShieldCheck,
@@ -71,12 +71,16 @@ export default function InterviewSessionPage() {
   // Initial Question Generation
   useEffect(() => {
     async function init() {
-      if (authLoading || profileLoading) return;
+      // Allow demo mode to skip loading checks
+      if (!isMockConfig && (authLoading || profileLoading)) return;
+
+      const demoRole = typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : null;
+      const demoExp = typeof window !== 'undefined' ? sessionStorage.getItem('demo_exp') : null;
 
       try {
         const result = await generateInterviewQuestions({
-          jobRole: profile?.targetRole || "Software Engineer",
-          experienceLevel: profile?.experienceLevel || "Mid-Level",
+          jobRole: demoRole || profile?.targetRole || "Software Engineer",
+          experienceLevel: demoExp || profile?.experienceLevel || "Mid-Level",
           skills: profile?.skills || ["Problem Solving"],
           resumeText: `Education: ${profile?.education || "Professional background"}`
         })
@@ -86,10 +90,10 @@ export default function InterviewSessionPage() {
           throw new Error("No questions generated")
         }
       } catch (err) {
-        console.warn("AI generation failed, using fallback questions:", err)
+        console.warn("AI generation failed, using fallback questions.")
         setQuestions([
           "Can you describe your professional background and education?",
-          "What motivates you to pursue a role as a " + (profile?.targetRole || "Software Engineer") + "?",
+          "What motivates you to pursue a role in this field?",
           "Tell me about a time you handled a difficult technical challenge.",
           "How do you stay updated with the latest trends in your field?",
           "Where do you see yourself in five years?"
@@ -99,9 +103,7 @@ export default function InterviewSessionPage() {
       }
     }
     
-    if (!authLoading && !profileLoading) {
-      init()
-    }
+    init()
   }, [authLoading, profileLoading, profile])
 
   // Speak the question when it changes
@@ -109,10 +111,12 @@ export default function InterviewSessionPage() {
     async function speak() {
       if (questions.length > 0 && questions[currentIdx]) {
         try {
+          setSpeaking(true)
           const { media } = await textToSpeech(questions[currentIdx])
           setAudioSrc(media)
         } catch (err) {
           console.warn("TTS failed:", err)
+          setSpeaking(false)
         }
       }
     }
@@ -130,20 +134,26 @@ export default function InterviewSessionPage() {
   }, [timeLeft, initializing])
 
   const handleNext = async () => {
-    if (!questions[currentIdx] || !db) return
-    if (isMockConfig) {
-      // Allow moving through the UI even if Firestore isn't connected
-      if (currentIdx < questions.length - 1) {
-        setCurrentIdx(currentIdx + 1)
-        setAnswer("")
-        return;
-      } else {
-        router.push("/dashboard")
-        return;
-      }
+    if (!questions[currentIdx]) return
+    
+    setSubmitting(true)
+    
+    // DEMO MODE OR FIREBASE
+    if (isMockConfig || !db) {
+      setTimeout(() => {
+        if (currentIdx < questions.length - 1) {
+          setCurrentIdx(currentIdx + 1)
+          setAnswer("")
+          setTimeLeft(180)
+          setAudioSrc(null)
+          setSubmitting(false)
+        } else {
+          router.push(`/dashboard`)
+        }
+      }, 500)
+      return
     }
 
-    setSubmitting(true)
     try {
       const interviewRef = doc(db, "interviews", params.id as string);
       await updateDoc(interviewRef, {
@@ -168,7 +178,7 @@ export default function InterviewSessionPage() {
         setCurrentIdx(currentIdx + 1)
         setAnswer("")
       } else {
-        router.push(`/results/${params.id}`)
+        router.push(`/dashboard`)
       }
     } finally {
       setSubmitting(false)
@@ -179,9 +189,9 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
-        <h2 className="text-3xl font-headline font-bold">Setting Up Session</h2>
+        <h2 className="text-3xl font-headline font-bold text-center">Preparing Your Interview Room</h2>
         <p className="text-muted-foreground mt-4 text-center max-w-xs">
-          Tailoring questions based on your profile...
+          Loading AI interviewer and tailoring questions to your profile...
         </p>
       </div>
     )
@@ -228,22 +238,17 @@ export default function InterviewSessionPage() {
               <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
             </div>
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">Audio Level</span>
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-xs text-slate-300">Audio Stream</span>
+              <div className={`w-2 h-2 rounded-full ${speaking ? 'bg-primary animate-ping' : 'bg-slate-500'}`} />
             </div>
           </div>
 
-          {isMockConfig && (
-            <div className="mt-6 p-4 bg-amber-900/20 border border-amber-500/30 rounded-xl">
-              <div className="flex items-center gap-2 text-amber-500 mb-2">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase">Demo Mode</span>
-              </div>
-              <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                Database is not connected. Responses won't be saved.
-              </p>
-            </div>
-          )}
+          <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
+            <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Interviewing For:</h4>
+            <p className="text-xs text-white font-medium capitalize">
+              {sessionStorage.getItem('demo_role') || profile?.targetRole || "Software Engineer"}
+            </p>
+          </div>
         </div>
 
         <div className="p-4 border-t border-slate-700">
@@ -271,15 +276,21 @@ export default function InterviewSessionPage() {
               <Alert variant="destructive" className="max-w-md">
                 <AlertTitle>Camera Access Required</AlertTitle>
                 <AlertDescription>
-                  Please enable your camera and microphone in the browser settings to use the interview feature.
+                  Please enable your camera and microphone in the browser settings to see your face and speak.
                 </AlertDescription>
               </Alert>
             </div>
           )}
 
-          {/* AI Interviewer Audio - REAL VOICE */}
+          {/* AI Interviewer Audio */}
           {audioSrc && (
-            <audio ref={audioRef} src={audioSrc} autoPlay onPlay={() => setSpeaking(true)} onEnded={() => setSpeaking(false)} className="hidden" />
+            <audio 
+              ref={audioRef} 
+              src={audioSrc} 
+              autoPlay 
+              onEnded={() => setSpeaking(false)} 
+              className="hidden" 
+            />
           )}
 
           {/* Question Overlay */}
@@ -291,12 +302,12 @@ export default function InterviewSessionPage() {
                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/40">
                       <MessageSquare className="text-primary w-6 h-6" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-primary text-white border-none text-[10px]">AI COACH</Badge>
+                        <Badge className="bg-primary text-white border-none text-[10px]">AI INTERVIEWER</Badge>
                         {speaking && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-bold animate-pulse">
-                            <Volume2 className="w-4 h-4" />
+                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-bold">
+                            <Volume2 className="w-4 h-4 animate-bounce" />
                             SPEAKING...
                           </div>
                         )}
@@ -313,8 +324,8 @@ export default function InterviewSessionPage() {
         </div>
 
         {/* Controls Bar */}
-        <div className="h-32 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="h-32 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4 shrink-0">
             <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
               <Mic className="h-6 w-6" />
             </Button>
@@ -323,23 +334,23 @@ export default function InterviewSessionPage() {
             </Button>
           </div>
 
-          <div className="flex-1 max-w-2xl px-8">
+          <div className="flex-1 max-w-2xl">
             <div className="relative">
               <textarea 
-                placeholder="Type your response here or speak..." 
-                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-20 resize-none focus:ring-2 focus:ring-primary outline-none transition-all"
+                placeholder="Type your response here..." 
+                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-20 resize-none focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
               <div className="absolute right-3 bottom-2">
-                <span className="text-[10px] text-slate-500 font-medium italic">Your response is saved automatically</span>
+                <span className="text-[10px] text-slate-500 font-medium italic">Demo: Not saving to cloud</span>
               </div>
             </div>
           </div>
 
           <Button 
             size="lg" 
-            className="h-14 px-10 font-bold group bg-primary hover:bg-primary/90"
+            className="h-14 px-10 font-bold group bg-primary hover:bg-primary/90 shrink-0"
             onClick={handleNext}
             disabled={submitting}
           >

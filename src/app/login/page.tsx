@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Loader2, AlertCircle, Play } from 'lucide-react';
 import { auth, isMockConfig } from '@/firebase/config';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +23,6 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isMockConfig) {
-      // In mock mode, allow "skipping" to dashboard for preview
       router.push('/dashboard');
       return;
     }
@@ -43,25 +42,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (isMockConfig) {
-      router.push('/dashboard');
-      return;
-    }
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Google Sign-In Failed",
-        description: error.message,
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
@@ -77,11 +57,11 @@ export default function LoginPage() {
         </div>
 
         {isMockConfig && (
-          <Alert variant="destructive" className="animate-pulse border-amber-500 bg-amber-50 text-amber-900">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="font-bold">Firebase Not Connected</AlertTitle>
+          <Alert className="border-blue-500 bg-blue-50 text-blue-900">
+            <Play className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="font-bold">Demo Mode Available</AlertTitle>
             <AlertDescription className="text-xs">
-              Project is in <strong>Demo Mode</strong>. You can click "Sign In" to preview the dashboard, but to save your data, click <strong>"Connect to Firebase"</strong> in the top toolbar.
+              Project is not connected to Firebase yet. You can click **"Enter Demo Dashboard"** to test the AI camera and voice features immediately.
             </AlertDescription>
           </Alert>
         )}
@@ -104,7 +84,7 @@ export default function LoginPage() {
                     className="pl-10" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
+                    required={!isMockConfig}
                   />
                 </div>
               </div>
@@ -121,7 +101,7 @@ export default function LoginPage() {
                     className="pl-10" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
+                    required={!isMockConfig}
                   />
                 </div>
               </div>
@@ -129,18 +109,6 @@ export default function LoginPage() {
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (isMockConfig ? "Enter Demo Dashboard" : "Sign In")}
               </Button>
             </form>
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
-              <img src="https://www.google.com/favicon.ico" className="w-4 h-4 mr-2" alt="Google" />
-              Sign in with Google
-            </Button>
           </CardContent>
           <CardFooter className="justify-center">
             <p className="text-sm text-muted-foreground">

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, useFirestore, isMockConfig } from "@/firebase/config"
+import { auth, db, isMockConfig } from "@/firebase/config"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,15 +16,15 @@ import {
   ShieldCheck, 
   AlertCircle,
   UploadCloud,
-  Loader2
+  Loader2,
+  Info
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function NewInterviewPage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const db = useFirestore()
   const { toast } = useToast()
   
   const [loading, setLoading] = useState(false)
@@ -43,15 +43,20 @@ export default function NewInterviewPage() {
       return
     }
 
+    setLoading(true)
+    
+    // DEMO MODE NAVIGATION
     if (isMockConfig) {
-      setLoading(true)
       setTimeout(() => {
+        // Store choices in session storage for demo
+        sessionStorage.setItem('demo_role', role);
+        sessionStorage.setItem('demo_exp', experience);
+        sessionStorage.setItem('demo_jd', jd);
         router.push(`/interviews/session/demo-session`)
       }, 1000)
       return
     }
     
-    setLoading(true)
     try {
       try {
         await resumeJobDescriptionAnalysis({
@@ -59,11 +64,11 @@ export default function NewInterviewPage() {
           jobDescriptionText: jd
         })
       } catch (aiError) {
-        console.warn("AI Analysis failed, proceeding with default settings:", aiError)
+        console.warn("AI Analysis failed, proceeding with default settings.")
       }
       
-      const sessionRef = await addDoc(collection(db!, "interviews"), {
-        userId: user?.uid || "anonymous",
+      const sessionRef = await addDoc(collection(db, "interviews"), {
+        userId: auth.currentUser?.uid || "anonymous",
         role: role,
         experienceLevel: experience,
         date: serverTimestamp(),
@@ -78,8 +83,9 @@ export default function NewInterviewPage() {
       toast({
         variant: "destructive",
         title: "Connection Error",
-        description: error.message || "Could not start session. Please connect Firebase."
+        description: "Falling back to Demo Session..."
       })
+      router.push(`/interviews/session/demo-session`)
     } finally {
       setLoading(false)
     }
@@ -91,6 +97,16 @@ export default function NewInterviewPage() {
         <h1 className="text-4xl font-headline font-bold mb-2 text-foreground">Prepare for Your Next Big Move</h1>
         <p className="text-muted-foreground text-lg">AI will generate a tailored interview based on your profile and target role.</p>
       </div>
+
+      {isMockConfig && (
+        <Alert className="mb-8 border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800 font-bold">Demo Mode Active</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            You can still test the **Real Face (Camera)** and **AI Voice** features even without connecting Firebase!
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
@@ -169,7 +185,7 @@ export default function NewInterviewPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Initializing...
+                    Initializing AI...
                   </>
                 ) : (
                   <>
