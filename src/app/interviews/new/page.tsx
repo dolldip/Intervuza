@@ -105,7 +105,7 @@ export default function NewInterviewPage() {
             <CardHeader>
               <CardTitle className="font-headline text-xl">Interview Parameters</CardTitle>
               <CardDescription>Tell us about the role you are targeting</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
