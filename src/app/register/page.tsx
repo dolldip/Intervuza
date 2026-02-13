@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, User, Mail, Lock, Loader2, Play } from 'lucide-react';
+import { ShieldCheck, User, Mail, Lock, Loader2, Play, Info } from 'lucide-react';
 import { auth, db, isMockConfig } from '@/firebase/config';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -19,13 +19,14 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // DEMO BYPASS: If API keys are failing, let them in anyway
+    // DEMO BYPASS: Immediate entry if the user wants to test camera/AI
     if (isMockConfig) {
       sessionStorage.setItem('demo_name', name || "Candidate");
       router.push('/profile');
@@ -35,20 +36,26 @@ export default function RegisterPage() {
     if (!email || !password || !name) return;
 
     setLoading(true);
+    setErrorStatus(null);
+    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await updateProfile(user, { displayName: name });
       
-      await setDoc(doc(db, "users", user.uid), {
-        userId: user.uid,
-        fullName: name,
-        education: "",
-        targetRole: "",
-        experienceLevel: "mid",
-        skills: []
-      });
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          userId: user.uid,
+          fullName: name,
+          education: "",
+          targetRole: "",
+          experienceLevel: "mid",
+          skills: []
+        });
+      } catch (firestoreErr) {
+        console.warn("Firestore save failed, but auth succeeded.");
+      }
 
       toast({
         title: "Account Created",
@@ -58,12 +65,12 @@ export default function RegisterPage() {
       router.push('/profile');
     } catch (error: any) {
       console.error(error);
+      setErrorStatus(error.message);
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: "Your API key might be invalid. Try clicking 'Enter Demo Dashboard' below.",
+        description: error.message || "Please use Demo Mode if your keys aren't ready.",
       });
-      // Fallback: If it fails, enable the demo bypass button visibility if not already
     } finally {
       setLoading(false);
     }
@@ -82,12 +89,23 @@ export default function RegisterPage() {
           <h2 className="text-2xl font-headline font-bold mt-4">Create your account</h2>
         </div>
 
-        {isMockConfig && (
-          <Alert className="border-blue-500 bg-blue-50 text-blue-900">
+        {(isMockConfig || errorStatus) && (
+          <Alert className="border-blue-500 bg-blue-50 text-blue-900 animate-in fade-in slide-in-from-top-4">
             <Play className="h-4 w-4 text-blue-600" />
-            <AlertTitle className="font-bold">Enter Demo Mode</AlertTitle>
-            <AlertDescription className="text-xs">
-              Project keys are not yet connected. Click **"Create Demo Account"** to test the camera and AI voice features right now.
+            <AlertTitle className="font-bold">Project Setup Required</AlertTitle>
+            <AlertDescription className="text-xs space-y-2">
+              <p>Firebase configuration is incomplete or the API key is invalid. You can bypass this to see the <strong>real camera</strong> and <strong>AI voice</strong> features immediately.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full border-blue-400 text-blue-700 hover:bg-blue-100 font-bold"
+                onClick={() => {
+                   sessionStorage.setItem('demo_name', name || "Candidate");
+                   router.push('/profile');
+                }}
+              >
+                Enter Demo Mode (Bypass Key Error)
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -109,7 +127,7 @@ export default function RegisterPage() {
                     className="pl-10" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    required={!isMockConfig}
+                    required
                   />
                 </div>
               </div>
@@ -124,7 +142,7 @@ export default function RegisterPage() {
                     className="pl-10" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required={!isMockConfig}
+                    required
                   />
                 </div>
               </div>
@@ -139,16 +157,16 @@ export default function RegisterPage() {
                     className="pl-10" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required={!isMockConfig}
+                    required
                   />
                 </div>
               </div>
               <Button className="w-full h-11 font-bold" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (isMockConfig ? "Create Demo Account" : "Create Account")}
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center border-t py-4">
             <p className="text-sm text-muted-foreground">
               Already have an account? <Link href="/login" className="text-primary font-bold hover:underline">Log in</Link>
             </p>

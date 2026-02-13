@@ -111,10 +111,11 @@ export default function InterviewSessionPage() {
       }
     }
     
-    if (!authLoading && (profile || isMockConfig)) {
+    // We proceed if auth is done OR if we are in demo mode
+    if (!authLoading && (profile || isMockConfig || params.id === "demo-session")) {
       init()
     }
-  }, [profile, authLoading])
+  }, [profile, authLoading, params.id])
 
   // AI Voice: Speak the question when it changes
   useEffect(() => {
@@ -148,7 +149,7 @@ export default function InterviewSessionPage() {
     
     setSubmitting(true)
     
-    // DEMO MODE logic
+    // DEMO MODE logic - bypass Firestore update
     if (isMockConfig || !db || params.id === "demo-session") {
       setTimeout(() => {
         if (currentIdx < questions.length - 1) {
@@ -201,7 +202,7 @@ export default function InterviewSessionPage() {
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
         <h2 className="text-3xl font-headline font-bold">Initializing AI Interviewer</h2>
         <p className="text-muted-foreground mt-4 max-w-xs">
-          Crafting questions based on your education and target role...
+          Crafting questions based on your background and target role...
         </p>
       </div>
     )
@@ -254,7 +255,7 @@ export default function InterviewSessionPage() {
           <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-xl">
             <h4 className="text-[10px] font-bold text-primary uppercase mb-1">Target Role</h4>
             <p className="text-sm text-white font-medium capitalize">
-              {typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : (profile?.targetRole || "General Candidate")}
+              {typeof window !== 'undefined' ? (sessionStorage.getItem('demo_role') || profile?.targetRole || "General Candidate") : "Loading..."}
             </p>
           </div>
         </div>
