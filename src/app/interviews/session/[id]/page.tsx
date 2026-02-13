@@ -19,7 +19,8 @@ import {
   ChevronRight,
   BrainCircuit,
   StopCircle,
-  Volume2
+  Volume2,
+  Loader2
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
@@ -29,17 +30,18 @@ import { useToast } from "@/hooks/use-toast"
 export default function InterviewSessionPage() {
   const router = useRouter()
   const params = useParams()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const db = useFirestore()
   const { toast } = useToast()
 
   const userDocRef = user ? doc(db!, "users", user.uid) : null
-  const { data: profile } = useDoc(userDocRef)
+  const { data: profile, loading: profileLoading } = useDoc(userDocRef)
 
   const [questions, setQuestions] = useState<string[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answer, setAnswer] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [initializing, setInitializing] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(120)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
@@ -48,6 +50,7 @@ export default function InterviewSessionPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
+  // Camera and Audio Permission
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
@@ -62,38 +65,48 @@ export default function InterviewSessionPage() {
         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
+          description: 'Please enable camera permissions in your browser settings to continue.',
         });
       }
     };
     getCameraPermission();
   }, [toast]);
 
+  // Initial Question Generation
   useEffect(() => {
     async function init() {
-      if (!profile) return
+      // Don't start until we know auth and profile state
+      if (authLoading || profileLoading) return;
+
       try {
         const result = await generateInterviewQuestions({
-          jobRole: profile.targetRole || "Software Engineer",
-          experienceLevel: profile.experienceLevel || "Mid",
-          skills: profile.skills || ["Communication", "Problem Solving"],
-          resumeText: `Education: ${profile.education || "Not specified"}`
+          jobRole: profile?.targetRole || "Software Engineer",
+          experienceLevel: profile?.experienceLevel || "Mid-Level",
+          skills: profile?.skills || ["Problem Solving", "Communication"],
+          resumeText: `Education: ${profile?.education || "Not specified"}`
         })
         setQuestions(result.questions)
-        setLoading(false)
       } catch (err) {
         console.error(err)
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to generate interview questions.",
+          title: "Setup Error",
+          description: "We couldn't generate questions. Using fallback technical set.",
         })
+        setQuestions([
+          "Can you describe a challenging project you've worked on recently?",
+          "How do you handle conflict within a team?",
+          "Where do you see yourself in five years?",
+          "What are your core technical strengths?",
+          "Why are you the best fit for this role?"
+        ])
+      } finally {
+        setInitializing(false)
       }
     }
-    if (profile) {
-      init()
-    }
-  }, [profile, toast])
+    
+    init()
+  }, [authLoading, profileLoading, profile, toast])
 
   // Speak the question when it changes
   useEffect(() => {
@@ -110,26 +123,27 @@ export default function InterviewSessionPage() {
         }
       }
     }
-    if (!loading && questions.length > 0) {
+    if (!initializing && questions.length > 0) {
       speak()
     }
-  }, [currentIdx, questions, loading])
+  }, [currentIdx, questions, initializing])
 
+  // Timer logic
   useEffect(() => {
-    if (timeLeft > 0 && !loading) {
+    if (timeLeft > 0 && !initializing) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
       return () => clearTimeout(timer)
     }
-  }, [timeLeft, loading])
+  }, [timeLeft, initializing])
 
   const handleNext = async () => {
     if (!questions[currentIdx]) return
 
-    setLoading(true)
+    setSubmitting(true)
     try {
       await instantTextualAnswerFeedback({
         interviewQuestion: questions[currentIdx],
-        userAnswer: answer || "I would focus on the core requirements and deliver value iteratively."
+        userAnswer: answer || "I would focus on the core requirements and deliver value iteratively using best practices relevant to the role."
       })
 
       if (currentIdx < questions.length - 1) {
@@ -142,17 +156,30 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       console.error(err)
+      toast({
+        variant: "destructive",
+        title: "Feedback Error",
+        description: "Moving to next question...",
+      })
+      if (currentIdx < questions.length - 1) {
+        setCurrentIdx(currentIdx + 1)
+        setAnswer("")
+      } else {
+        router.push(`/results/${params.id}`)
+      }
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
-  if (loading && questions.length === 0) {
+  if (initializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <BrainCircuit className="w-16 h-16 text-primary animate-pulse mb-4" />
-        <h2 className="text-2xl font-headline font-bold">Setting Up Your Session</h2>
-        <p className="text-muted-foreground mt-2">AI is tailoring your interview based on your profile...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+        <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
+        <h2 className="text-3xl font-headline font-bold">Initializing Your Session</h2>
+        <p className="text-muted-foreground mt-4 text-center max-w-xs">
+          AI is tailoring the interview based on your profile and target job role...
+        </p>
       </div>
     )
   }
@@ -191,12 +218,12 @@ export default function InterviewSessionPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Live AI Detection</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Live Analysis</div>
           <div className="space-y-2">
             {[
-              { label: "Confidence", score: 82, color: "bg-green-500" },
-              { label: "Eye Contact", score: 95, color: "bg-green-500" },
-              { label: "Pace", score: 78, color: "bg-blue-500" },
+              { label: "Confidence", score: 85, color: "bg-green-500" },
+              { label: "Eye Contact", score: 92, color: "bg-green-500" },
+              { label: "Pace", score: 75, color: "bg-blue-500" },
             ].map((stat) => (
               <div key={stat.label} className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50">
                 <div className="flex justify-between text-xs text-slate-300 mb-1.5">
@@ -211,7 +238,7 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-700 space-y-3">
+        <div className="p-4 border-t border-slate-700">
           <Button variant="destructive" className="w-full" onClick={() => router.push("/dashboard")}>
             <StopCircle className="mr-2 w-4 h-4" />
             End Session
@@ -222,6 +249,7 @@ export default function InterviewSessionPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
+          {/* USER VIDEO */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -230,11 +258,11 @@ export default function InterviewSessionPage() {
           />
           
           {hasCameraPermission === false && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 z-10 px-6">
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 z-20 px-6">
               <Alert variant="destructive" className="max-w-md">
                 <AlertTitle>Camera Access Required</AlertTitle>
                 <AlertDescription>
-                  We need access to your camera and microphone to conduct the mock interview. Please check your browser permissions.
+                  Please allow camera and microphone access in your browser to start the simulated interview.
                 </AlertDescription>
               </Alert>
             </div>
@@ -242,29 +270,29 @@ export default function InterviewSessionPage() {
 
           {/* AI Interviewer Audio */}
           {audioSrc && (
-            <audio ref={audioRef} src={audioSrc} autoPlay onPlay={() => setSpeaking(true)} onEnded={() => setSpeaking(false)} />
+            <audio ref={audioRef} src={audioSrc} autoPlay onPlay={() => setSpeaking(true)} onEnded={() => setSpeaking(false)} className="hidden" />
           )}
 
           {/* Question Overlay */}
-          <div className="absolute bottom-10 inset-x-0 px-8">
+          <div className="absolute bottom-10 inset-x-0 px-8 z-10">
             <div className="max-w-3xl mx-auto">
               <Card className="bg-slate-900/90 backdrop-blur-md border-primary/30 shadow-2xl">
                 <CardContent className="p-6">
                   <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <MessageSquare className="text-primary w-5 h-5" />
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <MessageSquare className="text-primary w-6 h-6" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-primary/20 text-primary border-primary/20 uppercase text-[10px]">Interviewer</Badge>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge className="bg-primary text-white border-none uppercase text-[10px]">AI Interviewer</Badge>
                         {speaking && (
-                          <div className="flex items-center gap-1 text-[10px] text-primary font-bold animate-pulse">
-                            <Volume2 className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5 text-[10px] text-primary font-bold animate-pulse">
+                            <Volume2 className="w-4 h-4" />
                             SPEAKING...
                           </div>
                         )}
                       </div>
-                      <h3 className="text-xl font-bold text-white leading-relaxed">
+                      <h3 className="text-xl md:text-2xl font-headline font-bold text-white leading-tight">
                         {questions[currentIdx]}
                       </h3>
                     </div>
@@ -276,38 +304,47 @@ export default function InterviewSessionPage() {
         </div>
 
         {/* Controls Bar */}
-        <div className="h-24 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between">
+        <div className="h-28 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-slate-700 text-white">
-              <Mic className="h-5 w-5" />
+            <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
+              <Mic className="h-6 w-6" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-slate-700 text-white">
-              <Video className="h-5 w-5" />
+            <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
+              <Video className="h-6 w-6" />
             </Button>
           </div>
 
-          <div className="flex-1 max-w-xl px-12">
+          <div className="flex-1 max-w-2xl px-8">
             <div className="relative">
-              <Input 
-                placeholder="Type your answer or speak..." 
-                className="bg-slate-900 border-slate-700 text-white h-12 pr-12"
+              <textarea 
+                placeholder="Type your answer here..." 
+                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-16 resize-none focus:ring-2 focus:ring-primary outline-none transition-all"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Badge variant="outline" className="text-[10px] text-slate-500 border-slate-700">AI Assistant</Badge>
+              <div className="absolute right-3 bottom-2">
+                <span className="text-[10px] text-slate-500 font-medium">Auto-feedback enabled</span>
               </div>
             </div>
           </div>
 
           <Button 
             size="lg" 
-            className="h-12 px-8 font-bold group"
+            className="h-14 px-10 font-bold group bg-primary hover:bg-primary/90"
             onClick={handleNext}
-            disabled={loading}
+            disabled={submitting}
           >
-            {loading ? <BrainCircuit className="w-5 h-5 animate-spin" /> : "Submit Answer"}
-            <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                Submit Answer
+                <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </Button>
         </div>
       </div>
