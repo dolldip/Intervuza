@@ -23,11 +23,8 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isMockConfig) {
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: "Firebase is not connected. Please connect a project in the Studio panel.",
-      });
+      // In mock mode, allow "skipping" to dashboard for preview
+      router.push('/dashboard');
       return;
     }
     setLoading(true);
@@ -48,11 +45,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     if (isMockConfig) {
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: "Firebase is not connected. Please connect a project in the Studio panel.",
-      });
+      router.push('/dashboard');
       return;
     }
     const provider = new GoogleAuthProvider();
@@ -84,11 +77,11 @@ export default function LoginPage() {
         </div>
 
         {isMockConfig && (
-          <Alert variant="destructive" className="animate-pulse">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Firebase Not Connected</AlertTitle>
-            <AlertDescription>
-              Please connect a real Firebase project in the Studio panel to enable login functionality.
+          <Alert variant="destructive" className="animate-pulse border-amber-500 bg-amber-50 text-amber-900">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="font-bold">Firebase Not Connected</AlertTitle>
+            <AlertDescription className="text-xs">
+              Project is in <strong>Demo Mode</strong>. You can click "Sign In" to preview the dashboard, but to save your data, click <strong>"Connect to Firebase"</strong> in the top toolbar.
             </AlertDescription>
           </Alert>
         )}
@@ -112,7 +105,6 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={isMockConfig}
                   />
                 </div>
               </div>
@@ -130,12 +122,11 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={isMockConfig}
                   />
                 </div>
               </div>
-              <Button className="w-full h-11" type="submit" disabled={loading || isMockConfig}>
-                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
+              <Button className="w-full h-11" type="submit" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (isMockConfig ? "Enter Demo Dashboard" : "Sign In")}
               </Button>
             </form>
             <div className="relative my-6">
@@ -146,7 +137,7 @@ export default function LoginPage() {
                 <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn} disabled={isMockConfig}>
+            <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
               <img src="https://www.google.com/favicon.ico" className="w-4 h-4 mr-2" alt="Google" />
               Sign in with Google
             </Button>

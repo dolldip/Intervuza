@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, useFirestore } from "@/firebase"
+import { useAuth, useFirestore, isMockConfig } from "@/firebase/config"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,7 +34,7 @@ export default function NewInterviewPage() {
   const [resumeText, setResumeText] = useState("Standard candidate profile.")
 
   const handleStart = async () => {
-    if (!role || !experience || !jd || !user || !db) {
+    if (!role || !experience || !jd) {
       toast({
         variant: "destructive",
         title: "Missing Information",
@@ -43,10 +42,17 @@ export default function NewInterviewPage() {
       })
       return
     }
+
+    if (isMockConfig) {
+      setLoading(true)
+      setTimeout(() => {
+        router.push(`/interviews/session/demo-session`)
+      }, 1000)
+      return
+    }
     
     setLoading(true)
     try {
-      // 1. Try to analyze profile, but don't let it crash the whole start process
       try {
         await resumeJobDescriptionAnalysis({
           resumeText,
@@ -54,12 +60,10 @@ export default function NewInterviewPage() {
         })
       } catch (aiError) {
         console.warn("AI Analysis failed, proceeding with default settings:", aiError)
-        // We continue anyway so the user can still use the app
       }
       
-      // 2. Create actual session in Firestore
-      const sessionRef = await addDoc(collection(db, "interviews"), {
-        userId: user.uid,
+      const sessionRef = await addDoc(collection(db!, "interviews"), {
+        userId: user?.uid || "anonymous",
         role: role,
         experienceLevel: experience,
         date: serverTimestamp(),
@@ -68,14 +72,13 @@ export default function NewInterviewPage() {
         status: "in-progress"
       });
 
-      // 3. Navigate to actual interview
       router.push(`/interviews/session/${sessionRef.id}`)
     } catch (error: any) {
       console.error("Session creation error:", error)
       toast({
         variant: "destructive",
         title: "Connection Error",
-        description: error.message || "Could not start session. Please check your internet connection."
+        description: error.message || "Could not start session. Please connect Firebase."
       })
     } finally {
       setLoading(false)
@@ -175,10 +178,6 @@ export default function NewInterviewPage() {
                   </>
                 )}
               </Button>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
-                <AlertCircle className="w-3 h-3" />
-                <span>Session will be recorded for feedback.</span>
-              </div>
             </CardFooter>
           </Card>
         </div>
