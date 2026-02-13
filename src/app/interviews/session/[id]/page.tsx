@@ -63,15 +63,11 @@ export default function InterviewSessionPage() {
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions to use the mock interview features.',
-        });
+        // We don't toast here to avoid spamming, the UI shows a banner anyway
       }
     };
     getCameraPermission();
-  }, [toast]);
+  }, []);
 
   // Initial Question Generation
   useEffect(() => {
@@ -85,14 +81,18 @@ export default function InterviewSessionPage() {
           skills: profile?.skills || ["Problem Solving"],
           resumeText: `Education: ${profile?.education || "Professional background"}`
         })
-        setQuestions(result.questions)
+        if (result && result.questions && result.questions.length > 0) {
+          setQuestions(result.questions)
+        } else {
+          throw new Error("No questions generated")
+        }
       } catch (err) {
-        console.error(err)
+        console.warn("AI generation failed, using fallback questions:", err)
         setQuestions([
-          "Can you describe your professional background?",
-          "How do you approach complex problem solving?",
-          "What motivates you in your current target role?",
-          "Tell me about a time you overcame a technical challenge.",
+          "Can you describe your professional background and education?",
+          "What motivates you to pursue a role as a " + (profile?.targetRole || "Software Engineer") + "?",
+          "Tell me about a time you handled a difficult technical challenge.",
+          "How do you stay updated with the latest trends in your field?",
           "Where do you see yourself in five years?"
         ])
       } finally {
@@ -100,21 +100,21 @@ export default function InterviewSessionPage() {
       }
     }
     
-    init()
+    if (!authLoading && !profileLoading) {
+      init()
+    }
   }, [authLoading, profileLoading, profile])
 
   // Speak the question when it changes
   useEffect(() => {
     async function speak() {
       if (questions.length > 0 && questions[currentIdx]) {
-        setSpeaking(true)
         try {
           const { media } = await textToSpeech(questions[currentIdx])
           setAudioSrc(media)
         } catch (err) {
-          console.error("TTS failed", err)
-        } finally {
-          setSpeaking(false)
+          console.warn("TTS failed:", err)
+          // Silent fail - user can still read the text
         }
       }
     }
@@ -136,7 +136,6 @@ export default function InterviewSessionPage() {
 
     setSubmitting(true)
     try {
-      // Save answer to Firestore
       const interviewRef = doc(db, "interviews", params.id as string);
       await updateDoc(interviewRef, {
         answers: arrayUnion({
@@ -156,6 +155,7 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       console.error(err)
+      // Even on error, move to next or finish
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1)
         setAnswer("")
@@ -169,11 +169,11 @@ export default function InterviewSessionPage() {
 
   if (initializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
         <h2 className="text-3xl font-headline font-bold">Setting Up Session</h2>
         <p className="text-muted-foreground mt-4 text-center max-w-xs">
-          Tailoring questions based on your role: {profile?.targetRole || "Software Engineer"}...
+          Tailoring questions based on your profile...
         </p>
       </div>
     )
@@ -197,7 +197,7 @@ export default function InterviewSessionPage() {
                 <span>Session Progress</span>
                 <span>{currentIdx + 1} / {questions.length}</span>
               </div>
-              <Progress value={((currentIdx + 1) / questions.length) * 100} className="h-1.5 bg-slate-700" />
+              <Progress value={((currentIdx + 1) / (questions.length || 1)) * 100} className="h-1.5 bg-slate-700" />
             </div>
             
             <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg border border-slate-600">
@@ -220,7 +220,7 @@ export default function InterviewSessionPage() {
               <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
             </div>
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">Audio Clarity</span>
+              <span className="text-xs text-slate-300">Audio Level</span>
               <div className="w-2 h-2 rounded-full bg-blue-500" />
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function InterviewSessionPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
-          {/* USER VIDEO - REAL HUMAN FACE */}
+          {/* USER VIDEO */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -251,7 +251,7 @@ export default function InterviewSessionPage() {
               <Alert variant="destructive" className="max-w-md">
                 <AlertTitle>Camera Access Required</AlertTitle>
                 <AlertDescription>
-                  Please enable your camera and microphone in the browser settings to see your face and hear the AI.
+                  Please enable your camera and microphone in the browser settings to use the interview feature.
                 </AlertDescription>
               </Alert>
             </div>
@@ -306,13 +306,13 @@ export default function InterviewSessionPage() {
           <div className="flex-1 max-w-2xl px-8">
             <div className="relative">
               <textarea 
-                placeholder="Type your response here..." 
+                placeholder="Type your response here or speak..." 
                 className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-20 resize-none focus:ring-2 focus:ring-primary outline-none transition-all"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
               <div className="absolute right-3 bottom-2">
-                <span className="text-[10px] text-slate-500 font-medium">Auto-feedback is live</span>
+                <span className="text-[10px] text-slate-500 font-medium italic">Your response is saved automatically</span>
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function InterviewSessionPage() {
               <Loader2 className="animate-spin h-5 w-5" />
             ) : (
               <>
-                Next Question
+                {currentIdx < questions.length - 1 ? 'Next Question' : 'Finish Interview'}
                 <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </>
             )}

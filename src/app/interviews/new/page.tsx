@@ -35,15 +35,27 @@ export default function NewInterviewPage() {
   const [resumeText, setResumeText] = useState("Standard candidate profile.")
 
   const handleStart = async () => {
-    if (!role || !experience || !jd || !user || !db) return
+    if (!role || !experience || !jd || !user || !db) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in all fields before starting."
+      })
+      return
+    }
     
     setLoading(true)
     try {
-      // 1. Analyze profile
-      await resumeJobDescriptionAnalysis({
-        resumeText,
-        jobDescriptionText: jd
-      })
+      // 1. Try to analyze profile, but don't let it crash the whole start process
+      try {
+        await resumeJobDescriptionAnalysis({
+          resumeText,
+          jobDescriptionText: jd
+        })
+      } catch (aiError) {
+        console.warn("AI Analysis failed, proceeding with default settings:", aiError)
+        // We continue anyway so the user can still use the app
+      }
       
       // 2. Create actual session in Firestore
       const sessionRef = await addDoc(collection(db, "interviews"), {
@@ -59,11 +71,11 @@ export default function NewInterviewPage() {
       // 3. Navigate to actual interview
       router.push(`/interviews/session/${sessionRef.id}`)
     } catch (error: any) {
-      console.error(error)
+      console.error("Session creation error:", error)
       toast({
         variant: "destructive",
-        title: "Initialization Error",
-        description: error.message || "Could not start session."
+        title: "Connection Error",
+        description: error.message || "Could not start session. Please check your internet connection."
       })
     } finally {
       setLoading(false)
@@ -73,7 +85,7 @@ export default function NewInterviewPage() {
   return (
     <div className="container max-w-4xl py-12 px-4 animate-fade-in">
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-headline font-bold mb-2">Prepare for Your Next Big Move</h1>
+        <h1 className="text-4xl font-headline font-bold mb-2 text-foreground">Prepare for Your Next Big Move</h1>
         <p className="text-muted-foreground text-lg">AI will generate a tailored interview based on your profile and target role.</p>
       </div>
 
@@ -154,7 +166,7 @@ export default function NewInterviewPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Analyzing...
+                    Initializing...
                   </>
                 ) : (
                   <>
