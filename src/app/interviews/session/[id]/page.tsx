@@ -77,7 +77,7 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     async function init() {
       // Small delay to ensure session storage is readable
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 800));
 
       const demoRole = typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : null;
       const demoExp = typeof window !== 'undefined' ? sessionStorage.getItem('demo_exp') : null;
@@ -111,8 +111,10 @@ export default function InterviewSessionPage() {
       }
     }
     
-    init()
-  }, [profile])
+    if (!authLoading && (profile || isMockConfig)) {
+      init()
+    }
+  }, [profile, authLoading])
 
   // AI Voice: Speak the question when it changes
   useEffect(() => {

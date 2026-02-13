@@ -63,8 +63,8 @@ export default function Home() {
                     <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" className="h-12 px-8 text-base">
-                  View Demo
+                <Button variant="outline" size="lg" className="h-12 px-8 text-base" asChild>
+                  <Link href="/login">View Demo</Link>
                 </Button>
               </div>
               <div className="pt-12 w-full max-w-5xl">
