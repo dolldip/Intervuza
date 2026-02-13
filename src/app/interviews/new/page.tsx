@@ -45,13 +45,14 @@ export default function NewInterviewPage() {
 
     setLoading(true)
     
+    // Save choices to session storage so AI can use them even in demo mode
+    sessionStorage.setItem('demo_role', role);
+    sessionStorage.setItem('demo_exp', experience);
+    sessionStorage.setItem('demo_jd', jd);
+    
     // DEMO MODE NAVIGATION
     if (isMockConfig) {
       setTimeout(() => {
-        // Store choices in session storage for demo
-        sessionStorage.setItem('demo_role', role);
-        sessionStorage.setItem('demo_exp', experience);
-        sessionStorage.setItem('demo_jd', jd);
         router.push(`/interviews/session/demo-session`)
       }, 1000)
       return
@@ -98,23 +99,13 @@ export default function NewInterviewPage() {
         <p className="text-muted-foreground text-lg">AI will generate a tailored interview based on your profile and target role.</p>
       </div>
 
-      {isMockConfig && (
-        <Alert className="mb-8 border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800 font-bold">Demo Mode Active</AlertTitle>
-          <AlertDescription className="text-blue-700">
-            You can still test the **Real Face (Camera)** and **AI Voice** features even without connecting Firebase!
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
           <Card className="shadow-lg border-primary/10">
             <CardHeader>
               <CardTitle className="font-headline text-xl">Interview Parameters</CardTitle>
               <CardDescription>Tell us about the role you are targeting</CardDescription>
-            </CardHeader>
+            </Header>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">

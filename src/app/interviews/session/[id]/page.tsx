@@ -51,7 +51,7 @@ export default function InterviewSessionPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Camera and Audio Permission - Critical: Always show video tag irrespective of permission
+  // Camera and Audio Permission
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
@@ -66,29 +66,31 @@ export default function InterviewSessionPage() {
         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
-          description: 'Please enable camera permissions to use this app.',
+          description: 'Please enable camera permissions to see your face during the interview.',
         });
       }
     };
     getCameraPermission();
   }, [toast]);
 
-  // Initial Question Generation using Profile or Session Storage
+  // Initial Question Generation using Profile (Real) or Session Storage (Demo)
   useEffect(() => {
     async function init() {
-      // Don't block demo mode with auth/profile loading
-      if (!isMockConfig && (authLoading || profileLoading)) return;
+      // Small delay to ensure session storage is readable
+      await new Promise(r => setTimeout(r, 500));
 
       const demoRole = typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : null;
       const demoExp = typeof window !== 'undefined' ? sessionStorage.getItem('demo_exp') : null;
       const demoEdu = typeof window !== 'undefined' ? sessionStorage.getItem('demo_edu') : null;
+      const demoJD = typeof window !== 'undefined' ? sessionStorage.getItem('demo_jd') : null;
 
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole || profile?.targetRole || "Software Engineer",
           experienceLevel: demoExp || profile?.experienceLevel || "Mid-Level",
           skills: profile?.skills || ["Problem Solving", "Communication"],
-          resumeText: `Education: ${demoEdu || profile?.education || "General background"}`
+          resumeText: `Education: ${demoEdu || profile?.education || "General background"}`,
+          jobDescriptionText: demoJD || ""
         })
         if (result && result.questions && result.questions.length > 0) {
           setQuestions(result.questions)
@@ -96,13 +98,13 @@ export default function InterviewSessionPage() {
           throw new Error("No questions generated")
         }
       } catch (err) {
-        console.warn("AI generation failed, using fallback tailored questions.")
+        console.warn("AI generation failed, using tailored fallback questions.")
         setQuestions([
-          `Can you describe how your education in ${demoEdu || "your field"} prepared you for a role as a ${demoRole || "professional"}?`,
-          "What is the most difficult technical challenge you've faced recently?",
-          "How do you handle disagreements within a technical team?",
-          "Where do you see the industry heading in the next 3 years?",
-          "Why are you the best fit for this specific position?"
+          `Based on your background in ${demoEdu || "your field"}, how would you approach the role of ${demoRole || "this position"}?`,
+          "Can you walk me through a complex technical problem you solved recently?",
+          "How do you ensure clear communication when working with non-technical stakeholders?",
+          "What motivates you to excel in this specific industry?",
+          "If you were hired tomorrow, what would be your first priority?"
         ])
       } finally {
         setInitializing(false)
@@ -110,9 +112,9 @@ export default function InterviewSessionPage() {
     }
     
     init()
-  }, [authLoading, profileLoading, profile])
+  }, [profile])
 
-  // Real Voice: Speak the question when it changes
+  // AI Voice: Speak the question when it changes
   useEffect(() => {
     async function speak() {
       if (questions.length > 0 && questions[currentIdx]) {
@@ -145,7 +147,7 @@ export default function InterviewSessionPage() {
     setSubmitting(true)
     
     // DEMO MODE logic
-    if (isMockConfig || !db) {
+    if (isMockConfig || !db || params.id === "demo-session") {
       setTimeout(() => {
         if (currentIdx < questions.length - 1) {
           setCurrentIdx(currentIdx + 1)
@@ -197,7 +199,7 @@ export default function InterviewSessionPage() {
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
         <h2 className="text-3xl font-headline font-bold">Initializing AI Interviewer</h2>
         <p className="text-muted-foreground mt-4 max-w-xs">
-          Tailoring questions to your education and target job role...
+          Crafting questions based on your education and target role...
         </p>
       </div>
     )
@@ -238,11 +240,11 @@ export default function InterviewSessionPage() {
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Interview Room Status</div>
           <div className="space-y-2">
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">Camera Feed</span>
+              <span className="text-xs text-slate-300">Face Detection (Camera)</span>
               <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500' : 'bg-red-500'}`} />
             </div>
             <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
-              <span className="text-xs text-slate-300">AI Voice Engine</span>
+              <span className="text-xs text-slate-300">AI Voice (TTS)</span>
               <div className={`w-2 h-2 rounded-full ${audioSrc ? 'bg-green-500' : 'bg-yellow-500'}`} />
             </div>
           </div>
@@ -250,7 +252,7 @@ export default function InterviewSessionPage() {
           <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-xl">
             <h4 className="text-[10px] font-bold text-primary uppercase mb-1">Target Role</h4>
             <p className="text-sm text-white font-medium capitalize">
-              {sessionStorage.getItem('demo_role') || profile?.targetRole || "General Candidate"}
+              {typeof window !== 'undefined' ? sessionStorage.getItem('demo_role') : (profile?.targetRole || "General Candidate")}
             </p>
           </div>
         </div>
@@ -279,9 +281,9 @@ export default function InterviewSessionPage() {
             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/95 z-20 px-6">
               <Alert variant="destructive" className="max-w-md">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Permission Required</AlertTitle>
+                <AlertTitle>Camera Access Required</AlertTitle>
                 <AlertDescription>
-                  We need access to your camera to show your face during the interview. Please check your browser settings.
+                  Please allow camera access to show your face during the mock interview.
                 </AlertDescription>
               </Alert>
             </div>

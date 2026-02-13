@@ -2,10 +2,11 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// You can manually paste your keys here if you have them from the Firebase Console.
-// Otherwise, clicking "Connect to Firebase" in the Studio UI will fill these automatically.
+// Using the API key you provided. 
+// Note: Real Firebase usage also requires authDomain and projectId.
+// The app will run in "Resilient Mode" if these are missing.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  apiKey: "4e9aee57-cd69-4b2a-85f5-35a00361058f",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
@@ -13,12 +14,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
 };
 
-const isMockConfig = !firebaseConfig.apiKey || firebaseConfig.apiKey === "mock-api-key";
+const isMockConfig = !firebaseConfig.apiKey || firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.apiKey.length < 10;
 
 if (isMockConfig && typeof window !== 'undefined') {
   console.warn(
     "Firebase is running with MOCK configuration. " +
-    "Database features are disabled. Please connect your project in the Studio panel."
+    "Using Demo Mode features. Connect your project in the Studio panel for full database support."
   );
 }
 
