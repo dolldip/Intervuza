@@ -1,7 +1,10 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth, useFirestore } from "@/firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,30 +20,51 @@ import {
   Loader2
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewInterviewPage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const db = useFirestore()
+  const { toast } = useToast()
+  
   const [loading, setLoading] = useState(false)
   const [role, setRole] = useState("")
   const [experience, setExperience] = useState("")
   const [jd, setJd] = useState("")
-  const [resumeText, setResumeText] = useState("Mock Resume Text: Experience at Google as a PM for 5 years. Proficient in Python, SQL, and Strategy.")
+  const [resumeText, setResumeText] = useState("Standard candidate profile.")
 
   const handleStart = async () => {
-    if (!role || !experience || !jd) return
+    if (!role || !experience || !jd || !user || !db) return
     
     setLoading(true)
     try {
-      // Analyze resume and JD before starting (Simulated)
+      // 1. Analyze profile
       await resumeJobDescriptionAnalysis({
         resumeText,
         jobDescriptionText: jd
       })
       
-      // Navigate to actual interview
-      router.push("/interviews/session/mock-id-123")
-    } catch (error) {
+      // 2. Create actual session in Firestore
+      const sessionRef = await addDoc(collection(db, "interviews"), {
+        userId: user.uid,
+        role: role,
+        experienceLevel: experience,
+        date: serverTimestamp(),
+        questions: [],
+        answers: [],
+        status: "in-progress"
+      });
+
+      // 3. Navigate to actual interview
+      router.push(`/interviews/session/${sessionRef.id}`)
+    } catch (error: any) {
       console.error(error)
+      toast({
+        variant: "destructive",
+        title: "Initialization Error",
+        description: error.message || "Could not start session."
+      })
     } finally {
       setLoading(false)
     }
@@ -141,7 +165,7 @@ export default function NewInterviewPage() {
               </Button>
               <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
                 <AlertCircle className="w-3 h-3" />
-                <span>1 free credit will be used</span>
+                <span>Session will be recorded for feedback.</span>
               </div>
             </CardFooter>
           </Card>

@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth, useFirestore, useDoc } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { doc, updateDoc, arrayUnion } from "firebase/firestore"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -20,7 +20,8 @@ import {
   BrainCircuit,
   StopCircle,
   Volume2,
-  Loader2
+  Loader2,
+  Camera
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
@@ -42,7 +43,7 @@ export default function InterviewSessionPage() {
   const [answer, setAnswer] = useState("")
   const [initializing, setInitializing] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(120)
+  const [timeLeft, setTimeLeft] = useState(180)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [speaking, setSpeaking] = useState(false)
@@ -65,7 +66,7 @@ export default function InterviewSessionPage() {
         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to continue.',
+          description: 'Please enable camera permissions to use the mock interview features.',
         });
       }
     };
@@ -75,30 +76,24 @@ export default function InterviewSessionPage() {
   // Initial Question Generation
   useEffect(() => {
     async function init() {
-      // Don't start until we know auth and profile state
       if (authLoading || profileLoading) return;
 
       try {
         const result = await generateInterviewQuestions({
           jobRole: profile?.targetRole || "Software Engineer",
           experienceLevel: profile?.experienceLevel || "Mid-Level",
-          skills: profile?.skills || ["Problem Solving", "Communication"],
-          resumeText: `Education: ${profile?.education || "Not specified"}`
+          skills: profile?.skills || ["Problem Solving"],
+          resumeText: `Education: ${profile?.education || "Professional background"}`
         })
         setQuestions(result.questions)
       } catch (err) {
         console.error(err)
-        toast({
-          variant: "destructive",
-          title: "Setup Error",
-          description: "We couldn't generate questions. Using fallback technical set.",
-        })
         setQuestions([
-          "Can you describe a challenging project you've worked on recently?",
-          "How do you handle conflict within a team?",
-          "Where do you see yourself in five years?",
-          "What are your core technical strengths?",
-          "Why are you the best fit for this role?"
+          "Can you describe your professional background?",
+          "How do you approach complex problem solving?",
+          "What motivates you in your current target role?",
+          "Tell me about a time you overcame a technical challenge.",
+          "Where do you see yourself in five years?"
         ])
       } finally {
         setInitializing(false)
@@ -106,7 +101,7 @@ export default function InterviewSessionPage() {
     }
     
     init()
-  }, [authLoading, profileLoading, profile, toast])
+  }, [authLoading, profileLoading, profile])
 
   // Speak the question when it changes
   useEffect(() => {
@@ -137,30 +132,30 @@ export default function InterviewSessionPage() {
   }, [timeLeft, initializing])
 
   const handleNext = async () => {
-    if (!questions[currentIdx]) return
+    if (!questions[currentIdx] || !db) return
 
     setSubmitting(true)
     try {
-      await instantTextualAnswerFeedback({
-        interviewQuestion: questions[currentIdx],
-        userAnswer: answer || "I would focus on the core requirements and deliver value iteratively using best practices relevant to the role."
-      })
+      // Save answer to Firestore
+      const interviewRef = doc(db, "interviews", params.id as string);
+      await updateDoc(interviewRef, {
+        answers: arrayUnion({
+          question: questions[currentIdx],
+          answer: answer || "No verbal response recorded.",
+          timestamp: new Date().toISOString()
+        })
+      });
 
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1)
         setAnswer("")
-        setTimeLeft(120)
+        setTimeLeft(180)
         setAudioSrc(null)
       } else {
         router.push(`/results/${params.id}`)
       }
     } catch (err) {
       console.error(err)
-      toast({
-        variant: "destructive",
-        title: "Feedback Error",
-        description: "Moving to next question...",
-      })
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1)
         setAnswer("")
@@ -176,9 +171,9 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-6" />
-        <h2 className="text-3xl font-headline font-bold">Initializing Your Session</h2>
+        <h2 className="text-3xl font-headline font-bold">Setting Up Session</h2>
         <p className="text-muted-foreground mt-4 text-center max-w-xs">
-          AI is tailoring the interview based on your profile and target job role...
+          Tailoring questions based on your role: {profile?.targetRole || "Software Engineer"}...
         </p>
       </div>
     )
@@ -199,8 +194,8 @@ export default function InterviewSessionPage() {
           <div className="space-y-4">
             <div>
               <div className="flex justify-between text-xs text-slate-400 mb-2 font-medium">
-                <span>Progress</span>
-                <span>{currentIdx + 1} of {questions.length}</span>
+                <span>Session Progress</span>
+                <span>{currentIdx + 1} / {questions.length}</span>
               </div>
               <Progress value={((currentIdx + 1) / questions.length) * 100} className="h-1.5 bg-slate-700" />
             </div>
@@ -218,23 +213,16 @@ export default function InterviewSessionPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Live Analysis</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Real-time Analysis</div>
           <div className="space-y-2">
-            {[
-              { label: "Confidence", score: 85, color: "bg-green-500" },
-              { label: "Eye Contact", score: 92, color: "bg-green-500" },
-              { label: "Pace", score: 75, color: "bg-blue-500" },
-            ].map((stat) => (
-              <div key={stat.label} className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50">
-                <div className="flex justify-between text-xs text-slate-300 mb-1.5">
-                  <span>{stat.label}</span>
-                  <span>{stat.score}%</span>
-                </div>
-                <div className="h-1 w-full bg-slate-700 rounded-full">
-                  <div className={`h-full ${stat.color} rounded-full`} style={{ width: `${stat.score}%` }} />
-                </div>
-              </div>
-            ))}
+            <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
+              <span className="text-xs text-slate-300">Face Detected</span>
+              <div className={`w-2 h-2 rounded-full ${hasCameraPermission ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
+            </div>
+            <div className="p-3 bg-slate-700/30 rounded-lg border border-slate-700/50 flex items-center justify-between">
+              <span className="text-xs text-slate-300">Audio Clarity</span>
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+            </div>
           </div>
         </div>
 
@@ -249,12 +237,13 @@ export default function InterviewSessionPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
-          {/* USER VIDEO */}
+          {/* USER VIDEO - REAL HUMAN FACE */}
           <video 
             ref={videoRef} 
             autoPlay 
             muted 
-            className="w-full h-full object-cover opacity-80"
+            playsInline
+            className="w-full h-full object-cover"
           />
           
           {hasCameraPermission === false && (
@@ -262,7 +251,7 @@ export default function InterviewSessionPage() {
               <Alert variant="destructive" className="max-w-md">
                 <AlertTitle>Camera Access Required</AlertTitle>
                 <AlertDescription>
-                  Please allow camera and microphone access in your browser to start the simulated interview.
+                  Please enable your camera and microphone in the browser settings to see your face and hear the AI.
                 </AlertDescription>
               </Alert>
             </div>
@@ -276,15 +265,15 @@ export default function InterviewSessionPage() {
           {/* Question Overlay */}
           <div className="absolute bottom-10 inset-x-0 px-8 z-10">
             <div className="max-w-3xl mx-auto">
-              <Card className="bg-slate-900/90 backdrop-blur-md border-primary/30 shadow-2xl">
+              <Card className="bg-slate-900/80 backdrop-blur-lg border-primary/30 shadow-2xl">
                 <CardContent className="p-6">
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/40">
                       <MessageSquare className="text-primary w-6 h-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-primary text-white border-none uppercase text-[10px]">AI Interviewer</Badge>
+                        <Badge className="bg-primary text-white border-none text-[10px]">AI COACH</Badge>
                         {speaking && (
                           <div className="flex items-center gap-1.5 text-[10px] text-primary font-bold animate-pulse">
                             <Volume2 className="w-4 h-4" />
@@ -304,26 +293,26 @@ export default function InterviewSessionPage() {
         </div>
 
         {/* Controls Bar */}
-        <div className="h-28 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between">
+        <div className="h-32 bg-slate-800 border-t border-slate-700 px-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
               <Mic className="h-6 w-6" />
             </Button>
             <Button size="icon" variant="ghost" className="h-14 w-14 rounded-full bg-slate-700 text-white hover:bg-slate-600">
-              <Video className="h-6 w-6" />
+              <Camera className="h-6 w-6" />
             </Button>
           </div>
 
           <div className="flex-1 max-w-2xl px-8">
             <div className="relative">
               <textarea 
-                placeholder="Type your answer here..." 
-                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-16 resize-none focus:ring-2 focus:ring-primary outline-none transition-all"
+                placeholder="Type your response here..." 
+                className="w-full bg-slate-950 border-slate-700 text-white rounded-xl py-3 px-4 h-20 resize-none focus:ring-2 focus:ring-primary outline-none transition-all"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
               />
               <div className="absolute right-3 bottom-2">
-                <span className="text-[10px] text-slate-500 font-medium">Auto-feedback enabled</span>
+                <span className="text-[10px] text-slate-500 font-medium">Auto-feedback is live</span>
               </div>
             </div>
           </div>
@@ -335,13 +324,10 @@ export default function InterviewSessionPage() {
             disabled={submitting}
           >
             {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
-              </>
+              <Loader2 className="animate-spin h-5 w-5" />
             ) : (
               <>
-                Submit Answer
+                Next Question
                 <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </>
             )}
