@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
-import { auth } from '@/firebase/config';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldCheck, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { auth, isMockConfig } from '@/firebase/config';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,6 +23,14 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMockConfig) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "Firebase is not connected. Please connect a project in the Studio panel.",
+      });
+      return;
+    }
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -39,6 +48,14 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (isMockConfig) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "Firebase is not connected. Please connect a project in the Studio panel.",
+      });
+      return;
+    }
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -67,6 +84,16 @@ export default function LoginPage() {
           <p className="text-muted-foreground">Sign in to continue your preparation.</p>
         </div>
 
+        {isMockConfig && (
+          <Alert variant="destructive" className="animate-pulse">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Firebase Not Connected</AlertTitle>
+            <AlertDescription>
+              Please connect a real Firebase project in the Studio panel to enable login functionality.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="border-none shadow-xl">
           <CardHeader>
             <CardTitle>Login</CardTitle>
@@ -86,6 +113,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isMockConfig}
                   />
                 </div>
               </div>
@@ -103,10 +131,11 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={isMockConfig}
                   />
                 </div>
               </div>
-              <Button className="w-full h-11" type="submit" disabled={loading}>
+              <Button className="w-full h-11" type="submit" disabled={loading || isMockConfig}>
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
               </Button>
             </form>
@@ -118,7 +147,7 @@ export default function LoginPage() {
                 <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn}>
+            <Button variant="outline" className="w-full h-11" onClick={handleGoogleSignIn} disabled={isMockConfig}>
               <img src="https://www.google.com/favicon.ico" className="w-4 h-4 mr-2" alt="Google" />
               Sign in with Google
             </Button>

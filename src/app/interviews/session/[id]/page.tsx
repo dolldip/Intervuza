@@ -21,12 +21,13 @@ import {
   StopCircle,
   Volume2,
   Loader2,
-  Camera
+  Camera,
+  AlertCircle
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
-import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
 import { textToSpeech } from "@/ai/flows/tts-flow"
 import { useToast } from "@/hooks/use-toast"
+import { isMockConfig } from "@/firebase/config"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -63,7 +64,6 @@ export default function InterviewSessionPage() {
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
-        // We don't toast here to avoid spamming, the UI shows a banner anyway
       }
     };
     getCameraPermission();
@@ -114,7 +114,6 @@ export default function InterviewSessionPage() {
           setAudioSrc(media)
         } catch (err) {
           console.warn("TTS failed:", err)
-          // Silent fail - user can still read the text
         }
       }
     }
@@ -133,6 +132,17 @@ export default function InterviewSessionPage() {
 
   const handleNext = async () => {
     if (!questions[currentIdx] || !db) return
+    if (isMockConfig) {
+      // Allow moving through the UI even if Firestore isn't connected
+      if (currentIdx < questions.length - 1) {
+        setCurrentIdx(currentIdx + 1)
+        setAnswer("")
+        return;
+      } else {
+        router.push("/dashboard")
+        return;
+      }
+    }
 
     setSubmitting(true)
     try {
@@ -155,7 +165,6 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       console.error(err)
-      // Even on error, move to next or finish
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1)
         setAnswer("")
@@ -224,6 +233,18 @@ export default function InterviewSessionPage() {
               <div className="w-2 h-2 rounded-full bg-blue-500" />
             </div>
           </div>
+
+          {isMockConfig && (
+            <div className="mt-6 p-4 bg-amber-900/20 border border-amber-500/30 rounded-xl">
+              <div className="flex items-center gap-2 text-amber-500 mb-2">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase">Demo Mode</span>
+              </div>
+              <p className="text-[10px] text-amber-200/70 leading-relaxed">
+                Database is not connected. Responses won't be saved.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-slate-700">
@@ -237,7 +258,7 @@ export default function InterviewSessionPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
-          {/* USER VIDEO */}
+          {/* USER VIDEO - REAL FACE */}
           <video 
             ref={videoRef} 
             autoPlay 
@@ -257,7 +278,7 @@ export default function InterviewSessionPage() {
             </div>
           )}
 
-          {/* AI Interviewer Audio */}
+          {/* AI Interviewer Audio - REAL VOICE */}
           {audioSrc && (
             <audio ref={audioRef} src={audioSrc} autoPlay onPlay={() => setSpeaking(true)} onEnded={() => setSpeaking(false)} className="hidden" />
           )}
