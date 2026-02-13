@@ -14,7 +14,7 @@ import {
   Flame,
   Star,
   CheckCircle2,
-  UserEdit,
+  UserPen,
   Loader2
 } from "lucide-react"
 import Link from "next/link"
@@ -48,7 +48,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <Button variant="outline" asChild className="hidden sm:flex">
             <Link href="/profile">
-              <UserEdit className="mr-2 w-4 h-4" />
+              <UserPen className="mr-2 w-4 h-4" />
               Edit Profile
             </Link>
           </Button>
