@@ -89,22 +89,22 @@ export default function ResultsPage() {
                     report?.verdict === 'Ready' ? 'bg-green-500' : 
                     report?.verdict === 'Needs Improvement' ? 'bg-amber-500' : 'bg-red-500'
                   }`}>
-                    {report?.verdict}
+                    {report?.verdict || "Evaluating"}
                   </Badge>
                </div>
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                   {[
-                    { label: "Knowledge", val: report?.scores.roleSpecificKnowledge, icon: BrainCircuit },
-                    { label: "Clarity", val: report?.scores.answerClarity, icon: Sparkles },
-                    { label: "Confidence", val: report?.scores.confidence, icon: Activity },
-                    { label: "Communication", val: report?.scores.communication, icon: MessageSquare },
-                    { label: "Logic", val: report?.scores.logicalThinking, icon: Zap },
+                    { label: "Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
+                    { label: "Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
+                    { label: "Confidence", val: report?.scores?.confidence, icon: Activity },
+                    { label: "Communication", val: report?.scores?.communication, icon: MessageSquare },
+                    { label: "Logic", val: report?.scores?.logicalThinking, icon: Zap },
                   ].map((s, i) => (
                     <div key={i} className="space-y-2">
                        <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2">
                           <s.icon className="w-3 h-3" /> {s.label}
                        </p>
-                       <p className="text-3xl font-black">{s.val}/10</p>
+                       <p className="text-3xl font-black">{s.val !== undefined ? `${s.val}/10` : "N/A"}</p>
                     </div>
                   ))}
                </div>
@@ -113,7 +113,7 @@ export default function ResultsPage() {
          <Card className="rounded-[2.5rem] bg-primary text-white p-10 flex flex-col justify-center items-center text-center">
             <Trophy className="w-16 h-16 mb-6 opacity-50" />
             <p className="text-sm font-black uppercase tracking-widest mb-2">Readiness Score</p>
-            <h2 className="text-7xl font-black">{report?.overallScore}%</h2>
+            <h2 className="text-7xl font-black">{report?.overallScore || 0}%</h2>
          </Card>
       </div>
 
@@ -131,7 +131,7 @@ export default function ResultsPage() {
                 <CheckCircle className="text-green-600 w-6 h-6" /> Strengths
               </h3>
               <ul className="space-y-4">
-                {report?.strengths.map((s, i) => (
+                {(report?.strengths || []).map((s, i) => (
                   <li key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-white border border-green-50 shadow-sm">
                     <span className="text-base font-semibold">{s}</span>
                   </li>
@@ -144,7 +144,7 @@ export default function ResultsPage() {
                 <AlertTriangle className="text-amber-600 w-6 h-6" /> Areas to Improve
               </h3>
               <ul className="space-y-4">
-                {report?.weaknesses.map((w, i) => (
+                {(report?.weaknesses || []).map((w, i) => (
                   <li key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-white border border-amber-50 shadow-sm">
                     <span className="text-base font-semibold">{w}</span>
                   </li>
