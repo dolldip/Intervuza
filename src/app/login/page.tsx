@@ -38,7 +38,7 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      console.error(error);
+      console.error("Login error:", error);
       let message = "Invalid email or password.";
       if (error.code === 'auth/invalid-credential') {
         message = "The credentials provided are incorrect. Please try again.";
@@ -79,7 +79,7 @@ export default function LoginPage() {
         description: "Verification code sent to your phone.",
       });
     } catch (error: any) {
-      console.error(error);
+      console.error("OTP Send Error:", error);
       toast({
         variant: "destructive",
         title: "OTP Failed",
@@ -103,6 +103,7 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("OTP Verify Error:", error);
       toast({
         variant: "destructive",
         title: "Verification Failed",
@@ -160,7 +161,7 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <Label htmlFor="password">Password</Label>
-                      <Link href="/forgot-password" name="forgot-password" className="text-xs text-primary font-bold hover:underline">Forgot password?</Link>
+                      <Link href="/forgot-password" text-primary font-bold hover:underline>Forgot password?</Link>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

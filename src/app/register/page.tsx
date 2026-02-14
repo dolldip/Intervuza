@@ -38,8 +38,13 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: name });
       
-      // Mandatory Security Step: Email Verification
-      await sendEmailVerification(user);
+      // Send verification email
+      try {
+        await sendEmailVerification(user);
+        console.log("Verification email sent successfully.");
+      } catch (emailError) {
+        console.warn("Could not send verification email immediately. This might be due to console settings.", emailError);
+      }
       
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
@@ -54,10 +59,10 @@ export default function RegisterPage() {
       setVerificationSent(true);
       toast({
         title: "Account Created",
-        description: "Please check your email to verify your security credentials.",
+        description: "Please check your email (and Spam folder) to verify your account.",
       });
     } catch (error: any) {
-      console.error(error);
+      console.error("Registration Error:", error);
       let message = "Something went wrong during registration.";
       if (error.code === 'auth/email-already-in-use') {
         message = "This email is already registered. Please log in instead.";
@@ -84,7 +89,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold uppercase tracking-tight">Verify Your Email</h1>
-            <p className="text-muted-foreground text-lg">We've sent a security link to <b>{email}</b>. Please verify your account to access elite AI coaching.</p>
+            <p className="text-muted-foreground text-lg">We've sent a verification link to <b>{email}</b>. If you don't see it, please check your <b>Spam folder</b>.</p>
           </div>
           <Button asChild className="w-full h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
             <Link href="/login">RETURN TO LOGIN</Link>

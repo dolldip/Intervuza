@@ -54,7 +54,7 @@ export default function InterviewSessionPage() {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   
-  // High-Sensitivity Biometrics (Sensitive and performance-based)
+  // High-Sensitivity Biometrics (Sensitive and punitive)
   const [confidenceLevel, setConfidenceLevel] = useState(65)
   const [eyeFocus, setEyeFocus] = useState(70)
   const [isCodingTask, setIsCodingTask] = useState(false)
@@ -98,11 +98,11 @@ export default function InterviewSessionPage() {
         let change = (Math.random() * 4) - 2.5; 
         
         // Heavy penalty for silence when user is supposed to be speaking
-        if (isListening && currentText.length < 5) change -= 8;
+        if (isListening && currentText.length < 5) change -= 12;
         // Bonus for steady, meaningful speaking
-        if (isListening && currentText.length > 40) change += 5;
+        if (isListening && currentText.length > 40) change += 6;
         // Penalty for excessive rambling
-        if (isListening && currentText.length > 600) change -= 4;
+        if (isListening && currentText.length > 800) change -= 5;
         
         return Math.min(99, Math.max(5, prev + change));
       });
@@ -110,9 +110,9 @@ export default function InterviewSessionPage() {
       setEyeFocus(prev => {
         let change = (Math.random() * 8) - 4.5;
         // Simulate distraction events
-        if (Math.random() > 0.95) change = -30;
+        if (Math.random() > 0.95) change = -40;
         // Focus improves during active exchanges
-        if (isSpeaking) change += 4;
+        if (isSpeaking) change += 5;
         
         return Math.min(100, Math.max(0, prev + change));
       });
@@ -173,7 +173,7 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 5) {
              completeTurn();
           }
-        }, 3500); 
+        }, 4000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -327,7 +327,7 @@ export default function InterviewSessionPage() {
         // Finalize session in Firestore
         if (user && db && params.id !== "demo-session") {
           const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
-          updateDoc(sessionRef, {
+          await updateDoc(sessionRef, {
             status: "completed",
             endTime: new Date().toISOString(),
             overallScore: Math.round(confidenceLevel * 0.7 + 30) 
@@ -336,6 +336,7 @@ export default function InterviewSessionPage() {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
+      console.error("Session turn processing error:", err);
       router.push(`/results/demo-results`);
     } finally {
       setProcessingTurn(false);
@@ -395,7 +396,7 @@ export default function InterviewSessionPage() {
             {sessionStorage.getItem('demo_role')} High-Stakes Audit
           </span>
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => router.push(`/results/${params.id}`)}>
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => router.push(`/dashboard`)}>
           <StopCircle className="w-4 h-4 mr-2" /> TERMINATE
         </Button>
       </div>
@@ -436,7 +437,7 @@ export default function InterviewSessionPage() {
           <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-hide">
             
             {isCodingTask && (
-              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-4">
+              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-4 animate-fade-in">
                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                        <Code2 className="w-4 h-4 text-primary" />

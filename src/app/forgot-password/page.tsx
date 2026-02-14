@@ -29,10 +29,10 @@ export default function ForgotPasswordPage() {
       setSent(true);
       toast({
         title: "Email Sent",
-        description: "A secure password reset link has been sent to your inbox.",
+        description: "A password reset link has been sent to your Gmail. Please check your Spam folder if you don't see it.",
       });
     } catch (error: any) {
-      console.error("Reset error:", error);
+      console.error("Reset Error:", error);
       let message = "Could not send reset email. Please check the address.";
       if (error.code === 'auth/user-not-found') {
         message = "No account found with this email address.";
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <p className="font-medium">Recovery instructions sent to your inbox.</p>
-                <p className="text-xs text-muted-foreground">Check your spam folder if you don't see it within 2 minutes.</p>
+                <p className="text-xs text-muted-foreground italic">If you don't see it within 2 minutes, please check your <b>Spam folder</b>.</p>
                 <Button className="w-full h-14 rounded-2xl font-black text-lg" asChild>
                   <Link href="/login">RETURN TO LOGIN</Link>
                 </Button>
