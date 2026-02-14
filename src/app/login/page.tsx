@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -8,9 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Mail, Lock, Loader2, AlertCircle, Play } from 'lucide-react';
-import { auth, isMockConfig } from '@/firebase/config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { ShieldCheck, Mail, Lock, Loader2, Play } from 'lucide-react';
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
@@ -19,13 +20,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isMockConfig) {
-      router.push('/dashboard');
-      return;
-    }
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -35,7 +33,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid email or password.",
+        description: error.message || "Invalid email or password.",
       });
     } finally {
       setLoading(false);
@@ -56,16 +54,6 @@ export default function LoginPage() {
           <p className="text-muted-foreground">Sign in to continue your preparation.</p>
         </div>
 
-        {isMockConfig && (
-          <Alert className="border-blue-500 bg-blue-50 text-blue-900">
-            <Play className="h-4 w-4 text-blue-600" />
-            <AlertTitle className="font-bold">Demo Mode Available</AlertTitle>
-            <AlertDescription className="text-xs">
-              Project is not connected to Firebase yet. You can click **"Enter Demo Dashboard"** to test the AI camera and voice features immediately.
-            </AlertDescription>
-          </Alert>
-        )}
-
         <Card className="border-none shadow-xl">
           <CardHeader>
             <CardTitle>Login</CardTitle>
@@ -84,7 +72,7 @@ export default function LoginPage() {
                     className="pl-10" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required={!isMockConfig}
+                    required
                   />
                 </div>
               </div>
@@ -101,12 +89,12 @@ export default function LoginPage() {
                     className="pl-10" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required={!isMockConfig}
+                    required
                   />
                 </div>
               </div>
               <Button className="w-full h-11" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (isMockConfig ? "Enter Demo Dashboard" : "Sign In")}
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
               </Button>
             </form>
           </CardContent>

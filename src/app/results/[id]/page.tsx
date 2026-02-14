@@ -21,7 +21,6 @@ import {
   Activity,
   Target,
   ArrowLeft,
-  Search,
   CheckCircle2,
   AlertCircle
 } from "lucide-react"
@@ -108,8 +107,8 @@ export default function ResultsPage() {
                </div>
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
                   {[
-                    { label: "Role Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
-                    { label: "Answer Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
+                    { label: "Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
+                    { label: "Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
                     { label: "Neural Confidence", val: report?.scores?.confidence, icon: Activity },
                     { label: "Communication", val: report?.scores?.communication, icon: MessageSquare },
                     { label: "Logical Flow", val: report?.scores?.logicalThinking, icon: Zap },
