@@ -21,7 +21,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Mic,
-  Eye
+  Eye,
+  Sparkles
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -57,7 +58,6 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // Use a ref to track the latest state within the speech callback to avoid closure staleness
   const stateRef = useRef({ 
     speaking, 
     listening, 
@@ -80,7 +80,6 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted])
 
-  // Media Setup
   useEffect(() => {
     async function setupMedia() {
       try {
@@ -102,7 +101,6 @@ export default function InterviewSessionPage() {
     }
     setupMedia();
 
-    // Setup Speech Recognition
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
@@ -111,9 +109,9 @@ export default function InterviewSessionPage() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
-        const { speaking: isSpeaking, listening: isListening, processingTurn: isProcessing, sessionStarted: isStarted } = stateRef.current;
+        const { speaking: isSpeaking, processingTurn: isProcessing, sessionStarted: isStarted } = stateRef.current;
         
-        if (!isStarted || isSpeaking || !isListening || isProcessing) return;
+        if (!isStarted || isSpeaking || isProcessing) return;
 
         let interimText = '';
         let currentFinalText = '';
@@ -131,7 +129,6 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
-        // Reset silence detection timer
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         
         silenceTimeoutRef.current = setTimeout(() => {
@@ -139,11 +136,12 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 5) {
             completeTurn();
           }
-        }, 3500); // 3.5 seconds of silence
+        }, 3500);
       };
 
       recognitionRef.current.onend = () => {
-        if (stateRef.current.sessionStarted && stateRef.current.listening && !stateRef.current.speaking && !stateRef.current.processingTurn) {
+        const { sessionStarted: isStarted, listening: isListening, speaking: isSpeaking, processingTurn: isProcessing } = stateRef.current;
+        if (isStarted && isListening && !isSpeaking && !isProcessing) {
           try { recognitionRef.current.start(); } catch(e) {}
         }
       };
@@ -156,14 +154,12 @@ export default function InterviewSessionPage() {
     };
   }, []);
 
-  // Ensure video stream is bound
   useEffect(() => {
     if (stream && videoRef.current) {
       videoRef.current.srcObject = stream;
     }
   }, [stream, sessionStarted]);
 
-  // Initial Data Fetch
   useEffect(() => {
     async function init() {
       const demoRole = sessionStorage.getItem('demo_role') || "Professional";
@@ -199,7 +195,6 @@ export default function InterviewSessionPage() {
     setListening(false)
     setFetchingAudio(true)
     
-    // Stop recognition while AI is talking
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch(e) {}
     }
@@ -287,7 +282,6 @@ export default function InterviewSessionPage() {
         setCurrentQuestion(feedback.nextQuestion);
         setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
         
-        // Reset local transcript
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
@@ -380,17 +374,15 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative bg-slate-950">
-        {/* Sarah AI View */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <div className="absolute inset-0">
              <img 
-               src={`https://picsum.photos/seed/sarah-ai-interviewer/1200/1200`} 
+               src={`https://picsum.photos/seed/sarah-ai-interviewer-v2/1200/1200`} 
                alt="Sarah AI" 
-               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-90 scale-105 saturate-150 blur-none' : 'opacity-40 grayscale blur-sm'}`}
+               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-150 blur-none' : 'opacity-60 grayscale-[0.2] blur-sm'}`}
              />
-             {/* Dynamic Speaking Aura */}
              {speaking && (
-               <div className="absolute inset-0 animate-pulse bg-primary/5 mix-blend-screen" />
+               <div className="absolute inset-0 animate-pulse bg-primary/10 mix-blend-screen" />
              )}
           </div>
           
@@ -400,11 +392,11 @@ export default function InterviewSessionPage() {
              {fetchingAudio && <Badge className="bg-blue-600 animate-pulse border-none px-6 py-2 rounded-full shadow-lg">SYNTHESIZING NEURAL VOICE...</Badge>}
              {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse border-none px-6 py-2 rounded-full shadow-lg flex items-center gap-2"><Volume2 className="w-4 h-4" /> SARAH IS SPEAKING</Badge>}
              {listening && <Badge className="bg-green-600 animate-bounce border-none px-6 py-2 rounded-full shadow-lg flex items-center gap-2"><Mic className="w-4 h-4" /> SARAH IS LISTENING</Badge>}
-             {processingTurn && <Badge className="bg-amber-600 animate-pulse border-none px-6 py-2 rounded-full shadow-lg">ANALYZING LINGUISTICS...</Badge>}
+             {processingTurn && <Badge className="bg-amber-600 animate-pulse border-none px-6 py-2 rounded-full shadow-lg">ANALYZING RESPONSE...</Badge>}
           </div>
 
           <div className="absolute bottom-10 inset-x-10 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/80 backdrop-blur-3xl border border-white/10 p-10 rounded-[3.5rem] shadow-2xl transition-all">
+            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-3xl border border-white/10 p-10 rounded-[3.5rem] shadow-2xl transition-all">
               <div className="flex items-start gap-8">
                 <div className={`p-6 rounded-[2.5rem] transition-all duration-500 ${speaking ? 'bg-primary shadow-[0_0_40px_rgba(59,130,246,0.6)]' : 'bg-slate-800'}`}>
                   <Volume2 className="w-10 h-10 text-white" />
@@ -420,7 +412,6 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* Biometric Analysis Sidebar */}
         <div className="w-[480px] bg-slate-950 border-l border-white/10 flex flex-col z-30">
           <div className="p-8 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
@@ -434,9 +425,9 @@ export default function InterviewSessionPage() {
                   autoPlay 
                   muted 
                   playsInline 
-                  className="w-full h-full object-cover grayscale contrast-125 saturate-0" 
+                  className="w-full h-full object-cover contrast-110 saturate-100" 
                 />
-                <div className="absolute inset-0 bg-primary/10 mix-blend-color" />
+                <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                 <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_20px_#3b82f6] animate-[scan_8s_linear_infinite]" />
                 <div className="absolute bottom-4 left-4 flex items-center gap-2">
                    <Badge className="bg-black/60 backdrop-blur-md border-white/10 text-[8px] font-mono tracking-tighter">LATENCY: 42MS</Badge>
@@ -465,7 +456,7 @@ export default function InterviewSessionPage() {
               </span>
               <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-8 h-64 overflow-y-auto scrollbar-hide flex flex-col justify-end">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-lg text-slate-300 italic leading-relaxed font-medium">
+                  <p className="text-lg text-slate-300 italic leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-2">
                     {transcript}
                     <span className="text-primary font-bold">{interimTranscript}</span>
                   </p>
@@ -488,7 +479,7 @@ export default function InterviewSessionPage() {
             ) : (
               <div className="w-full h-20 rounded-[2.5rem] bg-slate-800/50 flex items-center justify-center text-slate-500 font-bold gap-4">
                 <Loader2 className="animate-spin h-6 w-6" />
-                <span className="uppercase text-xs tracking-[0.4em] font-black">Sarah is Thinking...</span>
+                <span className="uppercase text-xs tracking-[0.4em] font-black">Sarah is Processing...</span>
               </div>
             )}
             <p className="text-[9px] text-center text-slate-600 mt-6 uppercase tracking-[0.2em] font-medium leading-relaxed">
