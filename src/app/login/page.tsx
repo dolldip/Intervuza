@@ -7,14 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { GraduationCap, Mail, Lock, Loader2, Phone, KeyRound, Sparkles } from 'lucide-react';
+import { GraduationCap, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { 
   signInWithEmailAndPassword, 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
-  ConfirmationResult,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
@@ -40,11 +36,7 @@ function AnimatedTitle({ text, className }: { text: string; className?: string }
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -90,53 +82,8 @@ export default function LoginPage() {
     }
   };
 
-  const setupRecaptcha = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {}
-      });
-    }
-  };
-
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber) return;
-    
-    setLoading(true);
-    setupRecaptcha();
-    const appVerifier = (window as any).recaptchaVerifier;
-    
-    try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      setConfirmationResult(confirmation);
-      setOtpSent(true);
-      toast({ title: "OTP Transmitted", description: "Verification code sent to your mobile device." });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "OTP Transmission Failed", description: "Verify phone format (e.g. +1...)." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp || !confirmationResult) return;
-    
-    setLoading(true);
-    try {
-      await confirmationResult.confirm(otp);
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Verification Failed", description: "Invalid code entered." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
-      <div id="recaptcha-container"></div>
       <div className="w-full max-w-md space-y-12 animate-fade-in relative z-10">
         <div className="text-center space-y-4">
           <Link className="inline-flex items-center space-x-3 group" href="/">
@@ -156,7 +103,7 @@ export default function LoginPage() {
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
             <CardTitle className="font-headline text-3xl font-black">Sign In</CardTitle>
-            <CardDescription className="text-lg">Select your preferred authentication layer.</CardDescription>
+            <CardDescription className="text-lg">Access your PrepWise professional audit.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
             <Button 
@@ -176,70 +123,31 @@ export default function LoginPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-slate-900 px-4 text-slate-500">Neural Gateway</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-slate-900 px-4 text-slate-500">Email Gateway</span></div>
             </div>
 
-            <Tabs defaultValue="email" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-10 h-14 rounded-2xl glass p-1 border-white/5">
-                <TabsTrigger value="email" className="rounded-xl font-black text-xs uppercase tracking-widest data-[state=active]:bg-primary transition-all">Email</TabsTrigger>
-                <TabsTrigger value="phone" className="rounded-xl font-black text-xs uppercase tracking-widest data-[state=active]:bg-primary transition-all">OTP</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="email" className="outline-none space-y-6">
-                <form onSubmit={handleEmailLogin} className="space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="email" className="font-black text-xs uppercase tracking-widest text-slate-500">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                      <Input id="email" type="email" placeholder="alex@intelligence.com" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center px-1">
-                      <Label htmlFor="password" className="font-black text-xs uppercase tracking-widest text-slate-500">Secure Password</Label>
-                      <Link href="/forgot-password" disabled={loading} className="text-primary font-black uppercase tracking-widest text-[9px] hover:underline">Reset Recovery</Link>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                      <Input id="password" type="password" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                    </div>
-                  </div>
-                  <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95" type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "AUTHENTICATE"}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="phone" className="outline-none space-y-6">
-                {!otpSent ? (
-                  <form onSubmit={handleSendOTP} className="space-y-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="phone" className="font-black text-xs uppercase tracking-widest text-slate-500">Phone Verification</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                        <Input id="phone" type="tel" placeholder="+1234567890" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
-                      </div>
-                    </div>
-                    <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02]" type="submit" disabled={loading}>
-                      {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "SEND OTP CODE"}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOTP} className="space-y-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="otp" className="font-black text-xs uppercase tracking-widest text-slate-500">Neural Verification Code</Label>
-                      <div className="relative">
-                        <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                        <Input id="otp" type="text" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 text-center tracking-[0.8em] font-black text-2xl" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                      </div>
-                    </div>
-                    <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl bg-green-600 hover:bg-green-700 shadow-2xl shadow-green-500/20" type="submit" disabled={loading}>
-                      {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "VERIFY & LOGIN"}
-                    </Button>
-                  </form>
-                )}
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={handleEmailLogin} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="email" className="font-black text-xs uppercase tracking-widest text-slate-500">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <Input id="email" type="email" placeholder="alex@prepwise.com" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center px-1">
+                  <Label htmlFor="password" className="font-black text-xs uppercase tracking-widest text-slate-500">Secure Password</Label>
+                  <Link href="/forgot-password" disabled={loading} className="text-primary font-black uppercase tracking-widest text-[9px] hover:underline">Reset Recovery</Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <Input id="password" type="password" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                </div>
+              </div>
+              <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95" type="submit" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "AUTHENTICATE"}
+              </Button>
+            </form>
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
