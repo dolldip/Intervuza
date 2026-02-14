@@ -7,13 +7,11 @@ import { useAuth, useFirestore, useUser } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { 
   StopCircle, 
   Volume2, 
   Loader2, 
   Activity, 
-  User, 
   Target, 
   Play, 
   CheckCircle2,
@@ -23,13 +21,10 @@ import {
   Sparkles,
   Zap,
   Terminal,
-  AlertCircle,
-  HelpCircle,
-  VideoOff,
-  Code2,
-  ChevronRight,
+  X,
   TrendingUp,
-  X
+  ChevronRight,
+  Lightbulb
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -69,11 +64,6 @@ export default function InterviewSessionPage() {
   const [turnFeedback, setTurnFeedback] = useState<any>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   
-  // Coding State
-  const [canCode, setCanCode] = useState(false)
-  const [showCodingPad, setShowCodingPad] = useState(false)
-  const [code, setCode] = useState("// Aria is waiting for your logic here...\n\nfunction solution() {\n  \n}")
-  
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
 
@@ -81,7 +71,6 @@ export default function InterviewSessionPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const stuckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   const historyRef = useRef<string[]>([])
 
@@ -153,14 +142,14 @@ export default function InterviewSessionPage() {
           transcriptAccumulatorRef.current += currentFinalText + ' ';
           setTranscript(transcriptAccumulatorRef.current);
           setIsStuck(false);
-          if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         }
         setInterimTranscript(interimText);
 
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 30) completeTurn(false);
+          if (combinedText.length > 5) completeTurn(false);
+          else if (combinedText.length === 0) setIsStuck(true);
         }, 12000); 
       };
 
@@ -185,13 +174,12 @@ export default function InterviewSessionPage() {
       const demoJd = sessionStorage.getItem('demo_jd') || "";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       const demoResume = sessionStorage.getItem('demo_resume') || "";
-      const analysisSkills = JSON.parse(sessionStorage.getItem('analysis_skills') || '["Logic", "Communication"]');
 
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: analysisSkills,
+          skills: [],
           jobDescriptionText: demoJd,
           resumeText: demoResume,
           roundType: demoRound,
@@ -282,7 +270,7 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || "No verbal response" });
+    currentAnswers.push({ question, answer: fullAnswer || "Silence." });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
@@ -294,7 +282,7 @@ export default function InterviewSessionPage() {
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
         previousQuestions: historyRef.current,
-        isStuck: forcedStuck
+        isStuck: forcedStuck || isStuck
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
@@ -327,6 +315,7 @@ export default function InterviewSessionPage() {
       terminateSession();
     } finally {
       setProcessingTurn(false);
+      setIsStuck(false);
     }
   };
 
@@ -351,13 +340,13 @@ export default function InterviewSessionPage() {
           </div>
           <div className="space-y-4">
             <Badge variant="secondary" className="glass px-6 py-2 rounded-full font-black text-primary gap-2 uppercase tracking-widest text-[10px]">
-              <TrendingUp className="w-3 h-3" /> {roleCategory} Audit Sector
+              <TrendingUp className="w-3 h-3" /> {roleCategory} Assessment Sector
             </Badge>
             <h1 className="text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
-            <p className="text-slate-500 text-lg">Aria will monitor your biometrics and industry logic during this session.</p>
+            <p className="text-slate-500 text-lg">Aria is ready to begin your professional audit. Her questions will be role-specific and interactive.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" onClick={startSession}>
-            BEGIN ASSESSMENT
+            START INTERVIEW
             <Play className="ml-4 w-6 h-6 fill-current" />
           </Button>
         </div>
@@ -378,7 +367,7 @@ export default function InterviewSessionPage() {
             TURN {turnCount + 1} / 6
           </Badge>
           <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]">
-            {roleCategory} Assessment
+            {roleCategory} Mode
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -390,7 +379,7 @@ export default function InterviewSessionPage() {
             disabled={terminating}
           >
             {terminating ? <Loader2 className="animate-spin w-5 h-5 mr-3" /> : <StopCircle className="w-5 h-5 mr-3" />} 
-            TERMINATE & AUDIT
+            FINISH AUDIT
           </Button>
         </div>
       </div>
@@ -408,33 +397,34 @@ export default function InterviewSessionPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
           
           <div className="absolute top-10 left-10 z-20 flex flex-col gap-4">
-             {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Processing Brain...</Badge>}
+             {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Aria Reasoning...</Badge>}
              {speaking && !fetchingAudio && <Badge className="glass bg-primary/20 text-primary animate-pulse px-6 py-2.5 rounded-full flex gap-3 text-[10px] font-black uppercase tracking-[0.2em]"><Volume2 className="w-4 h-4" /> Aria Speaking</Badge>}
-             {listening && <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-6 py-2.5 rounded-full flex gap-3 text-[10px] font-black uppercase tracking-[0.2em]"><Mic className="w-4 h-4" /> Detecting Input</Badge>}
+             {listening && <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-6 py-2.5 rounded-full flex gap-3 text-[10px] font-black uppercase tracking-[0.2em]"><Mic className="w-4 h-4" /> Listening...</Badge>}
+             {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 px-6 py-2.5 rounded-full flex gap-3 text-[10px] font-black uppercase tracking-[0.2em]"><Lightbulb className="w-4 h-4" /> Detecting Hesitation...</Badge>}
           </div>
 
           <div className="absolute bottom-16 inset-x-16 z-20 animate-fade-in">
             <div className="max-w-5xl mx-auto glass-dark border-white/10 p-14 rounded-[3.5rem] shadow-2xl relative">
               {showFeedback && turnFeedback && (
                 <div className="absolute -top-64 left-0 right-0 animate-fade-in z-30">
-                  <div className="glass bg-slate-900 border-primary/20 p-8 rounded-[2.5rem] shadow-2xl flex flex-col gap-4">
+                  <div className="glass bg-slate-900/90 backdrop-blur-3xl border-primary/20 p-8 rounded-[2.5rem] shadow-2xl flex flex-col gap-4 max-w-2xl mx-auto">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" /> Immediate Turn Feedback
+                        <Sparkles className="w-4 h-4" /> Professional Turn Feedback
                       </span>
                       <button onClick={() => setShowFeedback(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <p className="text-[9px] font-black text-green-400 uppercase tracking-widest">Strengths</p>
+                        <p className="text-[9px] font-black text-green-400 uppercase tracking-widest">Strength</p>
                         <p className="text-xs text-slate-300 italic">{turnFeedback.strengths[0]}</p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Growth Needed</p>
+                        <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Weakness</p>
                         <p className="text-xs text-slate-300 italic">{turnFeedback.weaknesses[0]}</p>
                       </div>
                     </div>
-                    <div className="pt-2 border-t border-white/5">
+                    <div className="pt-2 border-t border-white/10">
                       <p className="text-[9px] font-black text-primary uppercase tracking-widest">Strategy Tip</p>
                       <p className="text-xs text-slate-400">{turnFeedback.tips}</p>
                     </div>
@@ -442,7 +432,7 @@ export default function InterviewSessionPage() {
                 </div>
               )}
               <h3 className="text-4xl font-headline font-black leading-tight text-white tracking-tight">
-                {currentQuestion || "Calibrating turn..."}
+                {currentQuestion || "Calibrating logic..."}
               </h3>
             </div>
           </div>
@@ -451,7 +441,7 @@ export default function InterviewSessionPage() {
         <div className="w-[480px] glass-dark border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden">
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-6">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Stream</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
               <div className="aspect-video glass bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner">
                 <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
                 <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
@@ -466,7 +456,7 @@ export default function InterviewSessionPage() {
               </div>
               <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group">
                 <Target className="w-5 h-5 text-primary mb-3 mx-auto" />
-                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Eye Focus</p>
+                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Focus</p>
                 <p className="text-3xl font-black mt-2">{Math.round(eyeFocus)}%</p>
               </div>
             </div>
@@ -485,7 +475,7 @@ export default function InterviewSessionPage() {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
                     <Mic className="w-10 h-10 opacity-20" />
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-black">Awaiting Answer</p>
+                    <p className="text-[10px] uppercase tracking-[0.3em] font-black">Awaiting Response</p>
                   </div>
                 )}
               </div>
@@ -501,7 +491,7 @@ export default function InterviewSessionPage() {
             ) : (
               <div className="w-full h-20 rounded-[2rem] glass bg-slate-800/40 flex items-center justify-center text-slate-400 font-black gap-4 border border-white/5">
                 <Loader2 className="animate-spin h-6 w-6 text-primary" />
-                <span className="text-[11px] uppercase tracking-[0.3em]">Neural Analysis...</span>
+                <span className="text-[11px] uppercase tracking-[0.3em]">Neural Feedback...</span>
               </div>
             )}
           </div>

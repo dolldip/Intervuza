@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Updated: Deep Industry Reasoning. Aria now understands the specific culture of the role.
+ * Updated: Deep Industry Reasoning and Role Categorization.
  */
 
 import { ai } from '@/ai/genkit';
@@ -21,7 +21,7 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
   openingStatement: z.string().describe('Aria\'s professional human-like greeting.'),
   firstQuestion: z.string().describe('The very first question to start the interview.'),
-  roleCategory: z.enum(['BTech Technical', 'BTech HR', 'Teacher', 'Management', 'Other']).describe('The category of the role detected.'),
+  roleCategory: z.enum(['BTech Technical', 'BTech HR', 'Teacher', 'Doctor', 'Management', 'Other']).describe('The category of the role detected.'),
 });
 
 const prompt = ai.definePrompt({
@@ -35,10 +35,11 @@ STEP 1: Identify the role category from the following:
 - BTech Technical (focus on coding, logic, architecture, systems)
 - BTech HR (focus on recruitment, employee handling, soft skills)
 - Teacher (focus on pedagogy, subject depth, classroom management)
+- Doctor (focus on patient diagnosis, ethics, medical scenarios)
 - Management (focus on strategy, P&L, resource allocation)
 - Other (specific to the job role provided)
 
-STEP 2: Generate a first question based on REAL interview experiences from top firms (FAANG, Big 4, Ivy League institutions).
+STEP 2: Generate a first question based on REAL interview experiences from top-tier firms (FAANG, Big 4, Ivy League, Major Hospitals).
 
 Context:
 - Role: {{{jobRole}}}
@@ -48,7 +49,7 @@ Context:
 
 RULES:
 1. BE HUMAN: Use contractions ("I'm", "We've"). Be warm but critically professional.
-2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario or a project found in the resume.
+2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario, a project, or a case study relevant to the role.
 3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category.`,
 });
 

@@ -2,6 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
+ * Updated: Human-like reactions and strictly honest professional feedback.
  */
 
 import {ai} from '@/ai/genkit';
@@ -19,16 +20,15 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction/acknowledgment.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC.'),
+  nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC OR DEEP DRILL.'),
   feedback: z.object({
     strengths: z.array(z.string()),
     weaknesses: z.array(z.string()),
     tips: z.string()
   }),
   isInterviewComplete: z.boolean(),
-  requestCodingTask: z.boolean().optional(),
 });
 
 const prompt = ai.definePrompt({
@@ -40,19 +40,20 @@ The candidate answered: "{{{userAnswer}}}" to your question: "{{{interviewQuesti
 
 STRICT INTERVIEWER RULES:
 1. HUMAN FEEDBACK: Before the next question, you must analyze the answer.
-   - Strengths: What did they do well? (Clarity, technical depth, logic)
-   - Weaknesses: What was missing? (Vague details, lack of STAR method, poor technical grounding)
-   - Tip: One specific piece of advice for the next answer.
+   - Strengths: What did they do well? (Clarity, technical depth, logic, STAR method)
+   - Weaknesses: What was missing? (Vague details, lack of evidence, poor structural clarity)
+   - Tip: One specific piece of advice for the next turn.
 
-2. BUILD THE CONVERSATION: The next question must flow logically from their answer or pivot to a NEW high-stakes topic. NEVER repeat a topic or question.
-   Previous topics:
-   {{#each previousQuestions}}- {{{this}}}
-   {{/each}}
+2. BUILD THE CONVERSATION:
+   - Acknowledge their answer naturally ("I see your point about...", "Interesting perspective on...").
+   - The next question must flow logically or pivot to a NEW high-stakes topic. NEVER repeat a topic or question.
+   - If the candidate was 'stuck' (isStuck=true), acknowledge it politely and offer a nudge before moving to the next question.
 
 3. ROLE SENSITIVITY:
-   - If it's BTech Technical: Focus on the "How" and trade-offs.
-   - If it's Teacher: Focus on student outcomes and pedagogy.
-   - If it's BTech HR: Focus on situational judgment.
+   - If it's BTech Technical: Focus on trade-offs and "How".
+   - If it's Teacher: Focus on student outcomes and classroom scenarios.
+   - If it's Doctor: Focus on diagnosis logic and ethics.
+   - If it's HR: Focus on situational judgment.
 
 4. VOICE: Use contractions. Be empathetic but honest. If an answer was weak, express polite concern.`
 });
@@ -61,12 +62,6 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
   try {
     const {output} = await prompt(input);
     if (!output) throw new Error("Aria failed to respond.");
-    
-    // Safety check for coding pad
-    const techKeywords = ['dev', 'engineer', 'code', 'data', 'program', 'soft', 'logic', 'system'];
-    const isTechRole = techKeywords.some(k => input.jobRole.toLowerCase().includes(k));
-    if (!isTechRole) output.requestCodingTask = false;
-
     return output;
   } catch (error) {
     return {
@@ -74,12 +69,11 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       detectedEmotion: "Neutral",
       nextQuestion: "How do you typically handle conflicting priorities in a high-stakes environment?",
       feedback: {
-        strengths: ["Answer was direct"],
-        weaknesses: ["Could use more specific metrics or results"],
-        tips: "Try using the STAR method (Situation, Task, Action, Result) for behavioral answers."
+        strengths: ["Direct response"],
+        weaknesses: ["Could use more specific metrics"],
+        tips: "Try using the STAR method for behavioral answers."
       },
-      isInterviewComplete: false,
-      requestCodingTask: false
+      isInterviewComplete: false
     };
   }
 }
