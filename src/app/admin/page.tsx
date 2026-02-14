@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo } from "react"
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
           <CardHeader className="p-8 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="font-headline text-2xl">Recent Users</CardTitle>
-              <CardDescription>Latest enrollments in the AssessAI network.</CardDescription>
+              <CardDescription>Latest enrollments in the PrepWise network.</CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild className="font-bold text-primary">
               <Link href="/admin/users">View All</Link>

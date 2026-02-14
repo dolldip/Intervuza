@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -72,7 +73,7 @@ export default function Home() {
                   <span className="text-primary"><AnimatedTitle text="Interviews" /></span>
                 </h1>
                 <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:800ms]">
-                  The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
+                  Master high-stakes interviews with PrepWise. The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mt-12 animate-entrance [animation-delay:1000ms]">
@@ -157,7 +158,7 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-10 text-center">
               <h2 className="text-4xl font-headline font-black tracking-tighter sm:text-7xl text-white animate-sudden">Elevate Your Presence.</h2>
               <p className="max-w-[700px] text-white/80 text-xl md:text-2xl font-medium animate-sudden [animation-delay:200ms]">
-                Join 50k+ candidates who have transformed their interview performance with Aria's professional audit.
+                Join 50k+ candidates who have transformed their interview performance with PrepWise.
               </p>
               <Button size="lg" variant="secondary" className="h-18 px-12 text-2xl rounded-2xl font-black bg-white text-primary hover:scale-105 transition-transform shadow-2xl animate-sudden [animation-delay:400ms]" asChild>
                 <Link href="/register">Get Started Now</Link>
