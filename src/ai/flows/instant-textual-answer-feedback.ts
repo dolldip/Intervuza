@@ -2,6 +2,7 @@
 'use server';
 /**
  * @fileOverview Sarah's adaptive intelligence and corrective coaching engine.
+ * Fixed: Explicitly handles grammar, focus, and repetition avoidance.
  */
 
 import {ai} from '@/ai/genkit';
@@ -17,9 +18,9 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like reaction. Include critical coaching if grammar, focus, or technical depth was poor.'),
+  verbalReaction: z.string().describe('Immediate human-like reaction. MUST acknowledge the specific words said and provide corrective coaching if grammar, focus, or logic was poor.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. Must be UNIQUE and different from previous topics.'),
+  nextQuestion: z.string().describe('The single next question. MUST be UNIQUE and more challenging based on previous answer quality.'),
   isInterviewComplete: z.boolean().describe('Set to true after ~5-8 quality turns.'),
 });
 
@@ -27,22 +28,22 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Sarah, a professional and critical AI interviewer.
+  prompt: `You are Sarah, a professional, human-like, and critical AI interviewer.
 The candidate said: "{{{userAnswer}}}"
 In response to: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
-STRICT RULES:
-1. USE YOUR BRAIN: Analyze the candidate's actual words. Don't be a generic bot.
-2. CORRECTIVE FEEDBACK: If the answer was weak, rambled, had grammar errors, or used too many fillers, call it out politely in your reaction (e.g., "I appreciate the enthusiasm, but try to be more concise with your technical logic.").
-3. ADAPTIVE CHALLENGE: If they answered well, ask a deeper follow-up. If they struggled, pivot to a new skill but provide a supportive bridge.
-4. NO REPETITION: Do NOT ask these previous questions again:
+STRICT RULES FOR YOUR BRAIN:
+1. BE CRITICAL: If the candidate ramble, makes grammar mistakes, or avoids the technical point, point it out politely but firmly in your reaction (e.g., "I appreciate the enthusiasm, but try to focus more on the specific architecture rather than generalities.").
+2. ACKNOWLEDGE SPECIFICALLY: Don't use generic "I see" or "Good job". Acknowledge exactly what they said.
+3. ADAPTIVE DIFFICULTY: If they answered well, ask a much harder follow-up. If they struggled, provide a supportive bridge and pivot to a related but different skill.
+4. NO REPETITION: Do NOT ask these previous questions or topics again:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-5. Ask EXACTLY ONE next question.
-6. If 5-8 topics have been covered, set isInterviewComplete to true.`
+5. ONE QUESTION: Ask exactly ONE next question.
+6. HUMAN TONE: Use natural professional language, including appropriate pauses (represented by punctuation).`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -51,9 +52,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I see. Moving on, could you tell me how you handle complex problems under pressure?",
+      verbalReaction: "That's an interesting perspective, though I'd like to see more structure in your logic.",
       detectedEmotion: "Neutral",
-      nextQuestion: "How do you approach learning new technologies or frameworks relevant to this role?",
+      nextQuestion: "Moving on, how do you handle technical debt while meeting tight project deadlines?",
       isInterviewComplete: false
     };
   }
