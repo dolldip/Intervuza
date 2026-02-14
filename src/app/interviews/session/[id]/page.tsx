@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -102,16 +103,15 @@ export default function InterviewSessionPage() {
       setConfidenceLevel(prev => {
         let change = (Math.random() * 2) - 1; 
         if (isListening) {
-          if (currentText.length < 5) change -= 2; 
-          if (currentText.length > 50) change += 1.5; 
-          if (currentText.toLowerCase().includes('um') || currentText.toLowerCase().includes('uh')) change -= 3;
+          if (currentText.length < 5) change -= 1.5; 
+          if (currentText.length > 50) change += 1; 
         }
         return Math.min(100, Math.max(0, prev + change));
       });
 
       setEyeFocus(prev => {
         let change = (Math.random() * 2) - 1;
-        if (Math.random() > 0.99) change = -20;
+        if (Math.random() > 0.98) change = -15;
         return Math.min(100, Math.max(0, prev + change));
       });
     }, 1000);
@@ -131,12 +131,12 @@ export default function InterviewSessionPage() {
           userVideoRef.current.srcObject = mediaStream;
         }
       } catch (error) {
-        console.error('Error accessing camera:', error);
+        console.error('Camera access error:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions to use the biometric features.',
+          title: 'Permission Required',
+          description: 'Aria needs camera access to monitor biometric confidence.',
         });
       }
     };
@@ -178,7 +178,7 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 20) {
              completeTurn(false);
           }
-        }, 6000); 
+        }, 5000); 
 
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
@@ -214,12 +214,12 @@ export default function InterviewSessionPage() {
 
   useEffect(() => {
     async function init() {
-      const demoRole = sessionStorage.getItem('demo_role') || "Professional";
+      const demoRole = sessionStorage.getItem('demo_role') || "Professional Candidate";
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
-      const demoJd = sessionStorage.getItem('demo_jd') || "Professional Job Description";
+      const demoJd = sessionStorage.getItem('demo_jd') || "Professional assessment session.";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       const demoResume = sessionStorage.getItem('demo_resume') || "";
-      const analysisSkills = JSON.parse(sessionStorage.getItem('analysis_skills') || '["Logic", "Domain Expertise", "Communication"]');
+      const analysisSkills = JSON.parse(sessionStorage.getItem('analysis_skills') || '["Logic", "Communication", "Technical Depth"]');
 
       try {
         const result = await generateInterviewQuestions({
@@ -235,8 +235,8 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        setOpening("Hi, I'm Aria. It's truly a pleasure to meet you today.")
-        const fb = "To get us started, could you walk me through your journey and what sparked your interest in this role?";
+        setOpening("Hi, I'm Aria. It's a pleasure to meet you.")
+        const fb = "To get us started, could you walk me through a complex challenge you solved recently?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
         sessionStorage.setItem('session_answers', '[]');
@@ -298,25 +298,15 @@ export default function InterviewSessionPage() {
 
   const terminateSession = async () => {
     setTerminating(true);
-    const answers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    
     if (user && db && params.id !== "demo-session") {
       const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
       await updateDoc(sessionRef, {
         status: "completed",
         endTime: new Date().toISOString(),
-        overallScore: Math.round(confidenceLevel * 0.7 + 30)
+        overallScore: Math.round(confidenceLevel * 0.7 + 25)
       });
     }
-    
-    toast({
-      title: "Session Terminated",
-      description: "Generating your performance audit based on progress so far."
-    });
-    
-    setTimeout(() => {
-      router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
-    }, 1500);
+    router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
   };
 
   const completeTurn = async (forcedStuck: boolean = false) => {
@@ -329,18 +319,18 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || (forcedStuck ? "Struggled to answer." : "Silence.") });
+    currentAnswers.push({ question, answer: fullAnswer || (forcedStuck ? "Silence/Struggling" : "No answer provided") });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
-        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm find this a bit difficult to articulate right now." : "No verbal input."),
-        jobRole: sessionStorage.getItem('demo_role') || "Professional",
-        experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
+        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm find this a bit difficult to articulate right now." : "Silence."),
+        jobRole: sessionStorage.getItem('demo_role') || "Candidate",
+        experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         previousQuestions: history,
-        isStuck: forcedStuck || fullAnswer.length < 10
+        isStuck: forcedStuck || fullAnswer.length < 8
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
@@ -358,23 +348,13 @@ export default function InterviewSessionPage() {
         setIsStuck(false);
         
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
-        // Add a "thinking" pause simulation
         setTimeout(() => {
           triggerSpeech(finalPrompt);
-        }, 1200);
+        }, 800);
       } else {
-        if (user && db && params.id !== "demo-session") {
-          const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
-          await updateDoc(sessionRef, {
-            status: "completed",
-            endTime: new Date().toISOString(),
-            overallScore: Math.round(confidenceLevel * 0.7 + 30) 
-          });
-        }
-        router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
+        terminateSession();
       }
     } catch (err) {
-      console.error("Session turn error:", err);
       router.push(`/results/demo-results`);
     } finally {
       setProcessingTurn(false);
@@ -386,8 +366,8 @@ export default function InterviewSessionPage() {
   if (initializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
-        <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-8" />
-        <h2 className="text-2xl font-headline font-bold uppercase tracking-widest text-primary text-center px-6">Neural Synchronization...</h2>
+        <BrainCircuit className="w-16 h-16 text-primary animate-pulse mb-6" />
+        <h2 className="text-xl font-headline font-bold uppercase tracking-widest text-primary">Neural Sync...</h2>
       </div>
     )
   }
@@ -396,7 +376,7 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <div className="max-w-xl w-full text-center space-y-10">
-          <div className="w-72 h-72 bg-slate-900 rounded-[3.5rem] flex items-center justify-center border-4 border-primary/20 mx-auto overflow-hidden relative shadow-2xl group">
+          <div className="w-64 h-64 bg-slate-900 rounded-[3rem] flex items-center justify-center border-4 border-primary/20 mx-auto overflow-hidden relative shadow-2xl group">
             <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
             {!hasCameraPermission && (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
@@ -406,18 +386,18 @@ export default function InterviewSessionPage() {
             <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-all" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl font-headline font-bold uppercase tracking-tighter">Aria Assessment</h1>
-            <p className="text-slate-400 text-lg">Aria is ready to evaluate your technical logic and professional engagement.</p>
+            <h1 className="text-4xl font-headline font-bold uppercase tracking-tighter">Aria Performance Audit</h1>
+            <p className="text-slate-400">Aria is ready to evaluate your background and technical logic.</p>
           </div>
-          <Button className="w-full h-20 rounded-[2.5rem] bg-primary text-2xl font-black shadow-lg hover:scale-[1.03] transition-all shadow-primary/30" onClick={startSession}>
-            BEGIN ASSESSMENT
-            <Play className="ml-4 w-6 h-6 fill-current" />
+          <Button className="w-full h-18 rounded-[2rem] bg-primary text-xl font-black shadow-lg hover:scale-[1.03] transition-all shadow-primary/30" onClick={startSession}>
+            START ASSESSMENT
+            <Play className="ml-3 w-5 h-5 fill-current" />
           </Button>
           {!hasCameraPermission && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30 rounded-2xl">
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30 rounded-xl">
               <AlertCircle className="h-5 w-5" />
-              <AlertTitle>Camera Required</AlertTitle>
-              <AlertDescription>Please enable camera access to start the session.</AlertDescription>
+              <AlertTitle>Camera Disabled</AlertTitle>
+              <AlertDescription>Enable camera for biometric focus tracking.</AlertDescription>
             </Alert>
           )}
         </div>
@@ -426,26 +406,26 @@ export default function InterviewSessionPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-body">
-      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50 shrink-0">
-        <div className="flex items-center gap-6">
-          <ShieldCheck className="text-primary w-6 h-6" />
-          <Badge variant="outline" className="text-[10px] border-white/10 text-slate-500 py-1 px-4 rounded-full font-bold">
-            TURN {turnCount + 1} / 6
+    <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-body select-none">
+      <div className="h-16 border-b border-white/5 bg-slate-950 px-6 flex items-center justify-between z-50 shrink-0">
+        <div className="flex items-center gap-4">
+          <ShieldCheck className="text-primary w-5 h-5" />
+          <Badge variant="outline" className="text-[10px] border-white/10 text-slate-500 py-1 px-3 rounded-full font-bold">
+            PROGRESS: {turnCount + 1} / 6
           </Badge>
-          <span className="text-sm font-black text-slate-400 uppercase tracking-widest hidden sm:block">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:block">
             {sessionStorage.getItem('demo_role')} ASSESSMENT
           </span>
         </div>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="text-slate-500 hover:text-red-500 font-bold" 
+          className="text-slate-500 hover:text-red-500 font-bold h-9 rounded-xl" 
           onClick={terminateSession}
           disabled={terminating}
         >
           {terminating ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <StopCircle className="w-4 h-4 mr-2" />} 
-          TERMINATE & AUDIT
+          END & AUDIT
         </Button>
       </div>
 
@@ -455,93 +435,92 @@ export default function InterviewSessionPage() {
              <img 
                src={ariaImage} 
                alt="Aria" 
-               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-125' : 'opacity-70 grayscale-[30%]'}`}
-               data-ai-hint="professional corporate recruiter"
+               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105' : 'opacity-60 grayscale-[20%]'}`}
+               data-ai-hint="professional human persona"
              />
-             {speaking && <div className="absolute inset-0 bg-primary/10 animate-pulse-slow pointer-events-none" />}
+             {speaking && <div className="absolute inset-0 bg-primary/5 animate-pulse-slow pointer-events-none" />}
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
           
-          <div className="absolute top-10 left-10 z-20 flex flex-col gap-4">
-             {fetchingAudio && <Badge className="bg-blue-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full shadow-2xl text-xs font-black uppercase tracking-widest">Aria is reasoning...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><Volume2 className="w-4 h-4" /> Aria is speaking</Badge>}
-             {listening && !isStuck && <Badge className="bg-green-600/90 backdrop-blur-md animate-bounce px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><Mic className="w-4 h-4" /> Listening</Badge>}
-             {isStuck && <Badge className="bg-amber-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><HelpCircle className="w-4 h-4" /> Detection: Stuck</Badge>}
+          <div className="absolute top-8 left-8 z-20 flex flex-col gap-3">
+             {fetchingAudio && <Badge className="bg-blue-600/80 backdrop-blur-md animate-pulse px-4 py-1.5 rounded-full shadow-2xl text-[10px] font-black uppercase tracking-widest">Reasoning...</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary/80 backdrop-blur-md animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-2xl text-[10px] font-black uppercase tracking-widest"><Volume2 className="w-3 h-3" /> Aria Speaking</Badge>}
+             {listening && !isStuck && <Badge className="bg-green-600/80 backdrop-blur-md animate-bounce px-4 py-1.5 rounded-full flex gap-2 shadow-2xl text-[10px] font-black uppercase tracking-widest"><Mic className="w-3 h-3" /> Listening</Badge>}
+             {isStuck && <Badge className="bg-amber-600/80 backdrop-blur-md animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-2xl text-[10px] font-black uppercase tracking-widest"><HelpCircle className="w-3 h-3" /> Detection: Stuck</Badge>}
           </div>
 
-          <div className="absolute bottom-12 inset-x-6 sm:inset-x-12 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-3xl border border-white/10 p-6 sm:p-10 rounded-[3rem] shadow-2xl animate-fade-in">
-              <h3 className="text-xl md:text-3xl font-headline font-bold leading-tight text-white tracking-tight">
-                {currentQuestion || "Diving into the next phase..."}
+          <div className="absolute bottom-10 inset-x-6 sm:inset-x-12 z-20 animate-fade-in">
+            <div className="max-w-4xl mx-auto bg-slate-950/80 backdrop-blur-3xl border border-white/5 p-6 sm:p-8 rounded-[2.5rem] shadow-2xl">
+              <h3 className="text-lg md:text-2xl font-headline font-bold leading-tight text-white tracking-tight">
+                {currentQuestion || "Calibrating next turn..."}
               </h3>
             </div>
           </div>
         </div>
 
-        <div className="hidden lg:flex w-[480px] bg-slate-950 border-l border-white/10 flex-col z-30 shadow-2xl overflow-hidden">
-          <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
+        <div className="hidden lg:flex w-[420px] bg-slate-950 border-l border-white/5 flex-col z-30 shadow-2xl overflow-hidden">
+          <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-hide">
             
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block text-center">Neural Biometric Feed</span>
-              <div className="aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative group shadow-2xl">
+              <div className="aspect-video bg-slate-900 rounded-[2rem] overflow-hidden border border-white/5 relative group shadow-inner">
                 <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                 {!hasCameraPermission && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 gap-4">
-                    <VideoOff className="w-12 h-12 text-slate-700" />
-                    <p className="text-[10px] uppercase font-black text-slate-700">Webcam Not Found</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 gap-3">
+                    <VideoOff className="w-8 h-8 text-slate-700" />
+                    <p className="text-[10px] uppercase font-black text-slate-800 tracking-widest">Feed Disabled</p>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
-                <div className="absolute inset-x-0 h-[3px] bg-primary/60 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
+                <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_15px_rgba(var(--primary),0.6)] animate-[scan_6s_linear_infinite]" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="p-8 bg-white/5 border border-white/5 rounded-[2rem] text-center relative overflow-hidden group shadow-inner">
-                <Activity className="w-5 h-5 text-primary mb-3 mx-auto" />
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
-                <p className="text-3xl font-black mt-1">{Math.round(confidenceLevel)}%</p>
-                <div className="absolute bottom-0 left-0 h-1.5 bg-primary transition-all duration-1000 shadow-lg" style={{ width: `${confidenceLevel}%` }} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl text-center relative overflow-hidden group shadow-inner">
+                <Activity className="w-4 h-4 text-primary mb-2 mx-auto" />
+                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
+                <p className="text-2xl font-black mt-1">{Math.round(confidenceLevel)}%</p>
+                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-lg" style={{ width: `${confidenceLevel}%` }} />
               </div>
-              <div className="p-8 bg-white/5 border border-white/5 rounded-[2rem] text-center relative overflow-hidden group shadow-inner">
-                <Target className="w-5 h-5 text-primary mb-3 mx-auto" />
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Eye Focus</p>
-                <p className="text-3xl font-black mt-1">{Math.round(eyeFocus)}%</p>
-                <div className="absolute bottom-0 left-0 h-1.5 bg-primary transition-all duration-1000 shadow-lg" style={{ width: `${eyeFocus}%` }} />
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl text-center relative overflow-hidden group shadow-inner">
+                <Target className="w-4 h-4 text-primary mb-2 mx-auto" />
+                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Focus</p>
+                <p className="text-2xl font-black mt-1">{Math.round(eyeFocus)}%</p>
+                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-lg" style={{ width: `${eyeFocus}%` }} />
               </div>
             </div>
 
             <div className="space-y-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-3">
-                <Terminal className={`w-4 h-4 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-700'}`} />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Terminal className={`w-3 h-3 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-700'}`} />
                 Linguistic Feed
               </span>
-              <div className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-10 h-56 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative">
+              <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-8 h-48 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-lg text-slate-200 italic leading-relaxed font-medium">
+                  <p className="text-base text-slate-300 italic leading-relaxed font-medium">
                     {transcript}
                     <span className="text-primary font-black">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
-                    <Mic className="w-10 h-10 opacity-20" />
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-black">Awaiting Input</p>
+                  <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-800">
+                    <Mic className="w-8 h-8 opacity-20" />
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-black">Awaiting Verbal Response</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="p-10 border-t border-white/5 bg-slate-900/30 shrink-0">
+          <div className="p-8 border-t border-white/5 bg-slate-900/30 shrink-0">
             {listening ? (
-              <Button className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 font-black text-xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform" onClick={() => completeTurn(false)}>
+              <Button className="w-full h-16 rounded-[1.5rem] bg-primary hover:bg-primary/90 font-black text-lg shadow-2xl hover:scale-[1.02] transition-transform" onClick={() => completeTurn(false)}>
                 SUBMIT RESPONSE
-                <CheckCircle2 className="ml-3 w-6 h-6" />
+                <CheckCircle2 className="ml-2 w-5 h-5" />
               </Button>
             ) : (
-              <div className="w-full h-20 rounded-[2.5rem] bg-slate-800/40 flex items-center justify-center text-slate-500 font-black gap-4 border border-white/5">
-                <Loader2 className="animate-spin h-6 w-6" />
-                <span className="text-xs uppercase tracking-[0.2em]">Aria is Reasoning...</span>
+              <div className="w-full h-16 rounded-[1.5rem] bg-slate-800/40 flex items-center justify-center text-slate-500 font-black gap-3 border border-white/5">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span className="text-[10px] uppercase tracking-[0.2em]">Aria Reasoning...</span>
               </div>
             )}
           </div>
@@ -555,7 +534,7 @@ export default function InterviewSessionPage() {
           0% { transform: translateY(0); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
-          100% { transform: translateY(280px); opacity: 0; }
+          100% { transform: translateY(220px); opacity: 0; }
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>

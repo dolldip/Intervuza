@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -46,32 +47,31 @@ export default function NewInterviewPage() {
     if (!file) return
 
     setResumeFileName(file.name)
+    setLoading(true)
     
     try {
-      // In this prototype, we simulate extraction for PDF/DOCX or read TXT files
+      // For the prototype, we handle text files directly or simulate extraction for binaries
       if (file.type === "text/plain" || file.name.endsWith(".txt")) {
         const text = await file.text()
         setResumeText(text)
       } else {
-        // Mock extraction for binary files in this web environment
-        const mockText = `Resume of ${user?.displayName || "Candidate"}. 
-        Experience: ${experience || "Professional"} level. 
-        Role focus: ${role || "Technology"}. 
-        Extracted Skills: React, Next.js, TypeScript, Cloud Architecture, Leadership. 
-        Recent Project: Led a cross-functional team to deploy a high-stakes AI platform.`
+        // Simulation for PDF/DOCX content to provide Aria context
+        const mockText = `This is the resume of ${user?.displayName || "a candidate"}. They are a professional ${role || "Specialist"} with a focus on ${roundType} excellence. They have significant experience in their field and are targeting top-tier firms.`
         setResumeText(mockText)
       }
 
       toast({
-        title: "Resume Processed",
-        description: `${file.name} is now part of Aria's reasoning context.`
+        title: "Resume Analyzed",
+        description: `Aria has indexed your background from ${file.name}.`
       })
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Aria couldn't parse this file format yet."
+        description: "Could not read this file format."
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -85,15 +85,15 @@ export default function NewInterviewPage() {
     if (!role || !experience || !jd) {
       toast({
         variant: "destructive",
-        title: "Missing Information",
-        description: "Aria needs a role and description to calibrate her logic."
+        title: "Missing Context",
+        description: "Aria needs role details to start the assessment."
       })
       return
     }
 
     setLoading(true)
     
-    // Persist for the session
+    // Store in session for the real-time AI session
     sessionStorage.setItem('demo_role', role);
     sessionStorage.setItem('demo_exp', experience);
     sessionStorage.setItem('demo_round', roundType);
@@ -101,7 +101,7 @@ export default function NewInterviewPage() {
     sessionStorage.setItem('demo_resume', resumeText || "Standard professional background.");
     
     try {
-      let matchingSkills = ["Communication", "Domain Knowledge", "Problem Solving"];
+      let matchingSkills = ["Problem Solving", "Professionalism", "Domain Knowledge"];
       
       if (resumeText) {
         try {
@@ -111,7 +111,7 @@ export default function NewInterviewPage() {
           })
           matchingSkills = analysisResult.matchingSkills
         } catch (aiError) {
-          console.warn("AI Analysis failed, proceeding with default skills.")
+          console.warn("Analysis failed, using default skill logic.")
         }
       }
       
@@ -133,7 +133,7 @@ export default function NewInterviewPage() {
         router.push(`/interviews/session/demo-session`)
       }
     } catch (error: any) {
-      console.error("Session creation error:", error)
+      console.error("Session failed:", error)
       router.push(`/interviews/session/demo-session`)
     } finally {
       setLoading(false)
@@ -217,7 +217,7 @@ export default function NewInterviewPage() {
           <Card className="shadow-lg border-primary/10 rounded-[2.5rem] flex flex-col overflow-hidden h-full">
             <CardHeader className="bg-muted/30 p-8">
               <CardTitle className="font-headline text-2xl">Profile Context</CardTitle>
-              <CardDescription>Aria tailors her logic based on your resume.</CardDescription>
+              <CardDescription>Aria tailors her logic based on your background.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 space-y-6 p-8">
               <input 
@@ -238,10 +238,10 @@ export default function NewInterviewPage() {
                   <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-widest">PDF, DOCX, TXT</p>
                 </div>
               ) : (
-                <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 relative group">
+                <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 relative group animate-fade-in">
                   <button 
                     onClick={clearResume}
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-white shadow-md rounded-full flex items-center justify-center hover:bg-red-50 text-red-500 transition-colors"
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-white shadow-md rounded-full flex items-center justify-center hover:bg-red-50 text-red-500 transition-colors z-20"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -251,7 +251,7 @@ export default function NewInterviewPage() {
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-sm font-bold truncate">{resumeFileName}</p>
-                      <p className="text-[10px] uppercase tracking-widest text-primary font-black">Analyzed by Aria</p>
+                      <p className="text-[10px] uppercase tracking-widest text-primary font-black">Aria is Analyzing</p>
                     </div>
                   </div>
                 </div>

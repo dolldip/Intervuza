@@ -1,11 +1,11 @@
 
 {
-  "name": "AssessAI Interview Prep",
+  "name": "AssessAI | AI Interview Prep",
   "short_name": "AssessAI",
-  "description": "AI-powered professional interview coaching.",
+  "description": "Master your next interview with Dolly, your AI performance coach.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#020617",
   "theme_color": "#3b82f6",
   "icons": [
     {
