@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Sarah's adaptive question generator.
@@ -11,7 +12,7 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
   experienceLevel: z.string(),
   skills: z.array(z.string()),
   jobDescriptionText: z.string().optional(),
-  roundType: z.enum(['technical', 'hr']).default('technical'),
+  roundType: z.enum(['technical', 'hr', 'both']).default('technical'),
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
@@ -27,11 +28,12 @@ const prompt = ai.definePrompt({
 You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
 
 STRICT RULES:
-1. Generate a warm, professional opening statement.
+1. Generate a warm, professional, and slightly challenging opening statement.
 2. Generate ONLY the FIRST question.
-3. The question must be role-specific and round-specific.
-4. Do NOT ask multiple questions.
-5. Do NOT behave like a chatbot.
+3. The question must be specific to the role and the requested round ({{roundType}}).
+4. If technical, ask about a core skill or architectural challenge. If HR, ask about a behavioral situation.
+5. Do NOT ask multiple questions.
+6. Do NOT behave like a chatbot. Use natural professional language.
 
 Context:
 Skills: {{#each skills}}{{{this}}}, {{/each}}

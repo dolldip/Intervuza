@@ -87,11 +87,12 @@ export default function InterviewSessionPage() {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
       if (listening) {
-        setConfidenceLevel(prev => Math.min(100, Math.max(0, prev + (Math.random() > 0.5 ? 2 : -1.5))));
-        setEyeFocus(prev => Math.min(100, Math.max(0, prev + (Math.random() > 0.4 ? 1.5 : -1))));
+        // More realistic variation based on listening status
+        setConfidenceLevel(prev => Math.min(100, Math.max(30, prev + (Math.random() > 0.6 ? 3 : -2))));
+        setEyeFocus(prev => Math.min(100, Math.max(20, prev + (Math.random() > 0.4 ? 2 : -3))));
       } else {
-        setConfidenceLevel(prev => Math.max(0, prev - 0.5));
-        setEyeFocus(prev => Math.max(0, prev - 0.5));
+        setConfidenceLevel(prev => Math.max(0, prev - 1));
+        setEyeFocus(prev => Math.max(0, prev - 1.5));
       }
     }, 2000);
     return () => clearInterval(interval);
@@ -147,7 +148,13 @@ export default function InterviewSessionPage() {
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 5) completeTurn();
+          // Detect turn completion by phrases or silence
+          const lowerText = combinedText.toLowerCase();
+          const isDone = lowerText.includes("i am done") || lowerText.includes("that is all") || lowerText.includes("i am finished");
+          
+          if (combinedText.length > 10 || isDone) {
+             completeTurn();
+          }
         }, 4000); // 4 seconds of silence to detect turn end
       };
 
@@ -287,6 +294,7 @@ export default function InterviewSessionPage() {
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
+        // Sarah acknowledges before moving on
         await triggerSpeech(`${feedback.verbalReaction}. ${feedback.nextQuestion}`);
       } else {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
@@ -319,8 +327,8 @@ export default function InterviewSessionPage() {
             )}
           </div>
           <div className="space-y-4">
-            <h1 className="text-4xl font-headline font-bold">Role-Specific Assessment</h1>
-            <p className="text-slate-400">Sarah will evaluate your clarity, grammar, and technical logic. Speak naturally; turn detection is automatic.</p>
+            <h1 className="text-4xl font-headline font-bold">Professional Mock Interview</h1>
+            <p className="text-slate-400">Sarah will evaluate your clarity, logic, and technical depth. Speak naturally; turn detection is automatic.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-lg hover:scale-105 transition-all" onClick={startSession}>
             BEGIN ASSESSMENT
@@ -350,8 +358,8 @@ export default function InterviewSessionPage() {
             {sessionStorage.getItem('demo_role')}
           </span>
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => router.push("/dashboard")}>
-          <StopCircle className="w-4 h-4 mr-2" /> EXIT
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => router.push(`/results/${params.id}`)}>
+          <StopCircle className="w-4 h-4 mr-2" /> EXIT & FINISH
         </Button>
       </div>
 
@@ -359,13 +367,13 @@ export default function InterviewSessionPage() {
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <div className="absolute inset-0">
              <img 
-               src={`https://picsum.photos/seed/sarah-professional/1200/1200`} 
+               src={`https://picsum.photos/seed/sarah-hr-professional/1200/1200`} 
                alt="Sarah AI" 
-               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-150 blur-none' : 'opacity-50 blur-sm'}`}
+               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-150 blur-none' : 'opacity-70 blur-sm brightness-75'}`}
              />
-             {speaking && <div className="absolute inset-0 animate-pulse bg-primary/20 mix-blend-screen" />}
+             {speaking && <div className="absolute inset-0 animate-pulse bg-primary/20 mix-blend-overlay" />}
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
           <div className="absolute top-8 left-8 z-20 flex flex-col gap-3">
              {fetchingAudio && <Badge className="bg-blue-600 animate-pulse px-4 py-1.5 rounded-full">SYNTHESIZING...</Badge>}
              {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2"><Volume2 className="w-4 h-4" /> SARAH SPEAKING</Badge>}
@@ -373,7 +381,7 @@ export default function InterviewSessionPage() {
              {processingTurn && <Badge className="bg-amber-600 animate-pulse px-4 py-1.5 rounded-full">ANALYZING...</Badge>}
           </div>
           <div className="absolute bottom-10 inset-x-10 z-20">
-            <div className="max-w-3xl mx-auto bg-slate-950/90 backdrop-blur-3xl border border-white/10 p-8 rounded-[3rem] shadow-2xl">
+            <div className="max-w-3xl mx-auto bg-slate-950/80 backdrop-blur-3xl border border-white/10 p-8 rounded-[3rem] shadow-2xl">
               <h3 className="text-xl md:text-2xl font-headline font-bold leading-tight">
                 {currentQuestion || "Preparing next question..."}
               </h3>
@@ -384,7 +392,7 @@ export default function InterviewSessionPage() {
         <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30">
           <div className="p-8 space-y-8 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-center">Biometric Scan</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-center">Biometric Scan (LIVE)</span>
               <div className="aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative">
                 <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
@@ -408,7 +416,7 @@ export default function InterviewSessionPage() {
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                 <Waves className={`w-3 h-3 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-700'}`} />
-                Linguistic Stream
+                Neural Linguistic Stream
               </span>
               <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] p-6 h-56 overflow-y-auto scrollbar-hide flex flex-col justify-end">
                 {(transcript || interimTranscript) ? (
@@ -417,9 +425,9 @@ export default function InterviewSessionPage() {
                     <span className="text-primary font-bold">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <p className="text-[10px] text-slate-700 italic flex flex-col items-center justify-center h-full gap-2">
+                  <p className="text-[10px] text-slate-700 italic flex flex-col items-center justify-center h-full gap-2 text-center">
                     <Mic className="w-5 h-5 opacity-20" />
-                    Waiting for input...
+                    Waiting for spoken input...
                   </p>
                 )}
               </div>
@@ -435,7 +443,7 @@ export default function InterviewSessionPage() {
             ) : (
               <div className="w-full h-16 rounded-[2rem] bg-slate-800/50 flex items-center justify-center text-slate-500 font-bold gap-3">
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span className="text-xs uppercase tracking-widest">Processing...</span>
+                <span className="text-xs uppercase tracking-widest">Processing response...</span>
               </div>
             )}
           </div>

@@ -17,7 +17,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like reaction. Include critical coaching if grammar or focus was poor.'),
+  verbalReaction: z.string().describe('Immediate human-like reaction. Include critical coaching if grammar, focus, or technical depth was poor.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. Must be UNIQUE and different from previous topics.'),
   isInterviewComplete: z.boolean().describe('Set to true after ~5-8 quality turns.'),
@@ -35,8 +35,8 @@ Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
 STRICT RULES:
-1. USE YOUR BRAIN: Don't be a generic bot. Analyze the candidate's actual words.
-2. CORRECTIVE FEEDBACK: If the answer was weak, rambled, or had grammar errors, call it out politely in your reaction (e.g., "I appreciate the enthusiasm, but try to be more concise with your technical logic.").
+1. USE YOUR BRAIN: Analyze the candidate's actual words. Don't be a generic bot.
+2. CORRECTIVE FEEDBACK: If the answer was weak, rambled, had grammar errors, or used too many fillers, call it out politely in your reaction (e.g., "I appreciate the enthusiasm, but try to be more concise with your technical logic.").
 3. ADAPTIVE CHALLENGE: If they answered well, ask a deeper follow-up. If they struggled, pivot to a new skill but provide a supportive bridge.
 4. NO REPETITION: Do NOT ask these previous questions again:
 {{#each previousQuestions}} - {{{this}}}
