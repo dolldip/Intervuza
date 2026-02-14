@@ -88,8 +88,12 @@ export default function InterviewSessionPage() {
         setStream(mediaStream)
         setHasCameraPermission(true)
         
+        // Ensure videoRef is ready
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.error("Video play error:", e));
+          };
         }
       } catch (error) {
         console.error('Error accessing camera:', error);
@@ -111,18 +115,18 @@ export default function InterviewSessionPage() {
     };
   }, []);
 
-  // Neural Analysis Simulation (More honest fluctuations)
+  // Neural Analysis Simulation (Honest fluctuations as requested)
   useEffect(() => {
     if (sessionStarted) {
       const emotions = ["Confident", "Analyzing", "Searching", "Thoughtful", "Focused", "Stressed", "Uncertain"]
       const interval = setInterval(() => {
         setCurrentEmotion(emotions[Math.floor(Math.random() * emotions.length)])
         
-        // Fluctuate metrics more "honestly" - they can drop low
-        setConfidenceLevel(prev => Math.max(40, Math.min(98, prev + (Math.floor(Math.random() * 21) - 10))))
-        setEyeAlignment(prev => Math.max(30, Math.min(99, prev + (Math.floor(Math.random() * 31) - 15))))
-        setNeuralClarity(prev => Math.max(50, Math.min(96, prev + (Math.floor(Math.random() * 15) - 7))))
-        setStressMarker(prev => Math.max(5, Math.min(80, prev + (Math.floor(Math.random() * 21) - 10))))
+        // Fluctuate metrics more "honestly" - they can drop low to reflect real detection simulation
+        setConfidenceLevel(prev => Math.max(35, Math.min(98, prev + (Math.floor(Math.random() * 21) - 10))))
+        setEyeAlignment(prev => Math.max(25, Math.min(99, prev + (Math.floor(Math.random() * 31) - 15))))
+        setNeuralClarity(prev => Math.max(45, Math.min(96, prev + (Math.floor(Math.random() * 15) - 7))))
+        setStressMarker(prev => Math.max(10, Math.min(85, prev + (Math.floor(Math.random() * 21) - 10))))
       }, 2000)
       return () => clearInterval(interval)
     }
@@ -173,7 +177,7 @@ export default function InterviewSessionPage() {
     if (!authLoading) init();
   }, [profile, authLoading])
 
-  // AI Voice trigger
+  // AI Voice trigger with explicit play handling
   const triggerSpeech = async (index: number) => {
     if (!questions[index]) return;
     
@@ -184,19 +188,20 @@ export default function InterviewSessionPage() {
       const { media } = await textToSpeech(questions[index])
       setAudioSrc(media)
       
-      // Explicit play attempt
+      // We must wait for the audio element to load the new source
       if (audioRef.current) {
         audioRef.current.load();
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise.catch(error => {
-            console.warn("Autoplay blocked, waiting for user interaction.");
+            console.warn("Autoplay blocked or playback error:", error);
             setSpeaking(false);
+            setAudioError(true);
           });
         }
       }
     } catch (err) {
-      console.warn("Speech failed:", err)
+      console.warn("Speech generation failed:", err)
       setSpeaking(false)
       setAudioError(true)
     }
@@ -398,10 +403,10 @@ export default function InterviewSessionPage() {
           <div className="relative w-full h-full flex items-center justify-center">
             {/* Stable Human Avatar for Sarah */}
             <img 
-              src="https://picsum.photos/seed/sarah-interview-v4/1200/1200" 
-              alt="Sarah AI Human" 
+              src="https://picsum.photos/seed/sarah-pm-v9/1200/1200" 
+              alt="Sarah AI Interviewer" 
               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'scale-105 brightness-110 saturate-[1.2]' : 'brightness-75 grayscale-[0.2]'}`}
-              data-ai-hint="professional headshot human"
+              data-ai-hint="professional headshot female"
             />
             
             {/* Question Card Overlay */}
@@ -433,11 +438,6 @@ export default function InterviewSessionPage() {
                     <h3 className="text-2xl md:text-3xl font-headline font-bold leading-relaxed tracking-tight text-white/95">
                       {questions[currentIdx]}
                     </h3>
-                    {audioError && (
-                       <p className="text-[10px] text-amber-500/80 mt-3 font-mono uppercase tracking-widest">
-                         Audio playback blocked. Click the replay icon to hear Sarah.
-                       </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -458,7 +458,7 @@ export default function InterviewSessionPage() {
                    <span className="text-[11px] text-red-500 font-black uppercase tracking-widest">Live Scan</span>
                 </div>
               </div>
-              <div className="relative aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group ring-1 ring-white/10">
+              <div className="relative aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl ring-1 ring-white/10">
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -576,6 +576,11 @@ export default function InterviewSessionPage() {
         src={audioSrc || ""} 
         onEnded={() => setSpeaking(false)} 
         onPlay={() => setSpeaking(true)}
+        onError={() => {
+           console.error("Audio Playback Error");
+           setAudioError(true);
+           setSpeaking(false);
+        }}
         className="hidden" 
       />
 
