@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -309,7 +308,7 @@ export default function InterviewSessionPage() {
     
     toast({
       title: "Session Terminated",
-      description: "Generating your final performance audit based on the turns completed."
+      description: "Generating your performance audit based on progress so far."
     });
     
     setTimeout(() => {
@@ -333,7 +332,7 @@ export default function InterviewSessionPage() {
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
-        userAnswer: fullAnswer || (forcedStuck ? "I'm finding this a bit difficult." : "No verbal input."),
+        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm find this a bit difficult to articulate right now." : "No verbal input."),
         jobRole: sessionStorage.getItem('demo_role') || "Professional",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
@@ -356,7 +355,10 @@ export default function InterviewSessionPage() {
         setIsStuck(false);
         
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
-        await triggerSpeech(finalPrompt);
+        // Add a "thinking" pause simulation
+        setTimeout(() => {
+          triggerSpeech(finalPrompt);
+        }, 1200);
       } else {
         if (user && db && params.id !== "demo-session") {
           const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
@@ -382,7 +384,7 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-8" />
-        <h2 className="text-2xl font-headline font-bold uppercase tracking-widest text-primary">Neural Synchronization...</h2>
+        <h2 className="text-2xl font-headline font-bold uppercase tracking-widest text-primary text-center px-6">Neural Synchronization...</h2>
       </div>
     )
   }
@@ -422,13 +424,13 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-body">
-      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50">
+      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-6">
           <ShieldCheck className="text-primary w-6 h-6" />
           <Badge variant="outline" className="text-[10px] border-white/10 text-slate-500 py-1 px-4 rounded-full font-bold">
             TURN {turnCount + 1} / 6
           </Badge>
-          <span className="text-sm font-black text-slate-400 uppercase tracking-widest">
+          <span className="text-sm font-black text-slate-400 uppercase tracking-widest hidden sm:block">
             {sessionStorage.getItem('demo_role')} ASSESSMENT
           </span>
         </div>
@@ -444,7 +446,7 @@ export default function InterviewSessionPage() {
         </Button>
       </div>
 
-      <div className="flex-1 flex relative bg-slate-950">
+      <div className="flex-1 flex relative bg-slate-950 overflow-hidden">
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0">
              <img 
@@ -464,16 +466,16 @@ export default function InterviewSessionPage() {
              {isStuck && <Badge className="bg-amber-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><HelpCircle className="w-4 h-4" /> Detection: Stuck</Badge>}
           </div>
 
-          <div className="absolute bottom-12 inset-x-12 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-3xl border border-white/10 p-10 rounded-[3rem] shadow-2xl animate-fade-in">
-              <h3 className="text-2xl md:text-3xl font-headline font-bold leading-tight text-white tracking-tight">
+          <div className="absolute bottom-12 inset-x-6 sm:inset-x-12 z-20">
+            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-3xl border border-white/10 p-6 sm:p-10 rounded-[3rem] shadow-2xl animate-fade-in">
+              <h3 className="text-xl md:text-3xl font-headline font-bold leading-tight text-white tracking-tight">
                 {currentQuestion || "Diving into the next phase..."}
               </h3>
             </div>
           </div>
         </div>
 
-        <div className="w-[480px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl">
+        <div className="hidden lg:flex w-[480px] bg-slate-950 border-l border-white/10 flex-col z-30 shadow-2xl overflow-hidden">
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             
             <div className="space-y-4">
@@ -527,7 +529,7 @@ export default function InterviewSessionPage() {
             </div>
           </div>
 
-          <div className="p-10 border-t border-white/5 bg-slate-900/30">
+          <div className="p-10 border-t border-white/5 bg-slate-900/30 shrink-0">
             {listening ? (
               <Button className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 font-black text-xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform" onClick={() => completeTurn(false)}>
                 SUBMIT RESPONSE

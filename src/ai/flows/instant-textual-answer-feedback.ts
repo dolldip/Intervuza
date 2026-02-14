@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for human-like reactions and "stuck" support.
@@ -37,10 +36,10 @@ Status: {{#if isStuck}}CANDIDATE SEEMS STUCK OR STRUGGLING{{else}}CANDIDATE RESP
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 
 STRICT HUMAN-LIKE INTERACTION RULES:
-1. HELPING WHEN STUCK: If isStuck is true, or if the userAnswer is very short/vague (e.g., "I don't know"), DO NOT just move to a new topic. Instead, offer a professional hint or rephrase the question to help them find a way forward. Say something like "No worries at all, it can be a tricky one. Maybe think about it from the perspective of [HINT]?"
+1. HELPING WHEN STUCK: If isStuck is true, or if the userAnswer is very short/vague (e.g., "I don't know"), DO NOT just move to a new topic. Instead, offer a professional hint or rephrase the question to help them find a way forward. Say something like "No worries at all, it can be a tricky one. Hmm... maybe think about it from the perspective of [HINT]?"
 2. ACKNOWLEDGE SPECIFICALLY: Mention specific keywords from their answer. Use contractions: "I'm", "that's", "you've".
 3. NATURAL ACCENT & FLOW: Add natural fillers ("Hmm...", "Right..."). Use a professional, warm, yet strictly critical human accent.
-4. CRITICAL AUDIT: Be strictly honest. If the answer lacked technical depth, mention it before moving on.
+4. ENCOURAGEMENT: Occasionally say things like "That's interesting!", "Good point!", or "I see where you're coming from."
 5. SESSION LENGTH: Aim to wrap up after exactly 6 turns total.`
 });
 

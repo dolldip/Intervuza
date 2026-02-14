@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
+ * Refined for hyper-realistic human simulation.
  */
 
 import { ai } from '@/ai/genkit';
@@ -32,6 +33,7 @@ STRICT HUMAN-LIKE RULES:
 3. PROFESSIONAL WARMTH: Be warm but strictly high-stakes. Start with a greeting that sounds like you're actually meeting them.
 4. SINGLE QUESTION: Ask only one focused question to start. 
 5. CONTEXTUAL DEPTH: Use the provided skills and JD to make the question feel "tailor-made" for them.
+6. NATURAL PAUSES: In your text, imply natural pauses with commas and ellipses.
 
 Context:
 Skills: {{#each skills}}{{{this}}}, {{/each}}
