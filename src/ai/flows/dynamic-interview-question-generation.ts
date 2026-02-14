@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
 
 STEP 1: Identify role category: [BTech Technical, BTech HR, Teacher, Doctor, Management, Other].
 
-RULES FOR OPENING:
+RULES FOR OPENING (ZERO REPETITION):
 1. NO GENERIC STARTS: Do NOT say "Tell me about yourself." or "Walk me through your resume."
 2. EXPERIENCE AWARENESS: 
    - If experienceLevel is "junior" or 0 years: Start with an industry-specific hypothetical scenario or a fundamental subject knowledge challenge.
@@ -59,19 +59,36 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output;
   } catch (error) {
     const fallbacks: Record<string, string[]> = {
-      'Teacher': ["In an increasingly digital classroom, how do you maintain meaningful student engagement without technology becoming a crutch?"],
-      'Doctor': ["When faced with conflicting diagnostic data under high pressure, what is your systematic approach to ensuring patient safety?"],
-      'BTech Technical': ["If you were tasked with migrating a legacy monolith to a microservices architecture while maintaining zero downtime, what would be your primary risk mitigation strategy?"],
-      'default': ["Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete, and what should replace it?"]
+      'Teacher': [
+        "In an increasingly digital classroom, how do you maintain meaningful student engagement without technology becoming a crutch?",
+        "If a student consistently challenges your pedagogical authority, how do you re-establish an inclusive learning environment?",
+        "How do you adapt your teaching style for a neurodiverse classroom where standardized methods might fail?"
+      ],
+      'Doctor': [
+        "When faced with conflicting diagnostic data under high pressure, what is your systematic approach to ensuring patient safety?",
+        "How do you navigate the ethical complexity of recommending a high-risk treatment when the patient's family is divided?",
+        "In a resource-constrained environment, how do you prioritize clinical care without compromising on medical integrity?"
+      ],
+      'BTech Technical': [
+        "If you were tasked with migrating a legacy monolith to a microservices architecture while maintaining zero downtime, what would be your primary risk mitigation strategy?",
+        "How do you manage state consistency in a distributed system where eventual consistency is not acceptable for the business logic?",
+        "What is your approach to technical debt? Describe a situation where you chose to accumulate it intentionally and how you managed the fallout."
+      ],
+      'default': [
+        "Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete, and what should replace it?",
+        "How do you navigate systemic ambiguity when project requirements shift fundamentally mid-way through execution?",
+        "What is the most significant strategic failure you've observed in your field recently, and what logic could have prevented it?"
+      ]
     };
     
     const roleKey = input.jobRole?.toLowerCase().includes('teacher') ? 'Teacher' : 
                     input.jobRole?.toLowerCase().includes('doctor') ? 'Doctor' : 
                     input.jobRole?.toLowerCase().includes('btech') || input.jobRole?.toLowerCase().includes('engineer') ? 'BTech Technical' : 'default';
 
+    const options = fallbacks[roleKey] || fallbacks['default'];
     return {
       openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin your professional audit.",
-      firstQuestion: (fallbacks[roleKey] || fallbacks['default'])[Math.floor(Math.random() * (fallbacks[roleKey] || fallbacks['default']).length)],
+      firstQuestion: options[Math.floor(Math.random() * options.length)],
       roleCategory: roleKey === 'default' ? 'Other' : roleKey as any
     };
   }

@@ -1,7 +1,8 @@
+
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: Included specific analysis for correctness, clarity, completeness, and confidence.
+ * Updated: STRICTUREST Zero-Repetition and Dimensional Pivoting logic.
  */
 
 import {ai} from '@/ai/genkit';
@@ -55,7 +56,9 @@ STRICT INTERVIEWER PROTOCOL (IRONCLAD):
 
 2. ZERO REPETITION (DIMENSIONAL PIVOTING):
    - You MUST NOT ask anything similar to these previous turns: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
-   - Pivot dimensions: [Ethics, Future Trends, Technical Architecture, Conflict, Leadership].
+   - If the previous question was Technical, pivot to Leadership or Ethics.
+   - If the previous question was Behavioral, pivot to a Logic Puzzle or Industry Trend.
+   - Dimensions: [Ethics, Future Trends, Technical Architecture, Conflict, Leadership, Strategic Vision].
 
 3. EXPERIENCE LEVEL ADAPTATION:
    - Level: {{{experienceLevel}}}. Adjust complexity accordingly.
@@ -78,24 +81,34 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     const fallbacks: Record<string, string[]> = {
       'Teacher': [
         "In your view, how should a curriculum adapt to ensure students with varied learning speeds aren't left behind?",
-        "If a student consistently challenges your authority, what is your immediate pedagogical strategy?"
+        "If a student consistently challenges your authority, what is your immediate pedagogical strategy?",
+        "How do you incorporate emotional intelligence into your classroom management style?",
+        "Describe your approach to parent-teacher collaboration in high-conflict situations."
       ],
       'Doctor': [
         "When faced with a diagnostic discrepancy, how do you systematically re-evaluate your hypothesis?",
-        "How do you approach communicating terminal news with both empathy and clinical clarity?"
+        "How do you approach communicating terminal news with both empathy and clinical clarity?",
+        "What is your protocol for managing clinical burnout while maintaining patient care standards?",
+        "How do you stay updated with rapidly evolving medical research while maintaining a full clinical load?"
       ],
       'BTech Technical': [
         "If you had to optimize a system for a 100x traffic surge, which core component would you harden first?",
-        "How do you ensure data integrity across multiple microservices in an eventually consistent environment?"
+        "How do you ensure data integrity across multiple microservices in an eventually consistent environment?",
+        "What is your approach to security in the software development lifecycle? Where does it start?",
+        "Describe a time you had to argue for a specific technical choice against a stakeholder's preference. What was the outcome?"
       ],
       'default': [
         "Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete?",
-        "How do you navigate ambiguity when project requirements shift midway through execution?"
+        "How do you navigate ambiguity when project requirements shift midway through execution?",
+        "What is your philosophy on leadership within a cross-functional team?",
+        "How do you evaluate the success of a project beyond basic technical metrics?"
       ]
     };
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
-    const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[0];
+    // Filter out already used questions
+    const unusedFallbacks = roleFallbacks.filter(f => !input.previousQuestions?.includes(f));
+    const freshFallback = unusedFallbacks.length > 0 ? unusedFallbacks[Math.floor(Math.random() * unusedFallbacks.length)] : roleFallbacks[0];
 
     return {
       verbalReaction: "I see your perspective. Let's explore another aspect of your expertise.",
