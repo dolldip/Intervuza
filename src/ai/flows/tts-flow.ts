@@ -2,9 +2,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for converting text to speech.
- * Includes a fallback mechanism for quota exhaustion.
- *
- * - textToSpeech - A function that converts a string of text into a WAV audio data URI.
+ * Includes a robust fallback mechanism for quota exhaustion.
  */
 
 import { ai } from '@/ai/genkit';
@@ -20,9 +18,11 @@ const TTSOutputSchema = z.object({
 
 export async function textToSpeech(text: string): Promise<{ media: string; fallback?: boolean }> {
   try {
-    return await ttsFlow(text);
+    // Attempt the cloud flow
+    const response = await ttsFlow(text);
+    return response;
   } catch (error) {
-    console.warn("TTS Flow error. Returning fallback flag.");
+    console.warn("TTS Flow level error. Requesting client fallback.");
     return {
       media: "",
       fallback: true,
@@ -52,7 +52,7 @@ const ttsFlow = ai.defineFlow(
       });
 
       if (!media || !media.url) {
-        throw new Error('No audio media returned from Genkit');
+        throw new Error('No audio media returned');
       }
 
       const audioBuffer = Buffer.from(
@@ -66,7 +66,7 @@ const ttsFlow = ai.defineFlow(
         media: 'data:audio/wav;base64,' + wavData,
       };
     } catch (error: any) {
-      console.warn("TTS Quota exceeded or error. Informing client to use local fallback.");
+      console.warn("TTS Quota exceeded. Using browser fallback.");
       return {
         media: "",
         fallback: true,
