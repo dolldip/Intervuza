@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -58,29 +59,22 @@ export default function InterviewSessionPage() {
   // Simulated analysis states
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
   const [confidenceLevel, setConfidenceLevel] = useState(75)
-  const [isFaceDetected, setIsFaceDetected] = useState(false)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Explicit Camera and Audio Permission Request
+  // Robust Camera and Audio Permission Request
   useEffect(() => {
     async function setupMedia() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, 
           audio: true 
         });
         
-        setHasCameraPermission(true);
-        setIsFaceDetected(true);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch(e => console.error("Video play error:", e));
-          };
-        }
+        setStream(mediaStream)
+        setHasCameraPermission(true)
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
@@ -95,12 +89,19 @@ export default function InterviewSessionPage() {
     setupMedia();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
   }, [toast]);
+
+  // Attach stream to video element whenever it changes
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.error("Video play error:", e));
+    }
+  }, [stream, videoRef.current, initializing]);
 
   // Simulated AI analysis updates
   useEffect(() => {
@@ -120,7 +121,8 @@ export default function InterviewSessionPage() {
   // Question generation
   useEffect(() => {
     async function init() {
-      await new Promise(r => setTimeout(r, 2000)); // Cinematic pause
+      // Small pause to allow camera setup to breathe
+      await new Promise(r => setTimeout(r, 1500)); 
       
       const demoRole = sessionStorage.getItem('demo_role');
       const demoExp = sessionStorage.getItem('demo_exp');
@@ -159,7 +161,7 @@ export default function InterviewSessionPage() {
   // AI Voice trigger
   useEffect(() => {
     async function speak() {
-      if (questions[currentIdx]) {
+      if (questions[currentIdx] && !initializing) {
         try {
           setSpeaking(true)
           const { media } = await textToSpeech(questions[currentIdx])
@@ -170,14 +172,13 @@ export default function InterviewSessionPage() {
         }
       }
     }
-    if (!initializing && questions.length > 0) speak();
+    speak();
   }, [currentIdx, questions, initializing])
 
   const handleNext = async () => {
     if (!questions[currentIdx]) return
     setSubmitting(true)
     
-    // Store answer for results summary
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
     currentAnswers.push({
       question: questions[currentIdx],
@@ -234,9 +235,9 @@ export default function InterviewSessionPage() {
           <BrainCircuit className="w-32 h-32 text-primary animate-pulse" />
           <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-ping" />
         </div>
-        <h2 className="text-4xl font-headline font-bold mb-4">Initializing Interviewer</h2>
+        <h2 className="text-4xl font-headline font-bold mb-4">Initializing Sarah</h2>
         <p className="text-slate-400 text-xl max-w-md text-center px-6">
-          Sarah is analyzing your background to prepare a personalized assessment.
+          Setting up your secure live session and calibrating biometric sensors.
         </p>
       </div>
     )
@@ -293,9 +294,9 @@ export default function InterviewSessionPage() {
           
           <div className="relative w-full h-full">
             <img 
-              src="https://picsum.photos/seed/sarah-professional-interviewer/1200/1200" 
+              src="https://picsum.photos/seed/sarah-professional-8/1200/1200" 
               alt="AI Human Interviewer" 
-              className={`w-full h-full object-cover transition-all duration-700 ${speaking ? 'scale-105 brightness-110' : 'brightness-90 grayscale-[0.2]'}`}
+              className={`w-full h-full object-cover transition-all duration-700 ${speaking ? 'scale-105 brightness-110' : 'brightness-90 grayscale-[0.1]'}`}
               data-ai-hint="professional headshot"
             />
             
@@ -309,9 +310,9 @@ export default function InterviewSessionPage() {
                   <div className="flex-1 pt-2">
                     <div className="flex items-center gap-4 mb-4">
                       <Badge className="bg-primary/20 text-primary border-primary/30 px-3 py-1 text-[10px] uppercase font-black tracking-widest">AI Agent: Sarah</Badge>
-                      <span className="text-[11px] text-slate-400 font-mono tracking-widest">MODE: {speaking ? 'SPEAKING' : 'ANALYZING_SPEECH'}</span>
+                      <span className="text-[11px] text-slate-400 font-mono tracking-widest">MODE: {speaking ? 'SPEAKING' : 'LISTENING'}</span>
                     </div>
-                    <h3 className="text-3xl md:text-4xl font-headline font-bold leading-tight tracking-tight text-white">
+                    <h3 className="text-2xl md:text-3xl font-headline font-bold leading-tight tracking-tight text-white">
                       {questions[currentIdx]}
                     </h3>
                   </div>
@@ -322,19 +323,19 @@ export default function InterviewSessionPage() {
         </div>
 
         {/* RIGHT SIDEBAR: USER FEED & ANALYTICS */}
-        <div className="w-[520px] bg-slate-950/90 backdrop-blur-2xl border-l border-white/10 flex flex-col z-30 shadow-2xl relative">
+        <div className="w-[480px] bg-slate-950/95 backdrop-blur-2xl border-l border-white/10 flex flex-col z-30 shadow-2xl relative">
           <div className="p-8 space-y-10 flex-1 overflow-y-auto">
             
             {/* LIVE CAMERA FEED */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Direct Camera Input</span>
+                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Biometric Video Input</span>
                 <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                   <span className="text-[10px] text-red-500 font-bold uppercase">Live</span>
+                   <span className="text-[10px] text-red-500 font-bold uppercase">Streaming</span>
                 </div>
               </div>
-              <div className="relative aspect-video bg-slate-900 rounded-[2rem] overflow-hidden border border-white/10 shadow-inner group">
+              <div className="relative aspect-video bg-slate-900 rounded-[2rem] overflow-hidden border border-white/10 shadow-inner">
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -345,7 +346,6 @@ export default function InterviewSessionPage() {
                 
                 {/* Simulated AI Overlays */}
                 <div className="absolute inset-0 pointer-events-none z-20">
-                  <div className="absolute inset-0 border-[20px] border-black/20" />
                   <div className="absolute inset-x-0 h-1 bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),1)] animate-[scan_4s_linear_infinite]" />
                   
                   {/* Face Tracking Brackets */}
@@ -373,8 +373,8 @@ export default function InterviewSessionPage() {
                         <Camera className="w-10 h-10 text-red-500" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-bold text-white mb-2">Camera Connection Lost</h4>
-                        <p className="text-sm text-slate-400">Please verify camera permissions in your browser settings to continue with face analysis.</p>
+                        <h4 className="text-lg font-bold text-white mb-2">Camera Restricted</h4>
+                        <p className="text-sm text-slate-400">Please enable camera in your browser to start the neural expression analysis.</p>
                       </div>
                     </div>
                   </div>
@@ -385,18 +385,18 @@ export default function InterviewSessionPage() {
             {/* NEURAL ANALYTICS */}
             <div className="space-y-8">
                <div className="flex items-center justify-between px-2">
-                 <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Live Feedback Stream</h4>
-                 <Badge variant="outline" className="text-[9px] border-primary/20 text-primary">AI Process Active</Badge>
+                 <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Real-time Biometrics</h4>
+                 <Badge variant="outline" className="text-[9px] border-primary/20 text-primary uppercase">Analyzing...</Badge>
                </div>
                
                <div className="grid grid-cols-2 gap-4">
                  {[
-                   { label: "Vocal Clarity", value: "92%", icon: MessageSquare, status: "Optimal" },
-                   { label: "Eye Contact", value: "High", icon: Target, status: "Consistent" },
-                   { label: "Voice Tone", value: "Natural", icon: Mic, status: "Professional" },
-                   { label: "Thinking Pace", value: "110 wpm", icon: Zap, status: "Ideal" },
+                   { label: "Vocal Confidence", value: `${confidenceLevel}%`, icon: MessageSquare, status: "High" },
+                   { label: "Eye Engagement", value: "94%", icon: Target, status: "Optimal" },
+                   { label: "Stress Level", value: "Low", icon: Zap, status: "Calm" },
+                   { label: "Face Alignment", value: "Locked", icon: Scan, status: "Stable" },
                  ].map((stat, i) => (
-                   <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-[1.5rem] flex flex-col gap-4 hover:bg-white/[0.08] transition-all group">
+                   <div key={i} className="p-5 bg-white/5 border border-white/5 rounded-[1.5rem] flex flex-col gap-4 group">
                      <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                        <stat.icon className="w-5 h-5 text-primary" />
                      </div>
@@ -410,10 +410,10 @@ export default function InterviewSessionPage() {
                </div>
 
                <div className="space-y-4 pt-6 border-t border-white/10">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-2">Live Session Notes</label>
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-2">Live Response Capture</label>
                 <textarea 
-                  placeholder="Capture your thoughts or keywords to remember..." 
-                  className="w-full bg-slate-900/40 border border-white/10 text-white rounded-[2rem] p-6 h-48 resize-none focus:ring-2 focus:ring-primary/50 outline-none text-base transition-all shadow-inner"
+                  placeholder="The AI is listening... You can also type notes here." 
+                  className="w-full bg-slate-900/40 border border-white/10 text-white rounded-[2rem] p-6 h-40 resize-none focus:ring-2 focus:ring-primary/50 outline-none text-base transition-all"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                 />
@@ -432,19 +432,19 @@ export default function InterviewSessionPage() {
                 <Loader2 className="animate-spin h-7 w-7" />
               ) : (
                 <>
-                  {currentIdx < questions.length - 1 ? 'SUBMIT RESPONSE & NEXT' : 'FINISH INTERVIEW'}
+                  {currentIdx < questions.length - 1 ? 'SUBMIT & NEXT QUESTION' : 'COMPLETE INTERVIEW'}
                   <ChevronRight className="ml-4 w-7 h-7" />
                 </>
               )}
             </Button>
             <p className="text-center text-[10px] text-slate-500 mt-6 uppercase tracking-[0.3em] font-black">
-              Neural feedback is being synchronized
+              Biometric data is encrypted and secure
             </p>
           </div>
         </div>
       </div>
 
-      {/* Hidden Audio for Genkit TTS */}
+      {/* Audio element for Text-to-Speech */}
       {audioSrc && (
         <audio 
           ref={audioRef} 
