@@ -71,7 +71,7 @@ const accountItems = [
   },
   {
     title: "Subscription",
-    url: "/dashboard",
+    url: "/subscription",
     icon: CreditCard,
   },
   {
