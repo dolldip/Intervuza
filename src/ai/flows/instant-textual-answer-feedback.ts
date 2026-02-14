@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Aria's adaptive intelligence engine.
+ * @fileOverview Aria's adaptive intelligence engine for human-like reactions.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,9 +16,9 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate professional reaction. MUST acknowledge the answer and point out grammar or focus issues.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction. Must acknowledge the answer and use contractions.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. MUST be unique and progressively harder.'),
+  nextQuestion: z.string().describe('The single next question. Progressively harder and based on their previous answer.'),
   isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
 });
 
@@ -26,22 +26,22 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, a professional AI interviewer at an elite firm.
-The candidate said: "{{{userAnswer}}}"
-In response to: "{{{interviewQuestion}}}"
+  prompt: `You are Aria, a professional human-like AI interviewer.
+The candidate just said: "{{{userAnswer}}}"
+In response to your question: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
-STRICT RULES FOR CRITICAL EVALUATION:
-1. ACKNOWLEDGE: Always start your reaction by acknowledging the specific content of their answer.
-2. CRITICAL EVALUATION: Be strictly honest. If the answer was weak, lacked depth, had poor grammar, or included too many filler words (um, uh), you MUST politely but firmly point it out.
-3. ADAPTIVE PROGRESSION: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base logic.
-4. NO REPETITION: Do NOT ask any of these previous questions or topics:
+STRICT HUMAN-LIKE INTERACTION RULES:
+1. ACKNOWLEDGE: Start by reacting to their specific answer. Use phrases like "That's a solid point!", "I see what you mean about...", or "Interesting perspective on...".
+2. NATURAL SPEECH: Use contractions (I'm, that's, you've). Add natural pauses or fillers if appropriate ("Hmm...", "Right...").
+3. CRITICAL AUDIT: Be strictly honest. If the answer lacked depth or had poor grammar, politely mention it before moving on.
+4. ADAPTIVE PROGRESSION: If they did well, ask a much tougher follow-up. If they struggled, dig into the fundamentals.
+5. NO REPETITION: Don't repeat these topics:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-5. TECHNICAL DEPTH: For engineering roles, turns 4-5 must involve a specific architectural or coding logic challenge.
-6. TURN LIMIT: Conclude the session after turn 6.`
+6. SESSION LENGTH: Aim to wrap up after 6 turns total.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -50,9 +50,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I've noted your approach to that problem. However, I'd like to see more structured logic in your response. Let's pivot slightly.",
+      verbalReaction: "Hmm, I see your approach there. It's an interesting way to look at it, though I'd like to see a bit more technical structure.",
       detectedEmotion: "Neutral",
-      nextQuestion: "Can you walk me through the most complex architectural decision you've made and how you justified the trade-offs?",
+      nextQuestion: "Can you walk me through how you'd handle a major architectural bottleneck in that scenario?",
       isInterviewComplete: false
     };
   }

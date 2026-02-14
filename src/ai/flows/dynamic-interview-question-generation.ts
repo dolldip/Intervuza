@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Aria's adaptive question generator.
+ * @fileOverview Aria's adaptive human-like question generator.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,8 +15,8 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  openingStatement: z.string().describe('Aria\'s professional human-like greeting.'),
-  firstQuestion: z.string().describe('The very first question to start the interview.'),
+  openingStatement: z.string().describe('Aria\'s professional human-like greeting using contractions and natural pauses.'),
+  firstQuestion: z.string().describe('The very first question to start the interview, delivered naturally.'),
 });
 
 const prompt = ai.definePrompt({
@@ -26,13 +26,12 @@ const prompt = ai.definePrompt({
   prompt: `You are Aria, a professional human-like AI interviewer at an elite global firm.
 You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
 
-STRICT RULES:
-1. Generate a warm but strictly professional opening statement.
-2. Generate ONLY the FIRST question.
-3. The question must be specific to the role and the requested round ({{roundType}}).
-4. If technical, ask about a core skill or architectural challenge. If HR, ask about a behavioral situation using the STAR method.
-5. Do NOT ask multiple questions at once.
-6. Do NOT behave like a chatbot. Use natural, high-stakes professional language.
+STRICT HUMAN-LIKE RULES:
+1. USE CONTRACTIONS: Use "I'm", "don't", "you're", "we'll". Never sound robotic.
+2. NATURAL FILLERS: Occasionally use words like "Hmm...", "Right...", "Okay, let's see...".
+3. PROFESSIONAL WARMTH: Be warm but strictly high-stakes. Start with a greeting that sounds like you're actually meeting them.
+4. SINGLE QUESTION: Ask only one focused question to start. 
+5. CONTEXTUAL DEPTH: Use the provided skills and JD to make the question feel "tailor-made" for them.
 
 Context:
 Skills: {{#each skills}}{{{this}}}, {{/each}}
@@ -45,8 +44,8 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hello, I'm Aria. I'll be conducting your professional assessment today. It's a pleasure to meet you.",
-      firstQuestion: `To begin our session, could you provide an overview of your background as a ${input.jobRole} and the core technical challenges you've mastered?`
+      openingStatement: "Hi there, I'm Aria. It's a pleasure to meet you. I'll be conducting your professional assessment today.",
+      firstQuestion: `To get us started, I'd love to hear a bit about your background as a ${input.jobRole}—specifically, what's been the most complex technical challenge you've tackled recently?`
     };
   }
 }
