@@ -72,7 +72,7 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // CRITICAL: historyRef is the source of truth for the AI to prevent repeating questions
+  // History source of truth
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -148,7 +148,7 @@ export default function InterviewSessionPage() {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
           if (combinedText.length > 5) completeTurn(false);
           else if (combinedText.length === 0) setIsStuck(true);
-        }, 15000); 
+        }, 12000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -186,12 +186,10 @@ export default function InterviewSessionPage() {
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
         historyRef.current = [result.firstQuestion]
-        sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        const fallbackQ = `To start us off, based on your experience as a ${demoRole}, could you share a specific technical challenge you've overcome recently?`;
-        setCurrentQuestion(fallbackQ)
-        historyRef.current = [fallbackQ]
+        setCurrentQuestion("Could you start by sharing a specific challenge you've overcome recently?")
+        historyRef.current = ["Could you start by sharing a specific challenge you've overcome recently?"]
       } finally {
         setInitializing(false)
       }
@@ -268,10 +266,7 @@ export default function InterviewSessionPage() {
     if (recognitionRef.current) try { recognitionRef.current.stop(); } catch(e) {}
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
-    const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || "Silence." });
-    sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
-
+    
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
@@ -280,7 +275,7 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current, // Sending the full history to the AI
+        previousQuestions: historyRef.current,
         isStuck: forcedStuck || isStuck
       });
       
@@ -288,13 +283,9 @@ export default function InterviewSessionPage() {
       setTurnFeedback(feedback.feedback);
       setShowFeedback(true);
       
-      const nextTurnCount = currentTurn + 1;
-      
-      if (!feedback.isInterviewComplete && nextTurnCount < 6) {
-        setTurnCount(nextTurnCount);
+      if (!feedback.isInterviewComplete && currentTurn < 6) {
+        setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
-        
-        // CRITICAL: Update the historyRef immediately so the NEXT turn sees it correctly
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
@@ -316,7 +307,7 @@ export default function InterviewSessionPage() {
     }
   };
 
-  const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://picsum.photos/seed/aria-interviewer/1280/720";
+  const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://picsum.photos/seed/aria/1280/720";
 
   if (initializing) {
     return (
@@ -361,7 +352,7 @@ export default function InterviewSessionPage() {
           </div>
           <div className="h-8 w-px bg-white/10" />
           <Badge variant="outline" className="text-[10px] glass border-white/10 text-slate-400 py-2 px-6 rounded-full font-black uppercase tracking-widest">
-            TURN {turnCount + 1} / 6
+            TURN {turnCount + 1} / 7
           </Badge>
           <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]">
             {roleCategory} Mode
@@ -429,7 +420,7 @@ export default function InterviewSessionPage() {
                 </div>
               )}
               <h3 className="text-4xl font-headline font-black leading-tight text-white tracking-tight">
-                {currentQuestion || "Calibrating logic..."}
+                {currentQuestion || "Calibrating industry logic..."}
               </h3>
             </div>
           </div>

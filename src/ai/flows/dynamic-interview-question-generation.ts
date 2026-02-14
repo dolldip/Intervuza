@@ -50,7 +50,7 @@ Context:
 RULES:
 1. BE HUMAN: Use contractions ("I'm", "We've"). Be warm but critically professional.
 2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario, a project, or a case study relevant to the role.
-3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category.`,
+3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category. If the user is a Teacher, ask about classroom management or a student scenario. If a Doctor, ask about a diagnosis or ethical dilemma.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
