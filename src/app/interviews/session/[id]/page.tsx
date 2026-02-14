@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
@@ -70,13 +70,19 @@ export default function InterviewSessionPage() {
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
 
-  const userVideoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
   const historyRef = useRef<string[]>([])
+
+  // Callback ref to ensure video srcObject is set correctly when element mounts
+  const videoRef = useCallback((node: HTMLVideoElement | null) => {
+    if (node && stream) {
+      node.srcObject = stream;
+    }
+  }, [stream, sessionStarted]);
 
   const stateRef = useRef({ 
     speaking, 
@@ -101,12 +107,6 @@ export default function InterviewSessionPage() {
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, sessionStarted, isStuck])
 
   useEffect(() => {
-    if (userVideoRef.current && stream) {
-      userVideoRef.current.srcObject = stream;
-    }
-  }, [sessionStarted, stream, hasCameraPermission]);
-
-  useEffect(() => {
     const getCameraPermission = async () => {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -114,6 +114,11 @@ export default function InterviewSessionPage() {
         setHasCameraPermission(true)
       } catch (error) {
         setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions to use the biometric analyzer.',
+        });
       }
     };
     getCameraPermission();
@@ -328,7 +333,7 @@ export default function InterviewSessionPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6 relative overflow-hidden">
         <div className="max-w-2xl w-full text-center space-y-8 md:space-y-12 relative z-10">
           <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2rem] md:rounded-[3.5rem] flex items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_50px_rgba(var(--primary),0.2)] group">
-            <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
           </div>
           <div className="space-y-4">
@@ -353,7 +358,7 @@ export default function InterviewSessionPage() {
       <div className="h-16 md:h-20 glass-dark px-4 md:px-10 flex items-center justify-between z-50 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-2 md:gap-6">
           <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg md:rounded-xl flex items-center justify-center">
-            <GraduationCap className="text-white w-5 h-5 md:w-6 md:h-6" />
+            <BrainCircuit className="text-white w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div className="h-6 md:h-8 w-px bg-white/10 hidden md:block" />
           <Badge variant="outline" className="text-[8px] md:text-[10px] glass border-white/10 text-slate-400 py-1 md:py-2 px-3 md:px-6 rounded-full font-black uppercase tracking-widest">
@@ -459,10 +464,10 @@ export default function InterviewSessionPage() {
 
         <div className="w-full md:w-[380px] lg:w-[480px] glass-dark md:border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden max-h-[40vh] md:max-h-none">
           <div className="p-6 md:p-10 space-y-6 md:space-y-10 flex-1 overflow-y-auto scrollbar-hide">
-            <div className="space-y-4 hidden md:block">
+            <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
               <div className="aspect-video glass bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner">
-                <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
+                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
                 <div className="absolute inset-x-0 h-[1px] md:h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
               </div>
             </div>
