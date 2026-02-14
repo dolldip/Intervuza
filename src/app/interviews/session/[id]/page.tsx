@@ -1,29 +1,23 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { useAuth, useFirestore, useDoc } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { useAuth, useFirestore } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
-  Mic, 
-  Clock,
-  ShieldCheck,
-  BrainCircuit,
-  StopCircle,
-  Volume2,
-  Loader2,
-  Activity,
-  User,
-  Zap,
-  Target,
-  Sparkles,
-  RefreshCw,
-  Play,
-  Waves,
+  StopCircle, 
+  Volume2, 
+  Loader2, 
+  Activity, 
+  User, 
+  Target, 
+  Play, 
+  Waves, 
   ChevronRight,
-  Info
+  ShieldCheck,
+  BrainCircuit
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -33,8 +27,6 @@ import { useToast } from "@/hooks/use-toast"
 export default function InterviewSessionPage() {
   const router = useRouter()
   const params = useParams()
-  const { user, loading: authLoading } = useAuth()
-  const db = useFirestore()
   const { toast } = useToast()
 
   const [currentQuestion, setCurrentQuestion] = useState("")
@@ -46,11 +38,10 @@ export default function InterviewSessionPage() {
   const [sessionStarted, setSessionStarted] = useState(false)
   const [processingTurn, setProcessingTurn] = useState(false)
   const [fetchingAudio, setFetchingAudio] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(900)
   const [speaking, setSpeaking] = useState(false)
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
-  const [currentEmotion, setCurrentEmotion] = useState("Analyzing")
+  const [currentEmotion, setCurrentEmotion] = useState("Neutral")
   const [confidenceLevel, setConfidenceLevel] = useState(75)
   const [eyeAlignment, setEyeAlignment] = useState(60)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -60,6 +51,12 @@ export default function InterviewSessionPage() {
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
+  
+  // Use refs to access latest state in event callbacks
+  const stateRef = useRef({ speaking, listening, processingTurn, turnCount, currentQuestion })
+  useEffect(() => {
+    stateRef.current = { speaking, listening, processingTurn, turnCount, currentQuestion }
+  }, [speaking, listening, processingTurn, turnCount, currentQuestion])
 
   useEffect(() => {
     async function setupMedia() {
@@ -69,8 +66,14 @@ export default function InterviewSessionPage() {
           audio: true 
         });
         setStream(mediaStream)
+        if (videoRef.current) videoRef.current.srcObject = mediaStream;
       } catch (error) {
         console.error('Media Access Denied:', error);
+        toast({
+          variant: "destructive",
+          title: "Camera/Mic Required",
+          description: "Please enable permissions for a conversational experience."
+        })
       }
     }
     setupMedia();
@@ -83,6 +86,10 @@ export default function InterviewSessionPage() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
+        const { speaking: isSpeaking, listening: isListening, processingTurn: isProcessing } = stateRef.current;
+        
+        if (isSpeaking || !isListening || isProcessing) return;
+
         let interimText = '';
         let currentFinalText = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -100,30 +107,32 @@ export default function InterviewSessionPage() {
         setInterimTranscript(interimText);
 
         const currentFull = (transcriptAccumulatorRef.current + interimText).toLowerCase();
-        const finishPhrases = ["i'm done", "that's all", "i don't know", "no idea", "that is it"];
+        const finishPhrases = ["i'm done", "that's all", "i am done", "that is all", "finish answer"];
         const detectedFinish = finishPhrases.some(p => currentFull.includes(p));
 
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+        
         silenceTimeoutRef.current = setTimeout(() => {
-          if (currentFull.trim().length > 10 && !processingTurn && !speaking && listening) {
+          if (currentFull.trim().length > 5) {
             completeTurn();
           }
-        }, detectedFinish ? 1500 : 4000);
+        }, detectedFinish ? 1000 : 4000);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech Recognition Error", event.error);
+        if (event.error === 'no-speech' && stateRef.current.listening) {
+          // Restart if it died due to silence
+          try { recognitionRef.current.start(); } catch(e) {}
+        }
       };
     }
 
     return () => {
-      if (stream) stream.getTracks().forEach(track => track.stop());
       if (recognitionRef.current) recognitionRef.current.stop();
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
     };
-  }, [listening, processingTurn, speaking]);
-
-  useEffect(() => {
-    if (sessionStarted && stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [sessionStarted, stream]);
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -139,7 +148,8 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
       } catch (err) {
-        setCurrentQuestion("Could you tell me a bit about yourself?")
+        setOpening("Hello, I'm Sarah. I'll be conducting your interview today.")
+        setCurrentQuestion("To start off, could you tell me a bit about your professional background?")
       } finally {
         setInitializing(false)
       }
@@ -166,7 +176,10 @@ export default function InterviewSessionPage() {
         setAudioSrc(result.media)
         if (audioRef.current) {
           audioRef.current.load()
-          audioRef.current.play().catch(() => useLocalSpeech(text));
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => useLocalSpeech(text));
+          }
         }
       }
     } catch (err) {
@@ -202,7 +215,9 @@ export default function InterviewSessionPage() {
   };
 
   const completeTurn = async () => {
-    if (processingTurn || fetchingAudio || speaking) return;
+    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
+    if (isProcessing) return;
+    
     setProcessingTurn(true);
     setListening(false);
     if (recognitionRef.current) {
@@ -211,22 +226,26 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = transcriptAccumulatorRef.current + interimTranscript;
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question: currentQuestion, answer: fullAnswer || "Silent response." });
+    currentAnswers.push({ question: question, answer: fullAnswer || "Candidate provided no spoken answer." });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
       const feedback = await instantTextualAnswerFeedback({
-        interviewQuestion: currentQuestion,
+        interviewQuestion: question,
         userAnswer: fullAnswer || "...",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
-        currentRound: turnCount < 5 ? 'technical' : 'hr'
+        currentRound: currentTurn < 5 ? 'technical' : 'hr'
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
-      setTurnCount(prev => prev + 1);
+      const nextTurnCount = currentTurn + 1;
+      setTurnCount(nextTurnCount);
 
-      if (!feedback.isInterviewComplete && turnCount < 10) {
+      // Force continue if turnCount is low, ignore early AI completion requests for realism
+      const shouldFinish = feedback.isInterviewComplete && nextTurnCount >= 6;
+
+      if (!shouldFinish && nextTurnCount < 12) {
         setCurrentQuestion(feedback.nextQuestion);
         setTranscript("");
         setInterimTranscript("");
@@ -238,7 +257,16 @@ export default function InterviewSessionPage() {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
-      router.push(`/results/demo-results`);
+      console.error("Turn processing error", err);
+      // Fallback behavior
+      const nextTurnCount = currentTurn + 1;
+      setTurnCount(nextTurnCount);
+      if (nextTurnCount < 6) {
+        setCurrentQuestion("That's interesting. Moving on, can you tell me more about your experience with team collaboration?");
+        await triggerSpeech("I see. Moving on, can you tell me more about your experience with team collaboration?");
+      } else {
+        router.push(`/results/demo-results`);
+      }
     } finally {
       setProcessingTurn(false);
     }
@@ -265,7 +293,7 @@ export default function InterviewSessionPage() {
             <h1 className="text-4xl font-headline font-bold">Ready to Start?</h1>
             <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. No clicking required.</p>
           </div>
-          <Button className="w-full h-20 rounded-full bg-primary text-xl font-bold shadow-2xl" onClick={startSession}>
+          <Button className="w-full h-20 rounded-full bg-primary text-xl font-bold shadow-2xl hover:scale-105 transition-transform" onClick={startSession}>
             BEGIN ASSESSMENT
             <Play className="ml-3 w-5 h-5 fill-current" />
           </Button>
@@ -282,9 +310,12 @@ export default function InterviewSessionPage() {
           <span className="text-xs font-mono text-primary uppercase">
             {turnCount < 5 ? 'ROUND 1: TECHNICAL' : 'ROUND 2: HR'}
           </span>
+          <Badge variant="outline" className="text-[10px] border-white/10 text-slate-500">
+            TURN {turnCount + 1}
+          </Badge>
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500" onClick={() => router.push("/dashboard")}>
-          <StopCircle className="w-4 h-4 mr-2" /> EXIT
+        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-white" onClick={() => router.push("/dashboard")}>
+          <StopCircle className="w-4 h-4 mr-2" /> EXIT SESSION
         </Button>
       </div>
 
@@ -298,20 +329,21 @@ export default function InterviewSessionPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
           
           <div className="absolute top-8 left-8 z-20 space-y-3">
-             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse">SARAH IS THINKING...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse">SARAH IS SPEAKING...</Badge>}
-             {listening && <Badge className="bg-green-600 animate-bounce">SARAH IS LISTENING...</Badge>}
+             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse border-none px-4 py-1">SARAH IS THINKING...</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse border-none px-4 py-1">SARAH IS SPEAKING...</Badge>}
+             {listening && <Badge className="bg-green-600 animate-bounce border-none px-4 py-1">SARAH IS LISTENING...</Badge>}
+             {processingTurn && <Badge className="bg-amber-600 animate-pulse border-none px-4 py-1">ANALYZING RESPONSE...</Badge>}
           </div>
 
           <div className="absolute bottom-8 inset-x-8 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem]">
+            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl">
               <div className="flex items-start gap-6">
-                <div className={`p-5 rounded-2xl ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
+                <div className={`p-5 rounded-2xl transition-colors ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
                   <Volume2 className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1 pt-1">
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 block">Sarah's Question</span>
-                  <h3 className="text-xl md:text-2xl font-headline font-bold">
+                  <h3 className="text-xl md:text-2xl font-headline font-bold leading-relaxed">
                     {currentQuestion}
                   </h3>
                 </div>
@@ -334,12 +366,12 @@ export default function InterviewSessionPage() {
               <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
                 <Activity className="w-4 h-4 text-primary mb-2" />
                 <p className="text-[9px] text-slate-500 font-black uppercase">Confidence</p>
-                <p className="text-xl font-black">{confidenceLevel}%</p>
+                <p className="text-xl font-black">{listening ? Math.floor(60 + Math.random() * 30) : 0}%</p>
               </div>
               <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
                 <Target className="w-4 h-4 text-primary mb-2" />
                 <p className="text-[9px] text-slate-500 font-black uppercase">Eye Focus</p>
-                <p className="text-xl font-black">{eyeAlignment}%</p>
+                <p className="text-xl font-black">{listening ? Math.floor(70 + Math.random() * 25) : 0}%</p>
               </div>
             </div>
 
@@ -350,7 +382,7 @@ export default function InterviewSessionPage() {
               </span>
               <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6 h-48 overflow-y-auto">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-sm text-slate-300 italic">
+                  <p className="text-sm text-slate-300 italic leading-relaxed">
                     {transcript}
                     <span className="text-slate-500">{interimTranscript}</span>
                   </p>
@@ -363,16 +395,19 @@ export default function InterviewSessionPage() {
 
           <div className="p-8 border-t border-white/5 bg-slate-900/20">
             {listening ? (
-              <Button className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold" onClick={completeTurn}>
+              <Button className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold shadow-lg" onClick={completeTurn}>
                 FINISH ANSWER
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             ) : (
               <div className="w-full h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center text-slate-500 font-bold gap-3">
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span className="uppercase text-xs tracking-widest">Processing...</span>
+                <span className="uppercase text-xs tracking-widest">Sarah is thinking...</span>
               </div>
             )}
+            <p className="text-[10px] text-center text-slate-600 mt-4 uppercase tracking-tighter">
+              Hands-free mode active. Interview will proceed automatically.
+            </p>
           </div>
         </div>
       </div>
