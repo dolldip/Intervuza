@@ -77,7 +77,6 @@ export default function InterviewSessionPage() {
   
   const historyRef = useRef<string[]>([])
 
-  // Callback ref to ensure video srcObject is set correctly when element mounts
   const videoRef = useCallback((node: HTMLVideoElement | null) => {
     if (node && stream) {
       node.srcObject = stream;
@@ -283,6 +282,7 @@ export default function InterviewSessionPage() {
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "mid",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
+        jobDescriptionText: sessionStorage.getItem('demo_jd') || "",
         resumeText: sessionStorage.getItem('demo_resume') || "",
         previousQuestions: historyRef.current,
         isStuck: forcedStuck || isStuck
