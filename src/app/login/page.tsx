@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -40,9 +39,12 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       let message = "Invalid email or password.";
-      if (error.code === 'auth/invalid-credential') {
-        message = "The credentials provided are incorrect. Please try again.";
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = "The credentials provided are incorrect. Please verify your email and password.";
+      } else if (error.code === 'auth/too-many-requests') {
+        message = "Too many failed attempts. Please try again later or reset your password.";
       }
+      
       toast({
         variant: "destructive",
         title: "Login Failed",
@@ -161,7 +163,7 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <Label htmlFor="password">Password</Label>
-                      <Link href="/forgot-password" className="text-primary font-bold hover:underline text-sm">Forgot password?</Link>
+                      <Link href="/forgot-password" title="Recover account password" className="text-primary font-bold hover:underline text-sm">Forgot password?</Link>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
