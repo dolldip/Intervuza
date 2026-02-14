@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -22,7 +23,8 @@ import {
   Zap,
   Code2,
   Terminal,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -53,6 +55,7 @@ export default function InterviewSessionPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
+  const [isStuck, setIsStuck] = useState(false)
   
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
@@ -61,6 +64,7 @@ export default function InterviewSessionPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const stuckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
   const stateRef = useRef({ 
@@ -70,7 +74,8 @@ export default function InterviewSessionPage() {
     turnCount, 
     currentQuestion, 
     askedQuestions,
-    sessionStarted
+    sessionStarted,
+    isStuck
   })
 
   useEffect(() => {
@@ -81,11 +86,11 @@ export default function InterviewSessionPage() {
       turnCount, 
       currentQuestion, 
       askedQuestions,
-      sessionStarted
+      sessionStarted,
+      isStuck
     }
-  }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted])
+  }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
-  // Realistic Biometrics Logic tied to real transcript
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
@@ -95,16 +100,16 @@ export default function InterviewSessionPage() {
       setConfidenceLevel(prev => {
         let change = (Math.random() * 2) - 1; 
         if (isListening) {
-          if (currentText.length < 5) change -= 2; // Penalize silence
-          if (currentText.length > 50) change += 1.5; // Reward detailed answers
-          if (currentText.toLowerCase().includes('um') || currentText.toLowerCase().includes('uh')) change -= 5; // Penalize fillers
+          if (currentText.length < 5) change -= 2; 
+          if (currentText.length > 50) change += 1.5; 
+          if (currentText.toLowerCase().includes('um') || currentText.toLowerCase().includes('uh')) change -= 5;
         }
         return Math.min(100, Math.max(0, prev + change));
       });
 
       setEyeFocus(prev => {
         let change = (Math.random() * 4) - 2;
-        if (Math.random() > 0.98) change = -40; // Simulate major distraction
+        if (Math.random() > 0.98) change = -30;
         return Math.min(100, Math.max(0, prev + change));
       });
     }, 1000);
@@ -126,11 +131,6 @@ export default function InterviewSessionPage() {
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Required',
-          description: 'Please enable camera permissions in your browser settings to conduct the assessment.',
-        });
       }
     };
 
@@ -160,6 +160,8 @@ export default function InterviewSessionPage() {
         if (currentFinalText) {
           transcriptAccumulatorRef.current += currentFinalText + ' ';
           setTranscript(transcriptAccumulatorRef.current);
+          setIsStuck(false);
+          if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         }
         setInterimTranscript(interimText);
 
@@ -167,9 +169,19 @@ export default function InterviewSessionPage() {
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
           if (combinedText.length > 20) {
-             completeTurn();
+             completeTurn(false);
           }
-        }, 6000); // Wait 6s of silence to auto-complete
+        }, 5000); 
+
+        // Stuck Detection logic
+        if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
+        stuckTimeoutRef.current = setTimeout(() => {
+          const { listening: isListeningNow } = stateRef.current;
+          if (isListeningNow) {
+            setIsStuck(true);
+            completeTurn(true);
+          }
+        }, 12000); // 12 seconds of silence/struggle
       };
 
       recognitionRef.current.onend = () => {
@@ -183,6 +195,7 @@ export default function InterviewSessionPage() {
     return () => {
       if (recognitionRef.current) recognitionRef.current.stop();
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+      if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
       if (stream) stream.getTracks().forEach(track => track.stop());
     };
   }, []);
@@ -204,7 +217,7 @@ export default function InterviewSessionPage() {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: ["Linguistic Precision", "Problem Solving", "Domain Mastery"],
+          skills: ["Logic", "Domain Expertise", "Communication"],
           jobDescriptionText: demoJd,
           roundType: demoRound
         })
@@ -213,8 +226,8 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        setOpening("Hi, I'm Aria. I'm really glad we could connect for this assessment today.")
-        const fb = "To kick things off, could you walk me through your journey and what specifically sparked your interest in this role?";
+        setOpening("Hi, I'm Aria. It's truly a pleasure to meet you today.")
+        const fb = "To get us started, could you walk me through your journey and what sparked your interest in this role?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
         sessionStorage.setItem('session_answers', '[]');
@@ -274,7 +287,7 @@ export default function InterviewSessionPage() {
     if (recognitionRef.current) try { recognitionRef.current.start(); } catch (e) {}
   };
 
-  const completeTurn = async () => {
+  const completeTurn = async (forcedStuck: boolean = false) => {
     const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question, askedQuestions: history } = stateRef.current;
     if (isProcessing) return;
     
@@ -284,29 +297,33 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || "Silence." });
+    currentAnswers.push({ question, answer: fullAnswer || (forcedStuck ? "Struggled to answer." : "Silence.") });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
-        userAnswer: fullAnswer || "No verbal input provided.",
+        userAnswer: fullAnswer || (forcedStuck ? "I'm finding this a bit difficult." : "No verbal input."),
         jobRole: sessionStorage.getItem('demo_role') || "Professional",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
-        previousQuestions: history
+        previousQuestions: history,
+        isStuck: forcedStuck || fullAnswer.length < 10
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
-      const nextTurnCount = currentTurn + 1;
+      const nextTurnCount = feedback.isOfferingHint ? currentTurn : currentTurn + 1;
       setTurnCount(nextTurnCount);
 
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setCurrentQuestion(feedback.nextQuestion);
-        setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
+        if (!feedback.isOfferingHint) {
+          setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
+        }
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
+        setIsStuck(false);
         
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         await triggerSpeech(finalPrompt);
@@ -322,7 +339,7 @@ export default function InterviewSessionPage() {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
-      console.error("Session turn processing error:", err);
+      console.error("Session turn error:", err);
       router.push(`/results/demo-results`);
     } finally {
       setProcessingTurn(false);
@@ -347,18 +364,18 @@ export default function InterviewSessionPage() {
             <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-all" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl font-headline font-bold uppercase tracking-tighter">High-Stakes Assessment</h1>
-            <p className="text-slate-400 text-lg">Aria is ready to analyze your technical logic and linguistic clarity. Ensure your camera is centered.</p>
+            <h1 className="text-5xl font-headline font-bold uppercase tracking-tighter">Aria Assessment</h1>
+            <p className="text-slate-400 text-lg">Aria is ready to evaluate your technical logic and professional engagement.</p>
           </div>
           <Button className="w-full h-20 rounded-[2.5rem] bg-primary text-2xl font-black shadow-lg hover:scale-[1.03] transition-all shadow-primary/30" onClick={startSession}>
-            BEGIN SESSION
+            BEGIN ASSESSMENT
             <Play className="ml-4 w-6 h-6 fill-current" />
           </Button>
           {!hasCameraPermission && (
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/30 rounded-2xl">
               <AlertCircle className="h-5 w-5" />
-              <AlertTitle>Hardware Access Required</AlertTitle>
-              <AlertDescription>Please allow camera access to conduct the assessment.</AlertDescription>
+              <AlertTitle>Camera Required</AlertTitle>
+              <AlertDescription>Please enable camera access to start the session.</AlertDescription>
             </Alert>
           )}
         </div>
@@ -379,12 +396,11 @@ export default function InterviewSessionPage() {
           </span>
         </div>
         <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-500 font-bold" onClick={() => router.push(`/dashboard`)}>
-          <StopCircle className="w-4 h-4 mr-2" /> TERMINATE SESSION
+          <StopCircle className="w-4 h-4 mr-2" /> TERMINATE
         </Button>
       </div>
 
       <div className="flex-1 flex relative bg-slate-950">
-        {/* Main AI Interaction Pane */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0">
              <img 
@@ -398,9 +414,10 @@ export default function InterviewSessionPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
           
           <div className="absolute top-10 left-10 z-20 flex flex-col gap-4">
-             {fetchingAudio && <Badge className="bg-blue-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full shadow-2xl text-xs font-black">ARIA IS REASONING...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black"><Volume2 className="w-4 h-4" /> ARIA IS SPEAKING</Badge>}
-             {listening && <Badge className="bg-green-600/90 backdrop-blur-md animate-bounce px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black"><Mic className="w-4 h-4" /> LISTENING TO CANDIDATE</Badge>}
+             {fetchingAudio && <Badge className="bg-blue-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full shadow-2xl text-xs font-black uppercase tracking-widest">Aria is reasoning...</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><Volume2 className="w-4 h-4" /> Aria is speaking</Badge>}
+             {listening && !isStuck && <Badge className="bg-green-600/90 backdrop-blur-md animate-bounce px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><Mic className="w-4 h-4" /> Listening</Badge>}
+             {isStuck && <Badge className="bg-amber-600/90 backdrop-blur-md animate-pulse px-6 py-2 rounded-full flex gap-3 shadow-2xl text-xs font-black uppercase tracking-widest"><HelpCircle className="w-4 h-4" /> Detection: Stuck</Badge>}
           </div>
 
           <div className="absolute bottom-12 inset-x-12 z-20">
@@ -412,7 +429,6 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* Side Panel: Biometrics & Feed */}
         <div className="w-[480px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl">
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             
@@ -420,11 +436,6 @@ export default function InterviewSessionPage() {
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block text-center">Neural Biometric Feed</span>
               <div className="aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative group shadow-2xl">
                 <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                {!hasCameraPermission && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80">
-                    <AlertCircle className="w-10 h-10 text-red-500" />
-                  </div>
-                )}
                 <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                 <div className="absolute inset-x-0 h-[3px] bg-primary/60 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
               </div>
@@ -459,7 +470,7 @@ export default function InterviewSessionPage() {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
                     <Mic className="w-10 h-10 opacity-20" />
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-black">Awaiting Candidate Input</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] font-black">Awaiting Input</p>
                   </div>
                 )}
               </div>
@@ -468,14 +479,14 @@ export default function InterviewSessionPage() {
 
           <div className="p-10 border-t border-white/5 bg-slate-900/30">
             {listening ? (
-              <Button className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 font-black text-xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform" onClick={completeTurn}>
+              <Button className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 font-black text-xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform" onClick={() => completeTurn(false)}>
                 SUBMIT RESPONSE
                 <CheckCircle2 className="ml-3 w-6 h-6" />
               </Button>
             ) : (
               <div className="w-full h-20 rounded-[2.5rem] bg-slate-800/40 flex items-center justify-center text-slate-500 font-black gap-4 border border-white/5">
                 <Loader2 className="animate-spin h-6 w-6" />
-                <span className="text-xs uppercase tracking-[0.2em]">Aria is Processing...</span>
+                <span className="text-xs uppercase tracking-[0.2em]">Aria is Reasoning...</span>
               </div>
             )}
           </div>
