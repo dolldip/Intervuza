@@ -28,7 +28,6 @@ import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-questio
 import { textToSpeech } from "@/ai/flows/tts-flow"
 import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
 import { useToast } from "@/hooks/use-toast"
-import { isMockConfig } from "@/firebase/config"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -52,6 +51,7 @@ export default function InterviewSessionPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [speaking, setSpeaking] = useState(false)
   const [listening, setListening] = useState(false)
+  const [audioSrc, setAudioSrc] = useState<string | null>(null)
   
   const [currentEmotion, setCurrentEmotion] = useState("Analyzing")
   const [confidenceLevel, setConfidenceLevel] = useState(75)
@@ -194,8 +194,9 @@ export default function InterviewSessionPage() {
     try {
       const { media } = await textToSpeech(text)
       setFetchingAudio(false)
+      setAudioSrc(media)
       if (audioRef.current) {
-        audioRef.current.src = media;
+        audioRef.current.load()
         await audioRef.current.play();
       }
     } catch (err) {
@@ -431,7 +432,12 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
-      <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />
+      <audio 
+        ref={audioRef} 
+        src={audioSrc || undefined} 
+        onEnded={handleAudioEnded} 
+        className="hidden" 
+      />
 
       <style jsx global>{`
         @keyframes scan {
