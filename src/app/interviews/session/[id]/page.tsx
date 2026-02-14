@@ -112,10 +112,10 @@ export default function InterviewSessionPage() {
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const totalText = transcriptAccumulatorRef.current + interimText;
-          if (totalText.trim().length > 15 && !processingTurn && !speaking) {
+          if (totalText.trim().length > 15 && !processingTurn && !speaking && listening) {
             completeTurn();
           }
-        }, 3500); 
+        }, 4000); // 4 seconds of silence to auto-complete turn
       };
     }
 
@@ -124,7 +124,7 @@ export default function InterviewSessionPage() {
       if (recognitionRef.current) recognitionRef.current.stop();
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
     };
-  }, []);
+  }, [listening, processingTurn, speaking]);
 
   useEffect(() => {
     if (sessionStarted && stream && videoRef.current) {
@@ -175,7 +175,7 @@ export default function InterviewSessionPage() {
     } else if (timeLeft === 0 && sessionStarted) {
       router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
     }
-  }, [sessionStarted, timeLeft]);
+  }, [sessionStarted, timeLeft, params.id, router]);
 
   const triggerSpeech = async (text: string) => {
     setSpeaking(true)
@@ -211,7 +211,13 @@ export default function InterviewSessionPage() {
   const useLocalSpeech = (text: string) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onend = handleAudioEnded;
+    utterance.onend = () => {
+      setSpeaking(false);
+      setListening(true);
+      if (recognitionRef.current) {
+        try { recognitionRef.current.start(); } catch (e) {}
+      }
+    };
     window.speechSynthesis.speak(utterance);
   }
 

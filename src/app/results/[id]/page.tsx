@@ -23,7 +23,8 @@ import {
   Sparkles,
   ShieldCheck,
   Zap,
-  Activity
+  Activity,
+  Target
 } from "lucide-react"
 import Link from "next/link"
 import { comprehensiveInterviewFeedbackReport, ComprehensiveInterviewFeedbackReportOutput } from "@/ai/flows/comprehensive-interview-feedback-report"
@@ -246,6 +247,7 @@ export default function ResultsPage() {
                     <img 
                       src={`https://picsum.photos/seed/face-map/800/600`} 
                       className="object-cover w-full h-full opacity-70 grayscale-[0.2]" 
+                      alt="Face Map"
                     />
                     <div className="absolute inset-0 border-[30px] border-black/10 rounded-[2.5rem] m-6 pointer-events-none" />
                     <div className="absolute top-8 left-8 bg-primary text-white px-4 py-2 rounded-2xl text-[10px] font-black tracking-widest shadow-2xl">LIVE_MAP_V4</div>
