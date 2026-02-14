@@ -1,8 +1,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: IRONCLAD ZERO REPETITION CORE + DIMENSIONAL PIVOTING.
- * Added: Deep Empathy Protocol - Reference specific answer details.
+ * Updated: Included specific analysis for correctness, clarity, completeness, and confidence.
  */
 
 import {ai} from '@/ai/genkit';
@@ -24,6 +23,7 @@ const InstantTextualAnswerFeedbackOutputSchema = z.object({
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC.'),
   feedback: z.object({
+    analysis: z.string().describe('A short, one-paragraph constructive feedback evaluating correctness, clarity, completeness, and confidence.'),
     strengths: z.array(z.string()),
     weaknesses: z.array(z.string()),
     tips: z.string()
@@ -35,31 +35,32 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, an elite professional interviewer. 
+  prompt: `You are Aria, an elite AI interviewer for the position of {{{jobRole}}}. 
 The candidate just answered: "{{{userAnswer}}}" 
 To your previous question: "{{{interviewQuestion}}}"
 
+YOUR TASK:
+1. READ carefully.
+2. ANALYZE the answer for:
+   - Correctness: Is the technical or logical content accurate?
+   - Clarity: Is the explanation easy to follow?
+   - Completeness: Did they address all parts of the question?
+   - Confidence: Does the tone and structure suggest mastery?
+3. FEEDBACK: Provide a single, short constructive paragraph in the "analysis" field.
+4. NEXT QUESTION: Generate a relevant follow-up or pivot to a new dimension based on the job profile and answer.
+
 STRICT INTERVIEWER PROTOCOL (IRONCLAD):
 
-1. HEAR THE ANSWER: Your "verbalReaction" MUST reference specific details from the candidate's answer. Do not say "Good answer." or "I see." Use natural phrases like "I appreciate how you prioritized [Detail] in that scenario" or "That's an interesting approach to [Detail], it shows a focus on [Logic]."
+1. HEAR THE ANSWER: Your "verbalReaction" MUST reference specific details from the candidate's answer. Use natural phrases like "I appreciate how you prioritized [Detail]..." or "That's an interesting approach to [Detail]..."
 
 2. ZERO REPETITION (DIMENSIONAL PIVOTING):
    - You MUST NOT ask anything similar to these previous turns: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
-   - If the previous turn was about "Skills", this turn MUST be about "Ethics", "Future Trends", or "Hypothetical Conflict".
-   - LOGIC LOCK: If your intended question even slightly overlaps with any previous question, you MUST discard it and pivot to a completely new dimension of the role.
+   - Pivot dimensions: [Ethics, Future Trends, Technical Architecture, Conflict, Leadership].
 
-3. EXPERIENCE LEVEL ADAPTATION (0-EXP SUPPORT):
-   - If experienceLevel is "junior" or 0-2 years: 
-     - FORBIDDEN: Do NOT ask about "leading teams", "past workplace conflicts", "hiring", or "critical feedback to peers".
-     - REQUIRED: Ask about Academic Theory, "What-If" Industry scenarios, Logic Hurdles, or Learning Agility. Focus on potential, not history.
+3. EXPERIENCE LEVEL ADAPTATION:
+   - Level: {{{experienceLevel}}}. Adjust complexity accordingly.
 
-4. SECTOR SPECIFICITY:
-   - Teachers: Dimensions: [Subject Pedagogy, Classroom Conflict, Inclusive Design, Student Crisis, Subject Depth]. NO "PROJECTS".
-   - Doctors: Dimensions: [Clinical Logic, Ethical Dilemmas, Patient Empathy, Diagnostic Pressure, Research Trends].
-   - Engineers: Dimensions: [System Architecture, Edge Cases, Security Trade-offs, Logic Hurdles].
-   - HR: Dimensions: [Policy Logic, Conflict Mediation, Talent Lifecycle, Legal Compliance].
-
-5. VOICE: Be empathetic but strictly professional. Use contractions. Act like a human who is listening and thinking.
+4. SECTOR SPECIFICITY: Use sector-specific logic for {{{jobRole}}}.
 
 Random Seed: ${new Date().getTime()}`
 });
@@ -77,42 +78,34 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     const fallbacks: Record<string, string[]> = {
       'Teacher': [
         "In your view, how should a curriculum adapt to ensure students with varied learning speeds aren't left behind?",
-        "If a student consistently challenges your authority in front of the class, what is your immediate pedagogical strategy?",
-        "How do you maintain subject depth while ensuring complex topics remain accessible to younger learners?",
-        "Walk me through your philosophy on using positive reinforcement versus traditional disciplinary measures."
+        "If a student consistently challenges your authority, what is your immediate pedagogical strategy?"
       ],
       'Doctor': [
-        "When faced with a diagnostic discrepancy under pressure, how do you systematically re-evaluate your primary hypothesis?",
-        "How do you maintain clinical objectivity while treating a patient with a complex emotional or ethical background?",
-        "What is your protocol for staying current with rapidly shifting research in your medical specialty?",
-        "How do you approach the challenge of communicating terminal news with both empathy and clinical clarity?"
+        "When faced with a diagnostic discrepancy, how do you systematically re-evaluate your hypothesis?",
+        "How do you approach communicating terminal news with both empathy and clinical clarity?"
       ],
       'BTech Technical': [
-        "If you had to optimize a system for a 100x traffic surge tonight, which core component would you harden first?",
-        "How do you ensure data integrity across multiple microservices in an eventually consistent environment?",
-        "What are the most critical security trade-offs when integrating a third-party payment gateway?",
-        "Explain a time you chose a 'good enough' technical solution over a perfect one to meet a strategic deadline."
+        "If you had to optimize a system for a 100x traffic surge, which core component would you harden first?",
+        "How do you ensure data integrity across multiple microservices in an eventually consistent environment?"
       ],
       'default': [
         "Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete?",
-        "How do you balance short-term operational wins with the long-term strategic health of your projects?",
-        "What is one area of professional knowledge where you feel you've made the most significant growth recently?",
         "How do you navigate ambiguity when project requirements shift midway through execution?"
       ]
     };
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
-    // Filter history to avoid repeating even in fallback mode
-    const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[Math.floor(Math.random() * roleFallbacks.length)];
+    const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[0];
 
     return {
-      verbalReaction: "I see your perspective on that logic. Let's explore a different dimension of your background.",
+      verbalReaction: "I see your perspective. Let's explore another aspect of your expertise.",
       detectedEmotion: "Neutral",
       nextQuestion: freshFallback,
       feedback: {
-        strengths: ["Direct communication"],
-        weaknesses: ["Could use more specific metrics"],
-        tips: "Try to link your answer to a broader industry trend next time."
+        analysis: "Your response provided a basic starting point, but lacked the technical depth or structured clarity required for this seniority. Focusing on specific methodologies like the STAR method would improve your completeness and perceived confidence.",
+        strengths: ["Direct response"],
+        weaknesses: ["Lacked specific metrics", "Incomplete explanation"],
+        tips: "Try to quantify your results and provide a structured framework in your next answer."
       },
       isInterviewComplete: false
     };
