@@ -24,13 +24,15 @@ import {
   Code2,
   Terminal,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  VideoOff
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
 import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { PlaceHolderImages } from "@/lib/placeholder-images"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -60,7 +62,7 @@ export default function InterviewSessionPage() {
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
 
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const userVideoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -91,6 +93,7 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
+  // Biometric sensitivity logic
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
@@ -102,14 +105,14 @@ export default function InterviewSessionPage() {
         if (isListening) {
           if (currentText.length < 5) change -= 2; 
           if (currentText.length > 50) change += 1.5; 
-          if (currentText.toLowerCase().includes('um') || currentText.toLowerCase().includes('uh')) change -= 5;
+          if (currentText.toLowerCase().includes('um') || currentText.toLowerCase().includes('uh')) change -= 3;
         }
         return Math.min(100, Math.max(0, prev + change));
       });
 
       setEyeFocus(prev => {
-        let change = (Math.random() * 4) - 2;
-        if (Math.random() > 0.98) change = -30;
+        let change = (Math.random() * 2) - 1;
+        if (Math.random() > 0.99) change = -20;
         return Math.min(100, Math.max(0, prev + change));
       });
     }, 1000);
@@ -120,17 +123,22 @@ export default function InterviewSessionPage() {
     const getCameraPermission = async () => {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
+          video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
           audio: true 
         });
         setStream(mediaStream)
         setHasCameraPermission(true)
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = mediaStream;
         }
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions to use the biometric features.',
+        });
       }
     };
 
@@ -173,7 +181,7 @@ export default function InterviewSessionPage() {
           }
         }, 5000); 
 
-        // Stuck Detection logic
+        // Stuck Detection logic: 10 seconds of silence/struggle
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
           const { listening: isListeningNow } = stateRef.current;
@@ -181,7 +189,7 @@ export default function InterviewSessionPage() {
             setIsStuck(true);
             completeTurn(true);
           }
-        }, 12000); // 12 seconds of silence/struggle
+        }, 10000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -200,11 +208,12 @@ export default function InterviewSessionPage() {
     };
   }, []);
 
+  // Ensure video element receives the stream whenever it is mounted or stream changes
   useEffect(() => {
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
+    if (stream && userVideoRef.current) {
+      userVideoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, sessionStarted, hasCameraPermission]);
 
   useEffect(() => {
     async function init() {
@@ -346,6 +355,8 @@ export default function InterviewSessionPage() {
     }
   };
 
+  const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://picsum.photos/seed/aria-interviewer/1280/720";
+
   if (initializing) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
@@ -360,7 +371,12 @@ export default function InterviewSessionPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <div className="max-w-xl w-full text-center space-y-10">
           <div className="w-72 h-72 bg-slate-900 rounded-[3.5rem] flex items-center justify-center border-4 border-primary/20 mx-auto overflow-hidden relative shadow-2xl group">
-            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            {!hasCameraPermission && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+                <VideoOff className="w-12 h-12 text-slate-600" />
+              </div>
+            )}
             <div className="absolute inset-0 bg-primary/5 group-hover:bg-transparent transition-all" />
           </div>
           <div className="space-y-4">
@@ -404,10 +420,10 @@ export default function InterviewSessionPage() {
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0">
              <img 
-               src={`https://picsum.photos/seed/aria-interviewer/1280/720`} 
+               src={ariaImage} 
                alt="Aria" 
                className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-125' : 'opacity-70 grayscale-[30%]'}`}
-               data-ai-hint="professional human recruiter"
+               data-ai-hint="professional corporate recruiter"
              />
              {speaking && <div className="absolute inset-0 bg-primary/10 animate-pulse-slow pointer-events-none" />}
           </div>
@@ -435,7 +451,13 @@ export default function InterviewSessionPage() {
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block text-center">Neural Biometric Feed</span>
               <div className="aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative group shadow-2xl">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                {!hasCameraPermission && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 gap-4">
+                    <VideoOff className="w-12 h-12 text-slate-700" />
+                    <p className="text-[10px] uppercase font-black text-slate-700">Webcam Not Found</p>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                 <div className="absolute inset-x-0 h-[3px] bg-primary/60 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
               </div>
