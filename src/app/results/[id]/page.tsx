@@ -36,14 +36,14 @@ export default function ResultsPage() {
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level"
       const answers = JSON.parse(sessionStorage.getItem('session_answers') || '[]')
       
-      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Progress Log: ${JSON.stringify(answers)}`
+      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Answered multiple rounds covering technical and behavioral depth.`
 
       try {
         const result = await comprehensiveInterviewFeedbackReport({
           jobRole: demoRole,
           experienceLevel: demoExp,
           interviewSummary: interviewSummary,
-          confidenceConsistencyScore: 82
+          confidenceConsistencyScore: 85
         })
         setReport(result)
       } catch (err) {
@@ -55,23 +55,13 @@ export default function ResultsPage() {
     load()
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
-        <div className="flex items-center gap-3 text-primary font-black text-sm uppercase tracking-[0.2em] glass px-10 py-4 rounded-full">
-           <Loader2 className="w-5 h-5 animate-spin" />
-           Syncing Professional Audit...
-        </div>
-      </div>
-    )
-  }
-
+  // IMMEDIATE UI: No full-page progress loaders. Show the portal layout immediately.
   return (
     <div className="container py-16 px-6 max-w-7xl animate-fade-in mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-16">
         <div>
           <Badge className="mb-4 glass bg-primary/10 text-primary border-primary/20 px-6 py-2 font-black uppercase tracking-[0.2em] text-[10px] rounded-full">
-            <Sparkles className="w-3 h-3 mr-2" /> Assessment Cycle Complete
+            <Sparkles className="w-3 h-3 mr-2" /> Assessment Complete
           </Badge>
           <h1 className="text-6xl font-headline font-black tracking-tighter leading-tight">Professional Performance Audit</h1>
         </div>
@@ -90,39 +80,49 @@ export default function ResultsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-16">
          <Card className="lg:col-span-2 glass-card p-12 relative overflow-hidden group">
-            <div className="relative z-10 space-y-12">
-               <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-3xl font-headline font-black tracking-tight">Neural Metric Matrix</h3>
-                  <Badge className={`text-sm px-8 py-2.5 rounded-full font-black border-none shadow-2xl ${
-                    report?.verdict === 'Ready' ? 'bg-green-500 shadow-green-500/30' : 
-                    report?.verdict === 'Needs Improvement' ? 'bg-amber-500 shadow-amber-500/30' : 'bg-red-500 shadow-red-500/30'
-                  }`}>
-                    VERDICT: {report?.verdict?.toUpperCase() || "PENDING"}
-                  </Badge>
-               </div>
-               <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
-                  {[
-                    { label: "Role Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit, color: "text-blue-400" },
-                    { label: "Answer Clarity", val: report?.scores?.answerClarity, icon: Sparkles, color: "text-purple-400" },
-                    { label: "Neural Confidence", val: report?.scores?.confidence, icon: Activity, color: "text-primary" },
-                    { label: "Communication", val: report?.scores?.communication, icon: MessageSquare, color: "text-amber-400" },
-                    { label: "Logical Thinking", val: report?.scores?.logicalThinking, icon: Zap, color: "text-cyan-400" },
-                  ].map((s, i) => (
-                    <div key={i} className="space-y-2 group/stat">
-                       <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-[0.2em] group-hover/stat:text-primary transition-colors">
-                          <s.icon className={`w-4 h-4 ${s.color}`} /> {s.label}
-                       </p>
-                       <p className="text-4xl font-black">{s.val ?? "--"}/10</p>
-                    </div>
-                  ))}
-               </div>
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-64 gap-4 text-primary font-black uppercase tracking-widest text-xs">
+                <Loader2 className="animate-spin w-6 h-6" /> Aria Syncing Metrics...
+              </div>
+            ) : (
+              <div className="relative z-10 space-y-12">
+                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                    <h3 className="text-3xl font-headline font-black tracking-tight">Neural Metric Matrix</h3>
+                    <Badge className={`text-sm px-8 py-2.5 rounded-full font-black border-none shadow-2xl ${
+                      report?.verdict === 'Ready' ? 'bg-green-500 shadow-green-500/30' : 
+                      report?.verdict === 'Needs Improvement' ? 'bg-amber-500 shadow-amber-500/30' : 'bg-red-500 shadow-red-500/30'
+                    }`}>
+                      VERDICT: {report?.verdict?.toUpperCase() || "AUDITING"}
+                    </Badge>
+                 </div>
+                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
+                    {[
+                      { label: "Role Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit, color: "text-blue-400" },
+                      { label: "Answer Clarity", val: report?.scores?.answerClarity, icon: Sparkles, color: "text-purple-400" },
+                      { label: "Neural Confidence", val: report?.scores?.confidence, icon: Activity, color: "text-primary" },
+                      { label: "Communication", val: report?.scores?.communication, icon: MessageSquare, color: "text-amber-400" },
+                      { label: "Logical Thinking", val: report?.scores?.logicalThinking, icon: Zap, color: "text-cyan-400" },
+                    ].map((s, i) => (
+                      <div key={i} className="space-y-2 group/stat">
+                         <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-[0.2em] group-hover/stat:text-primary transition-colors">
+                            <s.icon className={`w-4 h-4 ${s.color}`} /> {s.label}
+                         </p>
+                         <p className="text-4xl font-black">{s.val ?? "--"}/10</p>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+            )}
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
          </Card>
          <Card className="glass-card bg-primary text-white p-12 flex flex-col justify-center items-center text-center border-none shadow-2xl relative overflow-hidden group">
-            <Trophy className="w-20 h-20 mb-6 text-white/30 group-hover:scale-110 transition-transform duration-700" />
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-80">Aggregate Performance</p>
-            <h2 className="text-8xl font-black tabular-nums tracking-tighter">{report?.overallScore ?? 0}%</h2>
+            {loading ? <Loader2 className="animate-spin w-12 h-12 opacity-40" /> : (
+              <>
+                <Trophy className="w-20 h-20 mb-6 text-white/30 group-hover:scale-110 transition-transform duration-700" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-80">Aggregate Performance</p>
+                <h2 className="text-8xl font-black tabular-nums tracking-tighter">{report?.overallScore ?? "--"}%</h2>
+              </>
+            )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 inset-x-0 text-[9px] font-black uppercase tracking-[0.4em] opacity-40">Aria Logic Verified</div>
          </Card>
@@ -141,28 +141,32 @@ export default function ResultsPage() {
               <h3 className="flex items-center gap-4 text-2xl font-black mb-8">
                 <CheckCircle2 className="text-green-500 w-8 h-8" /> Identified Strengths
               </h3>
-              <ul className="space-y-4">
-                {(report?.strengths || ["Analyzing strengths..."]).map((s, i) => (
-                  <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
-                    <span className="text-green-500 mt-1.5">•</span>
-                    {s}
-                  </li>
-                ))}
-              </ul>
+              {loading ? <div className="space-y-4">{[1,2].map(i => <div key={i} className="h-20 glass bg-white/5 rounded-2xl animate-pulse" />)}</div> : (
+                <ul className="space-y-4">
+                  {(report?.strengths || []).map((s, i) => (
+                    <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
+                      <span className="text-green-500 mt-1.5">•</span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
 
             <Card className="glass border-amber-500/20 bg-amber-500/5 p-10 shadow-2xl rounded-[3rem]">
               <h3 className="flex items-center gap-4 text-2xl font-black mb-8">
                 <AlertCircle className="text-amber-500 w-8 h-8" /> Optimization Required
               </h3>
-              <ul className="space-y-4">
-                {(report?.weaknesses || ["Analyzing weaknesses..."]).map((w, i) => (
-                  <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
-                    <span className="text-amber-500 mt-1.5">•</span>
-                    {w}
-                  </li>
-                ))}
-              </ul>
+              {loading ? <div className="space-y-4">{[1,2].map(i => <div key={i} className="h-20 glass bg-white/5 rounded-2xl animate-pulse" />)}</div> : (
+                <ul className="space-y-4">
+                  {(report?.weaknesses || []).map((w, i) => (
+                    <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
+                      <span className="text-amber-500 mt-1.5">•</span>
+                      {w}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           </div>
         </TabsContent>
@@ -182,7 +186,7 @@ export default function ResultsPage() {
                        <ShieldCheck className="w-5 h-5" /> Visual Presence Analytics
                     </h4>
                     <p className="text-xl text-slate-300 leading-relaxed italic font-medium">
-                       "{report?.bodyLanguageReport || "Focus and presence remained stable during technical logic turns. Neural sensors indicated consistent role-alignment."}"
+                       {loading ? "Aria is analyzing visual presence turns..." : `"${report?.bodyLanguageReport || "Focus and presence remained stable during technical logic turns. Neural sensors indicated consistent role-alignment."}"`}
                     </p>
                  </div>
                  <div className="grid grid-cols-2 gap-6">
@@ -212,7 +216,7 @@ export default function ResultsPage() {
                 <h2 className="text-5xl font-headline font-black tracking-tighter uppercase">Strategic Road Map</h2>
               </div>
               <p className="text-2xl leading-relaxed text-slate-300 font-medium italic">
-                 {report?.improvementPlan || "Focus on deep architectural explanations and technical STAR method structure for behavioral turns."}
+                 {loading ? "Generating your tactical growth plan..." : report?.improvementPlan || "Focus on deep architectural explanations and technical STAR method structure for behavioral turns."}
               </p>
               <div className="flex gap-6">
                 <Button className="h-20 rounded-[1.5rem] bg-primary text-2xl font-black px-12 shadow-2xl shadow-primary/40 transition-all hover:scale-[1.03]" asChild>

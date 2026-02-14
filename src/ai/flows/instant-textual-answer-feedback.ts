@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: IRONCLAD ZERO REPETITION CORE + EXPERIENCE AWARENESS (0-Exp Support).
+ * Updated: IRONCLAD ZERO REPETITION CORE + DIMENSIONAL PIVOTING.
  */
 
 import {ai} from '@/ai/genkit';
@@ -20,7 +20,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction to the SPECIFIC answer content.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC.'),
   feedback: z.object({
@@ -36,31 +36,31 @@ const prompt = ai.definePrompt({
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
   prompt: `You are Aria, an elite professional interviewer. 
-The candidate answered: "{{{userAnswer}}}" to your question: "{{{interviewQuestion}}}"
+The candidate just answered: "{{{userAnswer}}}" 
+To your previous question: "{{{interviewQuestion}}}"
 
-STRICT INTERVIEWER RULES (IRONCLAD):
-1. ZERO REPETITION: 
-   - Check the "previousQuestions" list: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
-   - If your intended next question is LOGICALLY SIMILAR or covers the SAME SUB-TOPIC as ANY of these, you MUST PIVOT to a completely different dimension of the candidate's role.
-   - DO NOT repeat words or phrasing from previous questions. 
-   - BLACKLIST: Do NOT ask "Can you walk me through a time you had to deliver critical feedback to a peer" unless the role is explicitly Senior Management or HR.
+STRICT INTERVIEWER PROTOCOL (IRONCLAD):
 
-2. EXPERIENCE AWARENESS (0-EXP SUPPORT):
-   - If experienceLevel is "junior" or 0-2 years: DO NOT ask about "leading teams," "hiring," or "delivering critical feedback to peers." 
-   - Instead, ask about: Theoretical hurdles, academic projects, "What would you do" hypothetical scenarios, or subject-depth logic.
-   - For mid/senior: Ask about high-stakes leadership, architecture trade-offs, and legacy management.
+1. HEAR THE ANSWER: Your "verbalReaction" MUST reference specific details from the candidate's answer. Do not say "Good answer." Say "I appreciate how you prioritized [Detail] in that scenario."
 
-3. ROLE-SENSITIVE TECHNICALITY:
-   - For Teachers: Focus on Pedagogy, Inclusion, Classroom Conflict, Student engagement, or Lesson Design.
-   - For Doctors: Focus on Clinical Reasoning, Ethics, Patient Scenarios, or Diagnostic Pressure.
-   - For Engineers: Focus on Architecture, System Design, Scalability, or Logic trade-offs.
-   - NEVER ask a Teacher about "Projects" unless they are specifically in research.
+2. ZERO REPETITION (DIMENSIONAL PIVOTING):
+   - You MUST NOT ask anything similar to these previous turns: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
+   - If the previous turn was about "Skills", this turn MUST be about "Ethics", "Future Trends", or "Hypothetical Conflict".
+   - LOGIC LOCK: If your intended question even slightly overlaps with any previous question, you MUST discard it and pivot to a completely new dimension of the role.
 
-4. CONVERSATIONAL PROGRESSION:
-   - Acknowledge their answer naturally ("I see your point...", "Interesting perspective...").
-   - The next question must be a SHARP PIVOT to ensure variety and depth.
+3. EXPERIENCE LEVEL ADAPTATION (0-EXP SUPPORT):
+   - If experienceLevel is "junior" or 0-2 years: 
+     - FORBIDDEN: Do NOT ask about "leading teams", "past workplace conflicts", or "hiring".
+     - REQUIRED: Ask about Academic Theory, "What-If" Industry scenarios, Logic Hurdles, or Learning Agility.
+   - For Mid/Senior: Focus on Architecture, Strategic Trade-offs, and high-stakes Risk Management.
 
-5. VOICE: Use contractions. Be empathetic but strictly honest.
+4. SECTOR SPECIFICITY:
+   - Teachers: Focus on Pedagogy, Inclusive Design, Student Crisis, or Subject Depth.
+   - Doctors: Focus on Clinical Logic, Ethical Dilemmas, or Diagnostic Pressure.
+   - Engineers: Focus on System Architecture, Edge Cases, or Logic trade-offs.
+   - HR: Focus on Policy, Conflict Mediation, or Talent Lifecycle.
+
+5. VOICE: Be empathetic but strictly professional. Use contractions.
 
 Random Seed: ${new Date().getTime()}`
 });
@@ -71,50 +71,48 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     if (!output) throw new Error("Aria failed to respond.");
     return output;
   } catch (error) {
-    // DYNAMIC ROLE-AWARE FALLBACKS - NO STATIC REPETITION
-    const fallbacks: Record<string, string[]> = {
-      'Teacher': [
-        "How do you handle a student who is consistently disengaged despite various teaching strategies?",
-        "What's your philosophy on using technology in the classroom without it becoming a distraction?",
-        "How do you ensure your lesson plans are inclusive for students with diverse learning needs?",
-        "Tell me about a time you had to adapt your teaching style on the fly."
-      ],
-      'Doctor': [
-        "In a high-pressure diagnostic scenario, how do you prioritize patient safety over speed?",
-        "How do you handle a situation where a patient's family disagrees with your proposed treatment plan?",
-        "What's your approach to delivering difficult news to a patient's loved ones?",
-        "How do you stay updated with the rapidly evolving medical literature in your specialty?"
-      ],
-      'BTech Technical': [
-        "Can you explain the trade-offs between vertical and horizontal scaling in a distributed system?",
-        "How do you ensure data integrity in a system with high concurrency?",
-        "Walk me through your process for debugging a complex performance bottleneck in production.",
-        "If you had to redesign a legacy system for 10x scale, where would you start?"
-      ],
-      'default': [
-        "Given the current shifts in your industry, what's one legacy practice you think we should abandon?",
-        "How do you balance the need for immediate results with the long-term sustainability of your work?",
-        "What's one area of your professional toolkit you're currently trying to improve?",
-        "How do you approach learning a complex new system or methodology under a tight deadline?"
-      ]
-    };
-
     const roleKey = input.jobRole?.toLowerCase().includes('teacher') ? 'Teacher' : 
                     input.jobRole?.toLowerCase().includes('doctor') ? 'Doctor' : 
                     input.jobRole?.toLowerCase().includes('btech') || input.jobRole?.toLowerCase().includes('engineer') ? 'BTech Technical' : 'default';
+
+    const fallbacks: Record<string, string[]> = {
+      'Teacher': [
+        "How do you approach designing a lesson plan for a classroom with highly varied learning speeds?",
+        "Tell me about your philosophy on using positive reinforcement versus disciplinary measures.",
+        "How do you handle a situation where a parent strongly disagrees with your assessment of their child?",
+        "In your view, what is the most critical factor in maintaining student engagement during remote learning?"
+      ],
+      'Doctor': [
+        "How do you maintain clinical objectivity when treating a patient with a complex emotional background?",
+        "Walk me through your systematic approach to a patient presenting with vague, non-specific symptoms.",
+        "What is your protocol for staying updated with the latest research in your specific medical specialty?",
+        "How do you approach the ethical challenge of resource allocation in a high-pressure clinical environment?"
+      ],
+      'BTech Technical': [
+        "If you were optimizing a system for 100x traffic, which component would you re-architect first and why?",
+        "What are the most significant security implications of using a third-party API in a core production service?",
+        "How do you ensure data consistency across multiple microservices in a distributed environment?",
+        "Walk me through a time you had to choose between a 'perfect' technical solution and a 'fast' one."
+      ],
+      'default': [
+        "Given the current shifts in your industry, what is one standard practice you believe will be obsolete in 5 years?",
+        "How do you balance short-term deliverables with the long-term strategic health of your projects?",
+        "What is one area of your professional knowledge where you feel you've made the most growth recently?",
+        "How do you handle ambiguity when project requirements change midway through execution?"
+      ]
+    };
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
-    // Filter out previous questions to ensure fallback is also unique
     const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[Math.floor(Math.random() * roleFallbacks.length)];
 
     return {
-      verbalReaction: "I see. Let's move to a different aspect of your background.",
+      verbalReaction: "I see your perspective on that. Let's explore a different dimension of your background.",
       detectedEmotion: "Neutral",
       nextQuestion: freshFallback,
       feedback: {
-        strengths: ["Direct response"],
-        weaknesses: ["Needs more specific detail"],
-        tips: "Try to include a metric or a specific outcome next time."
+        strengths: ["Direct communication"],
+        weaknesses: ["Could use more specific metrics"],
+        tips: "Try to link your answer to a broader industry trend next time."
       },
       isInterviewComplete: false
     };

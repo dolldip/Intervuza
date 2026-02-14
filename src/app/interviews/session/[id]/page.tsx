@@ -76,6 +76,7 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
+  // IRONCLAD MEMORY: Uses Ref to ensure the AI always sees the absolute latest history.
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -171,7 +172,7 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     async function init() {
       const demoRole = sessionStorage.getItem('demo_role') || "Professional Candidate";
-      const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
+      const demoExp = sessionStorage.getItem('demo_exp') || "mid";
       const demoJd = sessionStorage.getItem('demo_jd') || "";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       const demoResume = sessionStorage.getItem('demo_resume') || "";
@@ -191,7 +192,7 @@ export default function InterviewSessionPage() {
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        const fb = "Given your specific industry background, what is the most significant strategic shift you've observed in the last 24 months?"
+        const fb = "Given your specific industry background, what is the most significant strategic shift you've observed recently?"
         setCurrentQuestion(fb)
         historyRef.current = [fb]
       } finally {
@@ -258,7 +259,7 @@ export default function InterviewSessionPage() {
         overallScore: Math.round(confidenceLevel * 0.7 + 25),
       });
     }
-    // Redirect immediately to results to "show feedback dont show progress" in the session page.
+    // Redirect immediately to results to "show feedback dont show progress"
     router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
   };
 
@@ -270,14 +271,15 @@ export default function InterviewSessionPage() {
     setListening(false);
     if (recognitionRef.current) try { recognitionRef.current.stop(); } catch(e) {}
 
-    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Code Submission: ${code}]` : "");
+    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Visual Submission: ${code}]` : "");
     
     try {
+      // Pass the high-fidelity history ref to ensure AI doesn't repeat.
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
         userAnswer: fullAnswer || "Silence.",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
-        experienceLevel: sessionStorage.getItem('demo_exp') || "junior",
+        experienceLevel: sessionStorage.getItem('demo_exp') || "mid",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
         previousQuestions: historyRef.current,
@@ -289,6 +291,7 @@ export default function InterviewSessionPage() {
       setShowFeedback(true);
       
       if (!feedback.isInterviewComplete && currentTurn < 6) {
+        // Log the next question instantly before state updates to block race conditions.
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTurnCount(currentTurn + 1);
