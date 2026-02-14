@@ -37,27 +37,19 @@ export default function InterviewSessionPage() {
   const db = useFirestore()
   const { toast } = useToast()
 
-  const userDocRef = user ? doc(db!, "users", user.uid) : null
-  const { data: profile } = useDoc(userDocRef)
-
+  const [currentQuestion, setCurrentQuestion] = useState("")
   const [opening, setOpening] = useState("")
-  const [techQuestions, setTechQuestions] = useState<string[]>([])
-  const [hrQuestions, setHrQuestions] = useState<string[]>([])
-  const [allQuestions, setAllQuestions] = useState<string[]>([])
-  const [currentIdx, setCurrentIdx] = useState(0)
-  
+  const [turnCount, setTurnCount] = useState(0)
   const [transcript, setTranscript] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [initializing, setInitializing] = useState(true)
   const [sessionStarted, setSessionStarted] = useState(false)
   const [processingTurn, setProcessingTurn] = useState(false)
   const [fetchingAudio, setFetchingAudio] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(600)
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
+  const [timeLeft, setTimeLeft] = useState(900)
   const [speaking, setSpeaking] = useState(false)
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
-  
   const [currentEmotion, setCurrentEmotion] = useState("Analyzing")
   const [confidenceLevel, setConfidenceLevel] = useState(75)
   const [eyeAlignment, setEyeAlignment] = useState(60)
@@ -77,10 +69,8 @@ export default function InterviewSessionPage() {
           audio: true 
         });
         setStream(mediaStream)
-        setHasCameraPermission(true)
       } catch (error) {
         console.error('Media Access Denied:', error);
-        setHasCameraPermission(false);
       }
     }
     setupMedia();
@@ -109,13 +99,16 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
+        const currentFull = (transcriptAccumulatorRef.current + interimText).toLowerCase();
+        const finishPhrases = ["i'm done", "that's all", "i don't know", "no idea", "that is it"];
+        const detectedFinish = finishPhrases.some(p => currentFull.includes(p));
+
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
-          const totalText = transcriptAccumulatorRef.current + interimText;
-          if (totalText.trim().length > 15 && !processingTurn && !speaking && listening) {
+          if (currentFull.trim().length > 10 && !processingTurn && !speaking && listening) {
             completeTurn();
           }
-        }, 4000); // 4 seconds of silence to auto-complete turn
+        }, detectedFinish ? 1500 : 4000);
       };
     }
 
@@ -133,49 +126,26 @@ export default function InterviewSessionPage() {
   }, [sessionStarted, stream]);
 
   useEffect(() => {
-    if (sessionStarted && !processingTurn && !fetchingAudio) {
-      const interval = setInterval(() => {
-        setConfidenceLevel(prev => Math.max(40, Math.min(98, prev + (Math.floor(Math.random() * 11) - 5))))
-        setEyeAlignment(prev => Math.max(30, Math.min(99, prev + (Math.floor(Math.random() * 15) - 7))))
-      }, 4000)
-      return () => clearInterval(interval)
-    }
-  }, [sessionStarted, processingTurn, fetchingAudio])
-
-  useEffect(() => {
     async function init() {
-      const demoRole = sessionStorage.getItem('demo_role') || "Senior Professional";
+      const demoRole = sessionStorage.getItem('demo_role') || "Professional";
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
-      const demoJD = sessionStorage.getItem('demo_jd') || "Target job description.";
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: profile?.skills || ["Professionalism", "Strategy"],
-          jobDescriptionText: demoJD
+          skills: ["Problem Solving", "Communication"],
+          roundType: 'technical'
         })
         setOpening(result.openingStatement)
-        const combined = [...result.technicalQuestions, ...result.hrQuestions]
-        setAllQuestions(combined)
-        setTechQuestions(result.technicalQuestions)
-        setHrQuestions(result.hrQuestions)
+        setCurrentQuestion(result.firstQuestion)
       } catch (err) {
-        setAllQuestions(["Tell me about your journey.", "Why should we hire you?"])
+        setCurrentQuestion("Could you tell me a bit about yourself?")
       } finally {
         setInitializing(false)
       }
     }
-    if (!authLoading) init();
-  }, [profile, authLoading])
-
-  useEffect(() => {
-    if (sessionStarted && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (timeLeft === 0 && sessionStarted) {
-      router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
-    }
-  }, [sessionStarted, timeLeft, params.id, router]);
+    init();
+  }, [])
 
   const triggerSpeech = async (text: string) => {
     setSpeaking(true)
@@ -196,10 +166,7 @@ export default function InterviewSessionPage() {
         setAudioSrc(result.media)
         if (audioRef.current) {
           audioRef.current.load()
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => useLocalSpeech(text));
-          }
+          audioRef.current.play().catch(() => useLocalSpeech(text));
         }
       }
     } catch (err) {
@@ -222,12 +189,8 @@ export default function InterviewSessionPage() {
   }
 
   const startSession = () => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {});
-      audioRef.current.pause();
-    }
     setSessionStarted(true);
-    triggerSpeech(`${opening}. ${allQuestions[0]}`);
+    triggerSpeech(`${opening}. ${currentQuestion}`);
   };
 
   const handleAudioEnded = () => {
@@ -248,46 +211,34 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = transcriptAccumulatorRef.current + interimTranscript;
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({
-      question: allQuestions[currentIdx],
-      answer: fullAnswer || "Silent response.",
-      round: currentIdx < techQuestions.length ? 'technical' : 'hr'
-    });
+    currentAnswers.push({ question: currentQuestion, answer: fullAnswer || "Silent response." });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
       const feedback = await instantTextualAnswerFeedback({
-        interviewQuestion: allQuestions[currentIdx],
+        interviewQuestion: currentQuestion,
         userAnswer: fullAnswer || "...",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
-        currentRound: currentIdx < techQuestions.length ? 'technical' : 'hr'
+        experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
+        currentRound: turnCount < 5 ? 'technical' : 'hr'
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
-      
-      if (currentIdx < allQuestions.length - 1) {
-        const nextIdx = currentIdx + 1;
-        setCurrentIdx(nextIdx);
+      setTurnCount(prev => prev + 1);
+
+      if (!feedback.isInterviewComplete && turnCount < 10) {
+        setCurrentQuestion(feedback.nextQuestion);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
         
-        const responseText = `${feedback.verbalReaction}. ${allQuestions[nextIdx]}`;
+        const responseText = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         await triggerSpeech(responseText);
       } else {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
-      if (currentIdx < allQuestions.length - 1) {
-        const nextIdx = currentIdx + 1;
-        setCurrentIdx(nextIdx);
-        setTranscript("");
-        setInterimTranscript("");
-        transcriptAccumulatorRef.current = "";
-        triggerSpeech(`Understood. Moving on to: ${allQuestions[nextIdx]}`);
-      } else {
-        router.push(`/results/demo-results`);
-      }
+      router.push(`/results/demo-results`);
     } finally {
       setProcessingTurn(false);
     }
@@ -298,7 +249,7 @@ export default function InterviewSessionPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
         <BrainCircuit className="w-24 h-24 text-primary animate-pulse mb-8" />
         <h2 className="text-3xl font-headline font-bold mb-4 uppercase tracking-widest text-primary">Neural Link Loading</h2>
-        <p className="text-slate-400 text-lg">Sarah is preparing your customized one-on-one session...</p>
+        <p className="text-slate-400">Sarah is preparing your tailored session...</p>
       </div>
     )
   }
@@ -307,21 +258,14 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <div className="max-w-2xl w-full text-center space-y-8">
-          <div className="w-40 h-40 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto shadow-2xl">
+          <div className="w-40 h-40 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto">
             <User className="w-16 h-16 text-primary" />
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold">Ready to Start?</h1>
-            <p className="text-slate-400 text-lg">Sarah will speak to you naturally. This is a hands-free conversational experience. Just speak when she finishes.</p>
-            <div className="flex items-center justify-center gap-4 text-xs font-mono text-primary/60">
-              <span className="flex items-center gap-1"><Mic className="w-3 h-3" /> MIC READY</span>
-              <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> NEURAL ACTIVE</span>
-            </div>
+            <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. No clicking required.</p>
           </div>
-          <Button 
-            className="w-full h-20 rounded-full bg-primary hover:bg-primary/90 text-xl font-bold transition-all hover:scale-105 shadow-2xl"
-            onClick={startSession}
-          >
+          <Button className="w-full h-20 rounded-full bg-primary text-xl font-bold shadow-2xl" onClick={startSession}>
             BEGIN ASSESSMENT
             <Play className="ml-3 w-5 h-5 fill-current" />
           </Button>
@@ -332,110 +276,86 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
-      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50 shadow-lg">
+      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-6">
           <ShieldCheck className="text-primary w-6 h-6" />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assessment Mode</span>
-            <span className="text-xs font-mono text-primary uppercase">
-              {currentIdx < techQuestions.length ? 'ROUND 1: TECHNICAL' : 'ROUND 2: HR'}
-            </span>
-          </div>
+          <span className="text-xs font-mono text-primary uppercase">
+            {turnCount < 5 ? 'ROUND 1: TECHNICAL' : 'ROUND 2: HR'}
+          </span>
         </div>
-        <div className="flex items-center gap-8">
-          <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 font-mono text-sm">
-            {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-          </div>
-          <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-400" onClick={() => router.push("/dashboard")}>
-            <StopCircle className="w-4 h-4 mr-2" /> EXIT
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" className="text-slate-500" onClick={() => router.push("/dashboard")}>
+          <StopCircle className="w-4 h-4 mr-2" /> EXIT
+        </Button>
       </div>
 
       <div className="flex-1 flex relative bg-slate-950">
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <img 
-            src={`https://picsum.photos/seed/sarah-persona-${currentEmotion}/1200/1200`} 
+            src={`https://picsum.photos/seed/sarah-${currentEmotion}/1200/1200`} 
             alt="Sarah AI" 
             className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105' : 'opacity-60 grayscale-[0.5]'}`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
           
           <div className="absolute top-8 left-8 z-20 space-y-3">
-             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse text-white px-4 py-2">SARAH IS PROCESSING...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse text-white px-4 py-2">SARAH IS SPEAKING...</Badge>}
-             {listening && <Badge className="bg-green-600 animate-bounce text-white px-4 py-2">SARAH IS LISTENING...</Badge>}
+             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse">SARAH IS THINKING...</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse">SARAH IS SPEAKING...</Badge>}
+             {listening && <Badge className="bg-green-600 animate-bounce">SARAH IS LISTENING...</Badge>}
           </div>
 
           <div className="absolute bottom-8 inset-x-8 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem]">
               <div className="flex items-start gap-6">
-                <div className={`p-5 rounded-2xl transition-colors ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
+                <div className={`p-5 rounded-2xl ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
                   <Volume2 className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1 pt-1">
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 block">Sarah's Question</span>
-                  <h3 className="text-xl md:text-2xl font-headline font-bold leading-tight">
-                    {allQuestions[currentIdx]}
+                  <h3 className="text-xl md:text-2xl font-headline font-bold">
+                    {currentQuestion}
                   </h3>
-                  {!speaking && !fetchingAudio && (
-                    <Button variant="outline" size="sm" className="mt-4 border-white/10 text-xs text-slate-400 hover:text-white" onClick={() => triggerSpeech(allQuestions[currentIdx])}>
-                      <RefreshCw className="w-3 h-3 mr-2" /> Replay Sarah's Voice
-                    </Button>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl">
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto scrollbar-hide">
+        <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30">
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto">
             <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Live Feed</span>
-                <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                   <span className="text-[9px] text-red-500 font-bold uppercase">Scanning...</span>
-                </div>
-              </div>
-              <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 relative shadow-inner">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1] grayscale-[0.4]" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Live Feed</span>
+              <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 relative">
+                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale-[0.4]" />
                 <div className="absolute inset-x-0 h-[1px] bg-primary/40 shadow-[0_0_15px_#3b82f6] animate-[scan_5s_linear_infinite]" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Confidence", value: `${confidenceLevel}%`, icon: Activity },
-                { label: "Eye Focus", value: `${eyeAlignment}%`, icon: Target },
-              ].map((stat, i) => (
-                <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2 hover:bg-white/10 transition-colors">
-                  <stat.icon className="w-4 h-4 text-primary" />
-                  <div>
-                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{stat.label}</p>
-                    <p className="text-xl font-black text-white">{stat.value}</p>
-                  </div>
-                </div>
-              ))}
+              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                <Activity className="w-4 h-4 text-primary mb-2" />
+                <p className="text-[9px] text-slate-500 font-black uppercase">Confidence</p>
+                <p className="text-xl font-black">{confidenceLevel}%</p>
+              </div>
+              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                <Target className="w-4 h-4 text-primary mb-2" />
+                <p className="text-[9px] text-slate-500 font-black uppercase">Eye Focus</p>
+                <p className="text-xl font-black">{eyeAlignment}%</p>
+              </div>
             </div>
 
             <div className="space-y-3">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                 <Waves className={`w-3 h-3 ${listening ? 'text-green-500' : 'text-slate-700'}`} />
-                Live Neural Transcript
+                Live Transcript
               </span>
-              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6 h-48 overflow-y-auto scrollbar-hide shadow-inner">
+              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6 h-48 overflow-y-auto">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-sm leading-relaxed text-slate-300 italic font-medium">
+                  <p className="text-sm text-slate-300 italic">
                     {transcript}
                     <span className="text-slate-500">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-600 space-y-2">
-                    <Loader2 className="w-5 h-5 animate-spin opacity-20" />
-                    <p className="text-xs italic">Awaiting candidate voice input...</p>
-                  </div>
+                  <p className="text-xs text-slate-600 italic">Awaiting voice input...</p>
                 )}
               </div>
             </div>
@@ -443,30 +363,21 @@ export default function InterviewSessionPage() {
 
           <div className="p-8 border-t border-white/5 bg-slate-900/20">
             {listening ? (
-              <Button 
-                className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold text-lg shadow-[0_10px_30px_rgba(22,163,74,0.3)] transition-all active:scale-95" 
-                onClick={completeTurn}
-              >
+              <Button className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold" onClick={completeTurn}>
                 FINISH ANSWER
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             ) : (
-              <div className="w-full h-16 rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center text-slate-500 font-bold gap-3">
+              <div className="w-full h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center text-slate-500 font-bold gap-3">
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span className="uppercase text-xs tracking-widest">Neural Syncing...</span>
+                <span className="uppercase text-xs tracking-widest">Processing...</span>
               </div>
             )}
-            <p className="text-[9px] text-center text-slate-600 uppercase mt-4 tracking-widest">Voice will auto-submit after 4 seconds of silence</p>
           </div>
         </div>
       </div>
 
-      <audio 
-        ref={audioRef} 
-        src={audioSrc || undefined} 
-        onEnded={handleAudioEnded} 
-        className="hidden" 
-      />
+      <audio ref={audioRef} src={audioSrc || undefined} onEnded={handleAudioEnded} className="hidden" />
 
       <style jsx global>{`
         @keyframes scan {
@@ -475,7 +386,6 @@ export default function InterviewSessionPage() {
           80% { opacity: 1; }
           100% { transform: translateY(220px); opacity: 0; }
         }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   )

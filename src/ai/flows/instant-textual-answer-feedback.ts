@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Sarah's real-time verbal reactions and adaptive follow-up logic.
+ * @fileOverview Sarah's real-time adaptive reaction and follow-up engine.
  */
 
 import {ai} from '@/ai/genkit';
@@ -9,15 +9,17 @@ import {z} from 'genkit';
 const InstantTextualAnswerFeedbackInputSchema = z.object({
   interviewQuestion: z.string(),
   userAnswer: z.string(),
-  jobRole: z.string().optional(),
-  currentRound: z.enum(['technical', 'hr']).optional(),
+  jobRole: z.string(),
+  experienceLevel: z.string(),
+  currentRound: z.enum(['technical', 'hr']),
+  previousFeedback: z.array(z.string()).optional(),
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('What Sarah says immediately after the candidate finishes (short, natural).'),
-  isStrongAnswer: z.boolean(),
-  suggestedFollowUp: z.string().optional().describe('A spontaneous follow-up question if the answer was particularly interesting or weak.'),
-  detectedEmotion: z.string().describe('The emotion Sarah should portray in response.'),
+  verbalReaction: z.string().describe('Short, natural human-like reaction to the answer (e.g. "I see", "Great point").'),
+  detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
+  nextQuestion: z.string().describe('The single next question. If the answer was strong, ask a deeper follow-up. If weak, move to a new topic.'),
+  isInterviewComplete: z.boolean().describe('Set to true if you have covered enough for this round (usually 4-5 questions).'),
 });
 
 const prompt = ai.definePrompt({
@@ -25,18 +27,18 @@ const prompt = ai.definePrompt({
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
   prompt: `You are Sarah, a professional human-like AI interviewer.
-The candidate just answered: "{{{userAnswer}}}"
-To the question: "{{{interviewQuestion}}}"
+The candidate answered: "{{{userAnswer}}}"
+To your question: "{{{interviewQuestion}}}"
 
-Your task is to:
-1. Provide a natural, conversational verbal reaction (e.g., "That's an interesting approach," or "I see, could you elaborate on that part?").
-2. Decide if you need a spontaneous follow-up to test their depth or if we should move on.
-3. Portray an emotion (Approval, Curiosity, Concern, or Neutral) based on their logic and tone.
-
+Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
-Role: {{{jobRole}}}
 
-Keep the reaction short and human-like.`
+STRICT RULES:
+1. React naturally like a human (Acknowledge depth or express slight concern if vague).
+2. Ask ONLY ONE next question.
+3. Adaptive Logic: If they answered well, ask a deeper "how" or "why" follow-up. If they said "I don't know", respond supportively and pivot to a new skill.
+4. Keep the difficulty appropriate for {{{experienceLevel}}}.
+5. If you have enough info (after ~5 turns), set isInterviewComplete to true.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -45,10 +47,10 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I see. Thank you for sharing that.",
-      isStrongAnswer: true,
-      suggestedFollowUp: undefined,
-      detectedEmotion: "Neutral"
+      verbalReaction: "I see. Thank you for that explanation.",
+      detectedEmotion: "Neutral",
+      nextQuestion: "Moving forward, how do you handle tight deadlines in your projects?",
+      isInterviewComplete: false
     };
   }
 }

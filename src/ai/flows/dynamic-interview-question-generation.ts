@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Dynamically generates interview questions with persona-driven logic.
+ * @fileOverview Sarah's adaptive question generator.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,33 +10,32 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
   jobRole: z.string(),
   experienceLevel: z.string(),
   skills: z.array(z.string()),
-  resumeText: z.string().optional(),
   jobDescriptionText: z.string().optional(),
-  roundType: z.enum(['technical', 'hr', 'both']).default('both'),
+  roundType: z.enum(['technical', 'hr']).default('technical'),
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  technicalQuestions: z.array(z.string()).describe('Questions focused on technical skills and scenarios.'),
-  hrQuestions: z.array(z.string()).describe('Questions focused on behavioral, soft skills, and attitude.'),
-  openingStatement: z.string().describe('Sarah\'s professional opening greeting.'),
+  openingStatement: z.string().describe('Sarah\'s professional human-like greeting.'),
+  firstQuestion: z.string().describe('The very first question to start the interview.'),
 });
 
 const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `You are Sarah, a professional human-like AI interviewer. Your role is to conduct a realistic job interview.
-User Profile:
-Role: {{{jobRole}}} ({{{experienceLevel}}})
+  prompt: `You are Sarah, a professional human-like AI interviewer.
+You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
+
+STRICT RULES:
+1. Generate a warm, professional opening statement.
+2. Generate ONLY the FIRST question.
+3. The question must be role-specific and round-specific.
+4. Do NOT ask multiple questions.
+5. Do NOT behave like a chatbot.
+
+Context:
 Skills: {{#each skills}}{{{this}}}, {{/each}}
-JD: {{{jobDescriptionText}}}
-
-Generate an opening statement and two sets of questions:
-1. Technical Round: Logic, scenario-based, and skill-specific.
-2. HR Round: Behavioral, soft skills, and stress handling.
-
-Opening: Greeting the candidate and setting a professional but conversational tone.
-Make the questions feel authentic, not like a chatbot.`,
+Job Description: {{{jobDescriptionText}}}`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
@@ -44,19 +43,9 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     const { output } = await prompt(input);
     return output!;
   } catch (error) {
-    console.warn("AI Quota hit. Using high-quality fallback questions.");
     return {
-      openingStatement: "Hello. I'm Sarah. I'll be conducting your interview today. Let's start with your technical background.",
-      technicalQuestions: [
-        "Can you walk me through a complex technical challenge you solved recently?",
-        "How do you ensure code quality and scalability in your projects?",
-        "If you were tasked with optimizing a slow system, what would be your first three steps?"
-      ],
-      hrQuestions: [
-        "Tell me about a time you had a significant disagreement with a teammate.",
-        "How do you handle high-pressure deadlines while maintaining quality?",
-        "Where do you see yourself contributing the most value to our team culture?"
-      ]
+      openingStatement: "Hello, I'm Sarah. I'll be conducting your interview today. It's a pleasure to meet you.",
+      firstQuestion: `To start off, could you tell me about your background as a ${input.jobRole}?`
     };
   }
 }
