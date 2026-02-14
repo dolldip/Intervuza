@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -25,7 +24,7 @@ import {
   RefreshCw,
   Play,
   MicOff,
-  Waveform,
+  Waves,
   ChevronRight
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
@@ -425,7 +424,7 @@ export default function InterviewSessionPage() {
                   <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_30px_#3b82f6] animate-[scan_6s_linear_infinite]" />
                   <div className="absolute bottom-6 left-6 flex items-center gap-2">
                     <div className="bg-primary/95 text-white px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-2xl backdrop-blur-md border border-white/10">
-                      <Sparkles className="w-3 h-3" />
+                      <Sparkles className="w-3.5 h-3.5" />
                       {currentEmotion.toUpperCase()}
                     </div>
                   </div>
@@ -457,7 +456,7 @@ export default function InterviewSessionPage() {
                <div className="space-y-4 pt-4">
                   <div className="flex items-center justify-between px-3">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Waveform className={`w-3 h-3 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-700'}`} />
+                      <Waves className={`w-3 h-3 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-700'}`} />
                       Live Neural Transcription
                     </label>
                   </div>
