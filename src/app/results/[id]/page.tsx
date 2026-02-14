@@ -78,13 +78,13 @@ export default function ResultsPage() {
           <h1 className="text-4xl font-headline font-bold">Interview Audit</h1>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" asChild className="rounded-xl px-6 font-bold">
+          <Button variant="outline" asChild className="rounded-xl px-6 font-bold h-11">
             <Link href="/dashboard">
               <ArrowLeft className="mr-2 w-4 h-4" />
               Dashboard
             </Link>
           </Button>
-          <Button asChild className="rounded-xl px-8 font-bold shadow-lg shadow-primary/20">
+          <Button asChild className="rounded-xl px-8 font-bold shadow-lg shadow-primary/20 h-11">
             <Link href="/interviews/new">Restart Assessment</Link>
           </Button>
         </div>
@@ -112,7 +112,7 @@ export default function ResultsPage() {
                   ].map((s, i) => (
                     <div key={i} className="space-y-1">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-widest">
-                          <s.icon className="w-3 h-3" /> {s.label}
+                          <s.icon className="w-3 h-3 text-primary" /> {s.label}
                        </p>
                        <p className="text-3xl font-black">{s.val ?? "--"}/10</p>
                     </div>
@@ -130,13 +130,13 @@ export default function ResultsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-10">
-        <TabsList className="bg-muted/50 p-1 rounded-2xl h-14 w-full max-w-lg mx-auto shadow-inner">
-          <TabsTrigger value="overview" className="flex-1 rounded-xl font-bold">Insights</TabsTrigger>
-          <TabsTrigger value="biometrics" className="flex-1 rounded-xl font-bold">Sensor Feed</TabsTrigger>
-          <TabsTrigger value="plan" className="flex-1 rounded-xl font-bold">Improvement Plan</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1 rounded-2xl h-14 w-full max-w-lg mx-auto shadow-inner border border-white/10">
+          <TabsTrigger value="overview" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Insights</TabsTrigger>
+          <TabsTrigger value="biometrics" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Sensor Feed</TabsTrigger>
+          <TabsTrigger value="plan" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Improvement Plan</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-8 outline-none">
+        <TabsContent value="overview" className="space-y-8 outline-none animate-fade-in">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="rounded-[2rem] border-green-100 bg-green-50/20 p-8 shadow-sm">
               <h3 className="flex items-center gap-3 text-xl font-bold mb-6">
@@ -166,7 +166,7 @@ export default function ResultsPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="biometrics" className="outline-none">
+        <TabsContent value="biometrics" className="outline-none animate-fade-in">
           <Card className="rounded-[2.5rem] p-10 bg-slate-50 border-none shadow-sm">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="aspect-video bg-slate-200 rounded-[2.5rem] relative overflow-hidden border-4 border-white shadow-xl">
@@ -200,7 +200,7 @@ export default function ResultsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="plan" className="outline-none">
+        <TabsContent value="plan" className="outline-none animate-fade-in">
           <Card className="bg-slate-950 rounded-[3rem] text-white p-12 relative overflow-hidden border-none shadow-2xl">
             <div className="relative z-10 space-y-8 max-w-3xl">
               <div className="flex items-center gap-4">

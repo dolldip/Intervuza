@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth, useFirestore, useDoc } from "@/firebase"
+import { useAuth, useFirestore, useDoc, useUser } from "@/firebase"
 import { doc, setDoc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,16 +10,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Save, UserCircle } from "lucide-react"
+import { Loader2, Save, UserCircle, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, isUserLoading: authLoading } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
   
   const userDocRef = user ? doc(db!, "users", user.uid) : null
-  const { data: profile, loading: profileLoading } = useDoc(userDocRef)
+  const { data: profile, isLoading: profileLoading } = useDoc(userDocRef)
 
   const [fullName, setFullName] = useState("")
   const [education, setEducation] = useState("")
@@ -29,37 +30,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.fullName || "")
+      setFullName(profile.fullName || user?.displayName || "")
       setEducation(profile.education || "")
       setTargetRole(profile.targetRole || "")
       setExperienceLevel(profile.experienceLevel || "")
-    } else {
-      setFullName(sessionStorage.getItem('demo_name') || "")
-      setEducation(sessionStorage.getItem('demo_edu') || "")
-      setTargetRole(sessionStorage.getItem('demo_role') || "")
-      setExperienceLevel(sessionStorage.getItem('demo_exp') || "")
     }
-  }, [profile])
+  }, [profile, user])
 
   const handleSave = async () => {
-    setSaving(true)
+    if (!user || !db) return;
     
-    sessionStorage.setItem('demo_name', fullName)
-    sessionStorage.setItem('demo_edu', education)
-    sessionStorage.setItem('demo_role', targetRole)
-    sessionStorage.setItem('demo_exp', experienceLevel)
-
-    if (!user || !db) {
-      setTimeout(() => {
-        toast({
-          title: "Profile Updated",
-          description: "Data saved to your local session.",
-        })
-        setSaving(false)
-      }, 500)
-      return
-    }
-
+    setSaving(true)
     try {
       await setDoc(doc(db, "users", user.uid), {
         userId: user.uid,
@@ -69,26 +50,27 @@ export default function ProfilePage() {
         experienceLevel,
         updatedAt: new Date().toISOString()
       }, { merge: true })
+      
       toast({
         title: "Profile Saved",
         description: "Your information has been synced to your account.",
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
       toast({
         variant: "destructive",
         title: "Sync Failed",
-        description: "Saved to local session only.",
+        description: error.message || "Could not save profile.",
       })
     } finally {
       setSaving(false)
     }
   }
 
-  if (profileLoading && user) {
+  if (authLoading || (profileLoading && user)) {
     return (
       <div className="flex h-full items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     )
   }
@@ -105,12 +87,22 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <Card className="shadow-lg border-primary/10">
-        <CardHeader>
+      {!user && (
+        <Alert variant="destructive" className="mb-6 rounded-2xl">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Not Signed In</AlertTitle>
+          <AlertDescription>
+            Please log in to save your profile permanently.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Card className="shadow-lg border-primary/10 rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="bg-muted/30 p-8">
           <CardTitle className="font-headline text-xl">Target Role & Education</CardTitle>
           <CardDescription>Sarah uses these details to generate technical and behavioral questions specific to top-tier companies.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-8">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
             <Input 
@@ -118,6 +110,7 @@ export default function ProfilePage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Alex Rivera"
+              className="h-12 rounded-xl"
             />
           </div>
 
@@ -128,7 +121,7 @@ export default function ProfilePage() {
               value={education}
               onChange={(e) => setEducation(e.target.value)}
               placeholder="e.g. Bachelor's in Computer Science from Stanford University"
-              className="min-h-[100px]"
+              className="min-h-[120px] rounded-xl"
             />
           </div>
 
@@ -140,12 +133,13 @@ export default function ProfilePage() {
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
                 placeholder="e.g. Senior Backend Engineer"
+                className="h-12 rounded-xl"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="experienceLevel">Experience Level</Label>
               <Select value={experienceLevel} onValueChange={setExperienceLevel}>
-                <SelectTrigger id="experienceLevel">
+                <SelectTrigger id="experienceLevel" className="h-12 rounded-xl">
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,12 +152,12 @@ export default function ProfilePage() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end border-t pt-6">
-          <Button onClick={handleSave} disabled={saving} className="min-w-[140px] h-11 font-bold">
+        <CardFooter className="flex justify-end border-t p-8 bg-muted/10">
+          <Button onClick={handleSave} disabled={saving || !user} className="min-w-[160px] h-12 rounded-xl font-bold shadow-lg">
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
+                Syncing...
               </>
             ) : (
               <>

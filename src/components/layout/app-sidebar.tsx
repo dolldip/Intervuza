@@ -1,8 +1,9 @@
+
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { 
   LayoutDashboard, 
   Video, 
@@ -13,7 +14,8 @@ import {
   UserCircle,
   Trophy,
   CreditCard,
-  LogOut
+  LogOut,
+  Loader2
 } from "lucide-react"
 
 import {
@@ -30,7 +32,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MOCK_USER } from "@/lib/mock-data"
+import { useUser, useAuth } from "@/firebase"
+import { signOut } from "firebase/auth"
 
 const items = [
   {
@@ -40,22 +43,22 @@ const items = [
   },
   {
     title: "Mock Interviews",
-    url: "/interviews",
+    url: "/interviews/new",
     icon: Video,
   },
   {
     title: "AI Coach",
-    url: "/coach",
+    url: "/dashboard",
     icon: GraduationCap,
   },
   {
     title: "History",
-    url: "/history",
+    url: "/dashboard",
     icon: History,
   },
   {
     title: "Achievements",
-    url: "/achievements",
+    url: "/dashboard",
     icon: Trophy,
   },
 ]
@@ -68,18 +71,30 @@ const accountItems = [
   },
   {
     title: "Subscription",
-    url: "/billing",
+    url: "/dashboard",
     icon: CreditCard,
   },
   {
     title: "Settings",
-    url: "/settings",
+    url: "/dashboard",
     icon: Settings,
   },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, isUserLoading } = useUser()
+  const auth = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -130,17 +145,35 @@ export function AppSidebar() {
       <SidebarFooter className="border-t p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-12 w-full justify-start gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={`https://picsum.photos/seed/${MOCK_USER.name}/40/40`} />
-                <AvatarFallback>AR</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-medium truncate w-full">{MOCK_USER.name}</span>
-                <span className="text-xs text-muted-foreground truncate w-full">Pro Plan</span>
+            {isUserLoading ? (
+              <div className="flex items-center justify-center h-12 w-full">
+                <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
               </div>
-              <LogOut className="ml-auto w-4 h-4 group-data-[collapsible=icon]:hidden" />
-            </SidebarMenuButton>
+            ) : user ? (
+              <div className="flex items-center gap-3 h-12 w-full px-2">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={`https://picsum.photos/seed/${user.uid}/40/40`} />
+                  <AvatarFallback className="rounded-lg">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:hidden flex-1">
+                  <span className="text-sm font-bold truncate w-full">{user.displayName || "Candidate"}</span>
+                  <span className="text-[10px] text-muted-foreground truncate w-full">{user.email}</span>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors group-data-[collapsible=icon]:hidden"
+                >
+                  <LogOut className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <SidebarMenuButton asChild>
+                <Link href="/login">
+                  <LogOut />
+                  <span>Log In</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

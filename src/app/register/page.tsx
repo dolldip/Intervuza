@@ -66,7 +66,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8 animate-fade-in">
         <div className="text-center space-y-2">
           <Link className="inline-flex items-center space-x-2" href="/">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
@@ -75,12 +75,13 @@ export default function RegisterPage() {
             <span className="font-headline font-bold text-3xl tracking-tight">AssessAI</span>
           </Link>
           <h2 className="text-2xl font-headline font-bold mt-4">Create your account</h2>
+          <p className="text-muted-foreground">Join 50k+ candidates prepping smarter</p>
         </div>
 
-        <Card className="border-none shadow-xl">
+        <Card className="border-none shadow-xl rounded-[2rem]">
           <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
-            <CardDescription>Join 50k+ candidates prepping smarter</CardDescription>
+            <CardTitle className="font-headline">Sign Up</CardTitle>
+            <CardDescription>Get started with your AI-powered preparation</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRegister} className="space-y-4">
@@ -91,7 +92,7 @@ export default function RegisterPage() {
                   <Input 
                     id="name" 
                     placeholder="Alex Rivera" 
-                    className="pl-10" 
+                    className="pl-10 h-12 rounded-xl" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -106,7 +107,7 @@ export default function RegisterPage() {
                     id="email" 
                     type="email" 
                     placeholder="alex@example.com" 
-                    className="pl-10" 
+                    className="pl-10 h-12 rounded-xl" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -121,19 +122,19 @@ export default function RegisterPage() {
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="pl-10" 
+                    className="pl-10 h-12 rounded-xl" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <Button className="w-full h-11 font-bold" type="submit" disabled={loading}>
+              <Button className="w-full h-12 rounded-xl font-bold text-lg" type="submit" disabled={loading}>
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center border-t py-4">
+          <CardFooter className="justify-center border-t pt-4">
             <p className="text-sm text-muted-foreground">
               Already have an account? <Link href="/login" className="text-primary font-bold hover:underline">Log in</Link>
             </p>

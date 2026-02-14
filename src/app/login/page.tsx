@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Mail, Lock, Loader2, Play } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +26,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Welcome back!",
+        description: "Successfully signed in.",
+      });
       router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
@@ -42,7 +45,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8 animate-fade-in">
         <div className="text-center space-y-2">
           <Link className="inline-flex items-center space-x-2" href="/">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
@@ -54,9 +57,9 @@ export default function LoginPage() {
           <p className="text-muted-foreground">Sign in to continue your preparation.</p>
         </div>
 
-        <Card className="border-none shadow-xl">
+        <Card className="border-none shadow-xl rounded-[2rem]">
           <CardHeader>
-            <CardTitle>Login</CardTitle>
+            <CardTitle className="font-headline">Login</CardTitle>
             <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
           <CardContent>
@@ -69,7 +72,7 @@ export default function LoginPage() {
                     id="email" 
                     type="email" 
                     placeholder="alex@example.com" 
-                    className="pl-10" 
+                    className="pl-10 h-12 rounded-xl" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -86,19 +89,19 @@ export default function LoginPage() {
                   <Input 
                     id="password" 
                     type="password" 
-                    className="pl-10" 
+                    className="pl-10 h-12 rounded-xl" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <Button className="w-full h-11" type="submit" disabled={loading}>
+              <Button className="w-full h-12 rounded-xl font-bold text-lg" type="submit" disabled={loading}>
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center border-t pt-4">
             <p className="text-sm text-muted-foreground">
               Don't have an account? <Link href="/register" className="text-primary font-bold hover:underline">Sign up</Link>
             </p>

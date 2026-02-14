@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   ShieldCheck, 
   UploadCloud,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -87,20 +88,23 @@ export default function NewInterviewPage() {
 
   return (
     <div className="container max-w-4xl py-12 px-4 animate-fade-in">
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl font-headline font-bold mb-2 text-foreground">Prepare for Your Next Big Move</h1>
-        <p className="text-muted-foreground text-lg">Sarah will conduct a role-specific adaptive interview targeting top companies.</p>
+      <div className="mb-10 text-center space-y-4">
+        <Badge variant="secondary" className="px-4 py-1.5 rounded-full font-bold text-primary gap-2">
+          <Sparkles className="w-3 h-3" /> Adaptive Intelligence Enabled
+        </Badge>
+        <h1 className="text-5xl font-headline font-bold tracking-tight text-foreground">Prepare for Your Next Big Move</h1>
+        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Sarah will conduct a role-specific adaptive interview targeting top-tier firms.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
-          <Card className="shadow-lg border-primary/10">
-            <CardHeader>
-              <CardTitle className="font-headline text-xl">Interview Parameters</CardTitle>
-              <CardDescription>Sarah adapts to your specific role and round focus.</CardDescription>
+          <Card className="shadow-lg border-primary/10 rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="bg-muted/30 p-8">
+              <CardTitle className="font-headline text-2xl">Interview Parameters</CardTitle>
+              <CardDescription>Sarah adapts her conversational depth based on your role.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="space-y-6 p-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="role">Job Role</Label>
                   <Input 
@@ -108,12 +112,13 @@ export default function NewInterviewPage() {
                     placeholder="e.g. Senior Software Engineer" 
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
+                    className="h-12 rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="level">Experience Level</Label>
                   <Select value={experience} onValueChange={setExperience}>
-                    <SelectTrigger id="level">
+                    <SelectTrigger id="level" className="h-12 rounded-xl">
                       <SelectValue placeholder="Select level" />
                     </SelectTrigger>
                     <SelectContent>
@@ -129,7 +134,7 @@ export default function NewInterviewPage() {
               <div className="space-y-2">
                 <Label htmlFor="round">Focus Round</Label>
                 <Select value={roundType} onValueChange={setRoundType}>
-                  <SelectTrigger id="round">
+                  <SelectTrigger id="round" className="h-12 rounded-xl">
                     <SelectValue placeholder="Select round" />
                   </SelectTrigger>
                   <SelectContent>
@@ -144,8 +149,8 @@ export default function NewInterviewPage() {
                 <Label htmlFor="jd">Job Description</Label>
                 <Textarea 
                   id="jd" 
-                  placeholder="Paste the job description here..." 
-                  className="min-h-[150px] resize-none"
+                  placeholder="Paste the job description here for hyper-targeted questions..." 
+                  className="min-h-[180px] resize-none rounded-2xl p-4"
                   value={jd}
                   onChange={(e) => setJd(e.target.value)}
                 />
@@ -155,29 +160,30 @@ export default function NewInterviewPage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="shadow-lg border-primary/10 h-full flex flex-col">
-            <CardHeader>
-              <CardTitle className="font-headline text-xl">Resume</CardTitle>
-              <CardDescription>Tailors questions based on your history.</CardDescription>
+          <Card className="shadow-lg border-primary/10 rounded-[2.5rem] flex flex-col overflow-hidden h-full">
+            <CardHeader className="bg-muted/30 p-8">
+              <CardTitle className="font-headline text-2xl">Profile Context</CardTitle>
+              <CardDescription>Tailors logic based on your history.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 space-y-4">
-              <div className="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center bg-muted/30 group cursor-pointer hover:bg-muted/50 transition-colors">
-                <UploadCloud className="w-8 h-8 text-primary mb-2" />
-                <p className="text-xs font-medium">Upload PDF Resume</p>
+            <CardContent className="flex-1 space-y-6 p-8">
+              <div className="border-2 border-dashed rounded-[2rem] p-10 flex flex-col items-center justify-center text-center bg-muted/20 group cursor-pointer hover:bg-muted/40 transition-all border-primary/20">
+                <UploadCloud className="w-10 h-10 text-primary mb-4 group-hover:scale-110 transition-transform" />
+                <p className="text-sm font-bold">Sync PDF Resume</p>
+                <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-widest">Max 2MB</p>
               </div>
 
-              <div className="p-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[10px] flex gap-2">
-                <ShieldCheck className="w-3 h-3 shrink-0" />
-                <span>AI will identify gaps in your profile compared to the role requirements.</span>
+              <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100 text-xs flex gap-3 shadow-sm italic leading-relaxed">
+                <ShieldCheck className="w-5 h-5 shrink-0" />
+                <span>Sarah analyzes your profile gaps compared to JD requirements in real-time.</span>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-8 bg-muted/10">
               <Button 
-                className="w-full h-12 text-lg font-bold shadow-lg" 
+                className="w-full h-16 text-xl font-black shadow-xl rounded-2xl hover:scale-[1.02] transition-transform" 
                 disabled={!role || !experience || !jd || loading}
                 onClick={handleStart}
               >
-                {loading ? <Loader2 className="animate-spin" /> : "Start Assessment"}
+                {loading ? <Loader2 className="animate-spin" /> : "START ASSESSMENT"}
               </Button>
             </CardFooter>
           </Card>
