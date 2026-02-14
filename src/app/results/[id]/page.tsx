@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -19,7 +20,8 @@ import {
   Share2,
   PlayCircle,
   BrainCircuit,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react"
 import Link from "next/link"
 import { comprehensiveInterviewFeedbackReport, ComprehensiveInterviewFeedbackReportOutput } from "@/ai/flows/comprehensive-interview-feedback-report"
@@ -95,7 +97,6 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Main Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {[
           { label: "Overall Score", value: report?.overallScore, icon: Trophy, color: "text-yellow-600", bg: "bg-yellow-100" },

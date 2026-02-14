@@ -118,6 +118,14 @@ export default function InterviewSessionPage() {
           }
         }, 4000); 
       };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech Recognition Error:", event.error);
+        if (event.error === 'no-speech') {
+          // Restart if silent for too long
+          try { recognitionRef.current.stop(); } catch(e) {}
+        }
+      };
     }
 
     return () => {
@@ -188,6 +196,8 @@ export default function InterviewSessionPage() {
     setSpeaking(true)
     setListening(false)
     setFetchingAudio(true)
+    
+    // Stop recognition while AI is speaking
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch(e) {}
     }
@@ -196,31 +206,41 @@ export default function InterviewSessionPage() {
       const result = await textToSpeech(text)
       setFetchingAudio(false)
       
-      if (result.fallback) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = handleAudioEnded;
-        window.speechSynthesis.speak(utterance);
+      if (result.fallback || !result.media) {
+        useLocalSpeech(text);
       } else {
         setAudioSrc(result.media)
         if (audioRef.current) {
           audioRef.current.load()
-          await audioRef.current.play().catch(() => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.onend = handleAudioEnded;
-            window.speechSynthesis.speak(utterance);
-          });
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.warn("Auto-play failed, using local speech fallback.");
+              useLocalSpeech(text);
+            });
+          }
         }
       }
     } catch (err) {
       console.error("Audio error:", err)
       setFetchingAudio(false)
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = handleAudioEnded;
-      window.speechSynthesis.speak(utterance);
+      useLocalSpeech(text);
     }
   }
 
+  const useLocalSpeech = (text: string) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = handleAudioEnded;
+    window.speechSynthesis.speak(utterance);
+  }
+
   const startSession = () => {
+    // Crucial: Unlock audio on user gesture
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+      audioRef.current.pause();
+    }
     setSessionStarted(true);
     triggerSpeech(questions[0]);
   };
@@ -229,7 +249,9 @@ export default function InterviewSessionPage() {
     setSpeaking(false);
     setListening(true);
     if (recognitionRef.current) {
-      try { recognitionRef.current.start(); } catch (e) {}
+      try { recognitionRef.current.start(); } catch (e) {
+        console.warn("Recognition start failed:", e);
+      }
     }
   };
 
