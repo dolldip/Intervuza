@@ -69,7 +69,7 @@ export default function Home() {
                 </Badge>
                 <h1 className="text-5xl font-headline font-black tracking-tighter sm:text-7xl lg:text-8xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1]">
                   <AnimatedTitle text="Master High-Stakes" /> <br /> 
-                  <span className="text-primary"><AnimatedTitle text="Interviews" /></span> <AnimatedTitle text="with Aria" />
+                  <span className="text-primary"><AnimatedTitle text="Interviews" /></span> <AnimatedTitle text="with PrepWise" />
                 </h1>
                 <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:800ms]">
                   The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
