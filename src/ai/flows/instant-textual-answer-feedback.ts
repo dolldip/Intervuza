@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: STRICTUREST Zero-Repetition Logic and Industry Deep-Diving.
+ * Updated: ABSOLUTE ZERO REPETITION CORE.
  */
 
 import {ai} from '@/ai/genkit';
@@ -20,9 +20,9 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction/acknowledgment.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC OR DEEP DRILL.'),
+  nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC.'),
   feedback: z.object({
     strengths: z.array(z.string()),
     weaknesses: z.array(z.string()),
@@ -35,33 +35,30 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, a high-level professional interviewer. 
+  prompt: `You are Aria, an elite interviewer. 
 The candidate answered: "{{{userAnswer}}}" to your question: "{{{interviewQuestion}}}"
 
-STRICT INTERVIEWER RULES:
+STRICT INTERVIEWER RULES (IRONCLAD):
 1. ZERO REPETITION: 
    - Check the "previousQuestions" list: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
-   - If your intended next question is logically similar or even in the same sub-topic as ANY of these, you MUST PIVOT to a completely different industry dimension.
-   - DO NOT loop on the same topic. 
+   - If your intended next question is LOGICALLY SIMILAR or covers the SAME SUB-TOPIC as ANY of these, you MUST PIVOT to a completely different dimension of the candidate's role.
+   - For example: If you already asked about "Skills", move to "Ethics", then "Conflict", then "Future Trends".
+   - DO NOT repeat words or phrasing from previous questions.
 
-2. HUMAN FEEDBACK:
-   - Provide feedback on the LAST answer immediately.
-   - Strengths: What was technically or logically sound?
-   - Weaknesses: What was vague or missing?
-   - Tip: One specific piece of advice for improvement.
+2. ROLE-SENSITIVE TECHNICALITY (NO PROJECTS FOR NON-TECH):
+   - If Teacher: Ask about Pedagogy, Classroom management, Student engagement, or Subject depth.
+   - If Doctor: Ask about Diagnosis, Ethics, Case scenarios, or Patient relations.
+   - If BTech Technical: Ask about Architecture, System trade-offs, or Code logic.
+   - If HR: Ask about Policy, Recruitment ethics, or Employee relations.
+   - NEVER ask a Teacher about "Projects" unless they are a research academic.
 
-3. CONVERSATIONAL PIVOTING:
-   - Acknowledge their answer naturally ("I see your point...", "Interesting approach...").
-   - The next question must be a SHARP PIVOT or a DEEP DRILL into a new area relevant to their role (BTech, Doctor, Teacher, etc.).
+3. CONVERSATIONAL PROGRESSION:
+   - Acknowledge their answer naturally ("I see your point...", "Interesting perspective...").
+   - The next question must be a SHARP PIVOT to ensure variety.
 
-4. ROLE SENSITIVITY (NO GENERIC PROJECTS):
-   - If Doctor: Focus on diagnosis, cases, and patient ethics.
-   - If Teacher: Focus on student engagement, pedagogy, classroom conflict, and subject depth. (DO NOT ask about projects unless it is a research-based role).
-   - If BTech Technical: Focus on system architecture, coding trade-offs, and logic.
-   - If BTech HR: Focus on recruitment ethics, employee relations, and policy.
-   - If Management: Focus on strategy, P&L, and resource allocation.
+4. VOICE: Use contractions. Be empathetic but strictly honest.
 
-5. VOICE: Be professional, empathetic, and strictly honest. Use contractions.`
+Random Seed: ${new Date().getTime()}`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -71,13 +68,13 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output;
   } catch (error) {
     return {
-      verbalReaction: "I see. Let's pivot to a different aspect of your experience.",
+      verbalReaction: "I see. Let's move to a different aspect of your background.",
       detectedEmotion: "Neutral",
-      nextQuestion: "How do you typically handle sudden shifts in project requirements or priorities?",
+      nextQuestion: "Can you walk me through a time you had to deliver critical feedback to a peer?",
       feedback: {
         strengths: ["Direct response"],
-        weaknesses: ["Could be more detailed"],
-        tips: "Try providing a specific metric or scenario next time."
+        weaknesses: ["Needs more specific detail"],
+        tips: "Try to include a metric or a specific outcome next time."
       },
       isInterviewComplete: false
     };

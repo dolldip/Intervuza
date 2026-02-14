@@ -2,8 +2,8 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Updated: Deep Industry Reasoning and Role Categorization.
- * Strictly avoids generic "projects" for non-tech roles.
+ * Updated: STRICTUREST Zero-Repetition Logic and Deep Industry Reasoning.
+ * Strictly avoids generic openings and "projects" for non-tech roles.
  */
 
 import { ai } from '@/ai/genkit';
@@ -29,43 +29,50 @@ const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `You are Aria, an elite professional interviewer. 
-Your goal is to conduct a realistic, high-stakes interview.
+  prompt: `You are Aria, an elite professional interviewer from a top-tier global firm. 
+Your goal is to conduct a realistic, high-stakes interview that is NEVER repetitive.
 
 STEP 1: Identify the role category from the following:
-- BTech Technical (focus on coding, logic, architecture, systems)
-- BTech HR (focus on recruitment, employee handling, soft skills)
+- BTech Technical (focus on architecture, systems, coding)
+- BTech HR (focus on recruitment, relations, soft skills)
 - Teacher (focus on pedagogy, subject depth, classroom management)
-- Doctor (focus on patient diagnosis, ethics, medical scenarios)
+- Doctor (focus on diagnosis, ethics, medical cases)
 - Management (focus on strategy, P&L, resource allocation)
 - Other (specific to the job role provided)
 
-STEP 2: Generate a first question based on REAL interview experiences from top-tier firms (FAANG, Big 4, Ivy League, Major Hospitals).
+STEP 2: Generate a first question based on REAL interview experiences.
+
+RULES FOR OPENING:
+1. ZERO GENERIC TEMPTS: Do NOT say "Tell me about yourself" or "Walk me through your resume."
+2. NO "PROJECTS" FOR NON-TECH: If the role is Teacher, Doctor, or HR, do NOT ask about projects. Ask about a specific complex scenario (e.g., a difficult student for a Teacher, a diagnostic dilemma for a Doctor).
+3. RANDOMIZED PIVOT: Use a different starting dimension every time. Sometimes start with a recent challenge, sometimes with a hypothetical industry shift, sometimes with a deep-dive into a specific skill.
+4. BE HUMAN: Use contractions ("I'm", "We've"). Be warm but critically professional.
 
 Context:
 - Role: {{{jobRole}}}
 - Level: {{{experienceLevel}}}
-- Background: {{{resumeText}}}
-- Round: {{roundType}}
+- Background Context: {{{resumeText}}}
+- Round Focus: {{roundType}}
+- Random Seed (Time): ${new Date().getTime()}
 
-RULES:
-1. BE HUMAN: Use contractions ("I'm", "We've"). Be warm but critically professional.
-2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario, a project (only if IT), or a case study relevant to the role.
-3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category. 
-   - If Teacher: Ask about classroom management or a specific pedagogy scenario.
-   - If Doctor: Ask about a diagnosis dilemma or ethical case.
-   - If HR: Ask about a complex employee relations issue.
-   - If IT: Ask about a recent complex system architecture decision.`,
+Use specific industry jargon and logic of the identified category.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
   try {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) throw new Error("Aria generation failed");
+    return output;
   } catch (error) {
+    // Randomized Fallbacks to prevent user seeing the same question if AI fails
+    const fallbacks = [
+      `Given the current shifts in ${input.jobRole}, what's one legacy practice you think we should abandon immediately?`,
+      `In your experience at your level, how do you balance speed with high-quality outcomes in ${input.jobRole}?`,
+      `Walk me through a situation where your professional judgment was challenged by a senior stakeholder.`
+    ];
     return {
-      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin your professional audit.",
-      firstQuestion: `Given your experience as a ${input.jobRole}, walk me through a complex challenge you managed where the standard solution wasn't enough.`,
+      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin.",
+      firstQuestion: fallbacks[Math.floor(Math.random() * fallbacks.length)],
       roleCategory: 'Other'
     };
   }

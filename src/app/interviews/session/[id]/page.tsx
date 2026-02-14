@@ -72,7 +72,7 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // History source of truth - Strictly tracking previous questions to prevent repetition
+  // IRONCLAD MEMORY: Tracks every single question to prevent any repetition.
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -148,7 +148,7 @@ export default function InterviewSessionPage() {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
           if (combinedText.length > 5) completeTurn(false);
           else if (combinedText.length === 0) setIsStuck(true);
-        }, 12000); 
+        }, 15000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -185,11 +185,13 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
+        // Commit first question to history IMMEDIATELY
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        setCurrentQuestion("Could you start by sharing a specific challenge you've overcome recently?")
-        historyRef.current = ["Could you start by sharing a specific challenge you've overcome recently?"]
+        const fb = "How do you ensure your technical knowledge stays relevant in such a fast-paced industry?"
+        setCurrentQuestion(fb)
+        historyRef.current = [fb]
       } finally {
         setInitializing(false)
       }
@@ -275,7 +277,7 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current, // Passing history to prevent repetition
+        previousQuestions: historyRef.current, // Passing history to the AI
         isStuck: forcedStuck || isStuck
       });
       
@@ -287,7 +289,7 @@ export default function InterviewSessionPage() {
         setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
         
-        // Strictly updating history to ensure next turn is aware of what was just asked
+        // COMMIT NEXT QUESTION TO HISTORY IMMEDIATELY
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
@@ -330,17 +332,17 @@ export default function InterviewSessionPage() {
           </div>
           <div className="space-y-4">
             <Badge variant="secondary" className="glass px-6 py-2 rounded-full font-black text-primary gap-2 uppercase tracking-widest text-[10px]">
-              <TrendingUp className="w-3 h-3" /> {roleCategory} Assessment Sector
+              <TrendingUp className="w-3 h-3" /> {roleCategory} Sector Active
             </Badge>
             <h1 className="text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
-            <p className="text-slate-500 text-lg">Aria is ready to begin your professional audit. Her questions will be role-specific and interactive.</p>
+            <p className="text-slate-500 text-lg">Aria is ready to begin your professional audit. Her questions will be role-specific and progressive.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" onClick={startSession}>
             START INTERVIEW
             <Play className="ml-4 w-6 h-6 fill-current" />
           </Button>
         </div>
-        <div className="absolute inset-0 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute inset-0 bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
       </div>
     )
   }
@@ -357,7 +359,7 @@ export default function InterviewSessionPage() {
             TURN {turnCount + 1} / 7
           </Badge>
           <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]">
-            {roleCategory} Mode
+            {roleCategory} Assessment
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -400,7 +402,7 @@ export default function InterviewSessionPage() {
                   <div className="glass bg-slate-900/90 backdrop-blur-3xl border-primary/20 p-8 rounded-[2.5rem] shadow-2xl flex flex-col gap-4 max-w-2xl mx-auto">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" /> Professional Turn Feedback
+                        <Sparkles className="w-4 h-4" /> Performance Insight
                       </span>
                       <button onClick={() => setShowFeedback(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
