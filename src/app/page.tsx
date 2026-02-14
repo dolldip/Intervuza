@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -46,17 +45,17 @@ export default function Home() {
           <div className="container px-4 md:px-6 mx-auto relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-4 max-w-4xl">
-                <Badge variant="secondary" className="glass px-6 py-2 rounded-full text-primary font-black uppercase tracking-[0.2em] text-[10px]">
+                <Badge variant="secondary" className="glass px-6 py-2 rounded-full text-primary font-black uppercase tracking-[0.2em] text-[10px] animate-sudden">
                   <Sparkles className="w-3 h-3 mr-2" /> Neural Coaching Engine
                 </Badge>
-                <h1 className="text-5xl font-headline font-black tracking-tighter sm:text-7xl lg:text-8xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1]">
+                <h1 className="text-5xl font-headline font-black tracking-tighter sm:text-7xl lg:text-8xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1] animate-entrance">
                   Master High-Stakes <br /> <span className="text-primary">Interviews</span> with Aria
                 </h1>
-                <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed">
+                <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:200ms]">
                   The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-6 mt-12">
+              <div className="flex flex-col sm:flex-row gap-6 mt-12 animate-entrance [animation-delay:400ms]">
                 <Button size="lg" className="h-16 px-10 text-lg rounded-2xl shadow-2xl shadow-primary/40 group font-black transition-all hover:scale-105" asChild>
                   <Link href="/register">
                     START FREE ASSESSMENT
@@ -75,7 +74,7 @@ export default function Home() {
         {/* Features Section */}
         <section id="features" className="w-full py-32 relative">
           <div className="container px-4 md:px-6 mx-auto">
-            <div className="text-center mb-24 space-y-4">
+            <div className="text-center mb-24 space-y-4 animate-entrance">
               <h2 className="text-4xl font-headline font-black tracking-tighter sm:text-6xl">Intelligence Architecture</h2>
               <p className="text-slate-400 max-w-[800px] mx-auto text-xl">
                 Aria uses state-of-the-art vision and NLP to analyze every micro-expression and technical argument.
@@ -120,7 +119,7 @@ export default function Home() {
                   color: "bg-cyan-500/10 text-cyan-400"
                 }
               ].map((feature, idx) => (
-                <Card key={idx} className="glass border-none hover:border-primary/30 transition-all duration-500 rounded-[2.5rem] overflow-hidden group">
+                <Card key={idx} className="glass border-none hover:border-primary/30 transition-all duration-500 rounded-[2.5rem] overflow-hidden group animate-sudden [animation-delay:var(--delay)]" style={{ '--delay': `${idx * 100}ms` } as any}>
                   <CardHeader className="p-10">
                     <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner`}>
                       <feature.icon className="w-7 h-7" />
@@ -139,11 +138,11 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
           <div className="container px-4 md:px-6 mx-auto relative z-10">
             <div className="flex flex-col items-center justify-center space-y-10 text-center">
-              <h2 className="text-4xl font-headline font-black tracking-tighter sm:text-7xl text-white">Elevate Your Presence.</h2>
-              <p className="max-w-[700px] text-white/80 text-xl md:text-2xl font-medium">
+              <h2 className="text-4xl font-headline font-black tracking-tighter sm:text-7xl text-white animate-sudden">Elevate Your Presence.</h2>
+              <p className="max-w-[700px] text-white/80 text-xl md:text-2xl font-medium animate-sudden [animation-delay:200ms]">
                 Join 50k+ candidates who have transformed their interview performance with Aria's professional audit.
               </p>
-              <Button size="lg" variant="secondary" className="h-18 px-12 text-2xl rounded-2xl font-black bg-white text-primary hover:scale-105 transition-transform shadow-2xl" asChild>
+              <Button size="lg" variant="secondary" className="h-18 px-12 text-2xl rounded-2xl font-black bg-white text-primary hover:scale-105 transition-transform shadow-2xl animate-sudden [animation-delay:400ms]" asChild>
                 <Link href="/register">Get Started Now</Link>
               </Button>
             </div>

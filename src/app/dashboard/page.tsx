@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -73,7 +72,7 @@ export default function DashboardPage() {
   return (
     <div className="p-8 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div>
+        <div className="animate-entrance">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
@@ -83,7 +82,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-slate-400 text-xl mt-2 font-medium">Ready for your professional audit today?</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 animate-sudden [animation-delay:300ms]">
           <Button variant="outline" asChild className="hidden sm:flex h-14 rounded-2xl px-8 glass font-bold">
             <Link href="/profile">
               <UserPen className="mr-2 w-5 h-5" />
@@ -106,7 +105,7 @@ export default function DashboardPage() {
           { label: "Completed", value: stats.completed, icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/10" },
           { label: "Total Turns", value: stats.total, icon: BrainCircuit, color: "text-purple-400", bg: "bg-purple-500/10" },
         ].map((stat, i) => (
-          <Card key={i} className="glass-card overflow-hidden group hover:border-primary/40 transition-all duration-500">
+          <Card key={i} className="glass-card overflow-hidden group hover:border-primary/40 transition-all duration-500 animate-sudden [animation-delay:var(--delay)]" style={{ '--delay': `${i * 100}ms` } as any}>
             <CardContent className="p-8 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{stat.label}</p>
@@ -122,7 +121,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-10">
-          <Card className="glass-card overflow-hidden">
+          <Card className="glass-card overflow-hidden animate-entrance [animation-delay:400ms]">
             <CardHeader className="flex flex-row items-center justify-between p-10 bg-white/5">
               <div className="flex items-center gap-6">
                 <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center text-primary shadow-inner">
@@ -152,7 +151,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card overflow-hidden">
+          <Card className="glass-card overflow-hidden animate-entrance [animation-delay:500ms]">
             <CardHeader className="p-10 border-b border-white/5 bg-white/5">
               <div className="flex items-center justify-between">
                 <CardTitle className="font-headline text-3xl font-black flex items-center gap-4">
@@ -167,8 +166,8 @@ export default function DashboardPage() {
                 <div className="flex justify-center p-20"><Loader2 className="animate-spin text-primary w-10 h-10" /></div>
               ) : sessions?.length ? (
                 <div className="divide-y divide-white/5">
-                  {sessions.map((item) => (
-                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 hover:bg-white/5 transition-all group">
+                  {sessions.map((item, idx) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 hover:bg-white/5 transition-all group animate-sudden" style={{ '--delay': `${idx * 50}ms` } as any}>
                       <div className="flex items-center gap-8">
                         <div className={`w-20 h-20 rounded-[2rem] flex flex-col items-center justify-center font-black text-2xl shadow-inner border border-white/10 ${item.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-primary/10 text-primary'}`}>
                           {item.status === 'completed' ? (item.overallScore || "--") : <AlertCircle className="w-8 h-8" />}
@@ -203,7 +202,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-10">
-          <Card className="glass bg-slate-900 border-none rounded-[3rem] overflow-hidden relative group">
+          <Card className="glass bg-slate-900 border-none rounded-[3rem] overflow-hidden relative group animate-entrance [animation-delay:600ms]">
             <CardHeader className="p-10 pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-primary" />
