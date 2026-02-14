@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -92,6 +93,13 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
+  // FIX: Ensure video stream is attached to the ref whenever it exists
+  useEffect(() => {
+    if (userVideoRef.current && stream) {
+      userVideoRef.current.srcObject = stream;
+    }
+  }, [sessionStarted, stream, hasCameraPermission]);
+
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
@@ -101,15 +109,15 @@ export default function InterviewSessionPage() {
       setConfidenceLevel(prev => {
         let change = (Math.random() * 2) - 1; 
         if (isListening) {
-          if (currentText.length < 5) change -= 1.5; 
-          if (currentText.length > 50) change += 1; 
+          if (currentText.length < 5) change -= 2.0; 
+          if (currentText.length > 60) change += 1.5; 
         }
         return Math.min(100, Math.max(0, prev + change));
       });
 
       setEyeFocus(prev => {
         let change = (Math.random() * 2) - 1;
-        if (Math.random() > 0.98) change = -15;
+        if (Math.random() > 0.98) change = -20;
         return Math.min(100, Math.max(0, prev + change));
       });
     }, 1000);
@@ -120,14 +128,11 @@ export default function InterviewSessionPage() {
     const getCameraPermission = async () => {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
           audio: true 
         });
         setStream(mediaStream)
         setHasCameraPermission(true)
-        if (userVideoRef.current) {
-          userVideoRef.current.srcObject = mediaStream;
-        }
       } catch (error) {
         console.error('Camera access error:', error);
         setHasCameraPermission(false);
@@ -173,10 +178,10 @@ export default function InterviewSessionPage() {
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 20) {
+          if (combinedText.length > 25) {
              completeTurn(false);
           }
-        }, 8000); 
+        }, 10000); 
 
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
@@ -230,7 +235,7 @@ export default function InterviewSessionPage() {
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
         setOpening("Hi, I'm Aria. It's a pleasure to meet you.")
-        const fb = "To get us started, could you walk me through a complex challenge you solved recently?";
+        const fb = "To get us started, could you walk me through a technical project from your resume and your specific role in it?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
         sessionStorage.setItem('session_answers', '[]');
@@ -324,7 +329,7 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         previousQuestions: history,
-        isStuck: forcedStuck || (fullAnswer.length < 8 && !forcedStuck)
+        isStuck: forcedStuck || (fullAnswer.length < 15 && !forcedStuck)
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
@@ -345,7 +350,7 @@ export default function InterviewSessionPage() {
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         setTimeout(() => {
           triggerSpeech(finalPrompt);
-        }, 1200);
+        }, 800);
       } else {
         terminateSession();
       }
@@ -385,7 +390,7 @@ export default function InterviewSessionPage() {
               <Sparkles className="w-3 h-3" /> Professional Audit Sector
             </Badge>
             <h1 className="text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Calibration Mode</h1>
-            <p className="text-slate-500 text-lg">Aria will monitor your biometrics and technical logic during this turn.</p>
+            <p className="text-slate-500 text-lg">Aria will monitor your biometrics and project logic during this turn.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all shadow-primary/30" onClick={startSession}>
             BEGIN ASSESSMENT

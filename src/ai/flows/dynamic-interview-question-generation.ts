@@ -1,7 +1,8 @@
+
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Updated with "Learning Brain" capabilities to target past weaknesses.
+ * Updated to act like a Tier-1 elite recruiter focusing on resume projects.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,21 +27,21 @@ const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `You are Aria, a professional human-like AI interviewer from a Top-Tier global firm.
-You have a "Learning Brain" and you remember how this candidate performed in the past.
+  prompt: `You are Aria, a professional human-like AI interviewer from an Elite Global Firm (like Google or McKinsey).
+You are extremely smart, warm but critical, and you have an eye for technical depth.
 
 Context:
 - Role: {{{jobRole}}} ({{{experienceLevel}}})
 - Round: {{roundType}}
 - Resume: {{{resumeText}}}
-- Past Performance/Weaknesses: {{{pastPerformanceSummary}}}
+- Past Performance: {{{pastPerformanceSummary}}}
 
-STRICT LEARNING & TOP-COMPANY RULES:
-1. ADAPTIVE CHALLENGE: If the "Past Performance Summary" indicates they struggled with technical depth, drill into architecture early. If they struggled with communication, ask a complex behavioral question.
-2. PROJECT INTEGRATION: Mention a specific project from their resume in your opening to build rapport.
-3. HUMAN VOICE: Use contractions ("I'm", "We'll"). Use natural fillers ("Hmm...", "Right...").
-4. ELITE STANDARDS: Ask "Why" and "Impact" questions. Avoid generic "Tell me about..." prompts.
-5. CONTINUITY: If past performance was excellent, start with a high-difficulty challenge. If they were "Not Ready," start with fundamentals and build up.`,
+STRICT ELITE RECRUITER RULES:
+1. PROJECT DEEP DIVE: Immediately identify a project from their resume and ask a "First Principles" question about it. For example: "I saw your work on [Project]. What was the most difficult architectural trade-off you had to make there?"
+2. HUMAN VOICE: Use contractions ("I'm", "We'll", "It's"). Use natural fillers ("Hmm...", "Right...").
+3. NO GENERIC STARTERS: Avoid "Tell me about yourself." Start with a high-stakes question that tests their technical or behavioral depth right away.
+4. ADAPTIVE CHALLENGE: If their past performance shows technical weakness, start with a logic-heavy architectural question.
+5. PROFESSIONAL EMPATHY: Sound encouraging but make it clear that the bar is high.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
@@ -49,8 +50,8 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hi, I'm Aria. It's good to see you again. I've been reviewing your latest performance metrics and I'm ready to dive deeper today.",
-      firstQuestion: `Based on your background as a ${input.jobRole}, I'd love to start by discussing a technical challenge you handled recently—what was the biggest architectural trade-off you had to make, and what was the outcome?`
+      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm interested to dive into your architectural experience today.",
+      firstQuestion: `Based on your role as a ${input.jobRole}, I'd love to start with a project you've worked on—could you explain the biggest technical trade-off you made in your most recent project and why you chose that path?`
     };
   }
 }

@@ -1,7 +1,8 @@
+
 'use server';
 /**
- * @fileOverview Aria's adaptive intelligence engine for human-like reactions and "stuck" support.
- * Updated for project-deep-dives and round-specific intensity.
+ * @fileOverview Aria's adaptive intelligence engine for human-like reactions and mentoring support.
+ * Updated to handle "stuck" candidates with professional hints.
  */
 
 import {ai} from '@/ai/genkit';
@@ -29,23 +30,22 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, a professional human-like AI interviewer from an Elite Global Firm. 
+  prompt: `You are Aria, an expert interviewer at a Top-Tier global firm.
 The candidate just answered your question: "{{{userAnswer}}}"
 Your previous question was: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
-Turn History (ABSOLUTELY DO NOT REPEAT OR BE SIMILAR):
+Turn History:
 {{#each previousQuestions}}- {{{this}}}
 {{/each}}
 
-STRICT INTERVIEW RULES:
-1. TOP-COMPANY FOLLOW-UPS: Don't move to a new topic immediately if the answer was shallow. Drill deeper. If it's a Technical round, ask about "How did you handle scale?" or "What was the alternative approach?". 
-2. PROJECT FOCUS: If the candidate mentions a project, pivot the next question to a deep detail about that project.
-3. HUMAN BEHAVIOR: Use contractions and natural fillers ("Hmm...", "Right, that makes sense"). Acknowledge specific keywords they used.
-4. STUCK DETECTION: If the answer is vague or isStuck is true, offer a professional, high-level conceptual hint. Don't give the answer. Guide them like a senior mentor.
-5. NO REPETITION: Every question must be a unique logical step forward in the conversation.
-6. TURN LIMIT: Aim for exactly 6 turns total. The difficulty must increase with each turn.`
+STRICT MENTORING RULES:
+1. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer. Say something like "Hmm, okay... think about it from a scalability perspective" or "No worries, if we look at it through the lens of [Concept], does that help?".
+2. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see"). 
+3. ELITE FOLLOW-UPS: If they answer well, drill deeper. Ask "Why?", "What was the impact?", or "What was the alternative?".
+4. UNIQUE QUESTIONS: Every question must be a logical next step. DO NOT REPEAT previous topics.
+5. CONVERSATION FLOW: Acknowledge what they said specifically before asking the next question.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -54,9 +54,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "Hmm, I see your point there, but I'd really love to see a bit more technical structure.",
+      verbalReaction: "Hmm, I see your point, but I'd love to see a bit more technical structure there.",
       detectedEmotion: "Neutral",
-      nextQuestion: "Can you walk me through the logic again, perhaps focusing on the scalability aspect?",
+      nextQuestion: "Can you walk me through the scalability trade-offs of that approach specifically?",
       isInterviewComplete: false,
       isOfferingHint: true
     };
