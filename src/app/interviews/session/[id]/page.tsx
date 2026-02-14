@@ -56,7 +56,6 @@ export default function InterviewSessionPage() {
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
   const [hasCameraPermission, setHasCameraPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
   
@@ -72,6 +71,8 @@ export default function InterviewSessionPage() {
   const recognitionRef = useRef<any>(null)
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
+  
+  // CRITICAL: historyRef is the source of truth for the AI to prevent repeating questions
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -80,7 +81,6 @@ export default function InterviewSessionPage() {
     processingTurn, 
     turnCount, 
     currentQuestion, 
-    askedQuestions,
     sessionStarted,
     isStuck
   })
@@ -92,12 +92,10 @@ export default function InterviewSessionPage() {
       processingTurn, 
       turnCount, 
       currentQuestion, 
-      askedQuestions,
       sessionStarted,
       isStuck
     }
-    historyRef.current = askedQuestions
-  }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
+  }, [speaking, listening, processingTurn, turnCount, currentQuestion, sessionStarted, isStuck])
 
   useEffect(() => {
     if (userVideoRef.current && stream) {
@@ -150,7 +148,7 @@ export default function InterviewSessionPage() {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
           if (combinedText.length > 5) completeTurn(false);
           else if (combinedText.length === 0) setIsStuck(true);
-        }, 12000); 
+        }, 15000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -187,12 +185,13 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
-        setAskedQuestions([result.firstQuestion])
         historyRef.current = [result.firstQuestion]
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        setCurrentQuestion(`To start us off, based on your experience as a ${demoRole}, could you share a specific technical challenge you've overcome recently?`)
+        const fallbackQ = `To start us off, based on your experience as a ${demoRole}, could you share a specific technical challenge you've overcome recently?`;
+        setCurrentQuestion(fallbackQ)
+        historyRef.current = [fallbackQ]
       } finally {
         setInitializing(false)
       }
@@ -281,7 +280,7 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current,
+        previousQuestions: historyRef.current, // Sending the full history to the AI
         isStuck: forcedStuck || isStuck
       });
       
@@ -294,11 +293,9 @@ export default function InterviewSessionPage() {
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
-        setAskedQuestions(prev => {
-           const nextHistory = [...prev, feedback.nextQuestion];
-           historyRef.current = nextHistory;
-           return nextHistory;
-        });
+        
+        // CRITICAL: Update the historyRef immediately so the NEXT turn sees it correctly
+        historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
         setInterimTranscript("");

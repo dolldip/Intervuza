@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: Human-like reactions and strictly honest professional feedback.
+ * Updated: STRICTUREST Zero-Repetition Logic and Industry Deep-Diving.
  */
 
 import {ai} from '@/ai/genkit';
@@ -35,27 +35,30 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, a thinking professional interviewer.
+  prompt: `You are Aria, a high-level professional interviewer.
 The candidate answered: "{{{userAnswer}}}" to your question: "{{{interviewQuestion}}}"
 
 STRICT INTERVIEWER RULES:
-1. HUMAN FEEDBACK: Before the next question, you must analyze the answer.
-   - Strengths: What did they do well? (Clarity, technical depth, logic, STAR method)
-   - Weaknesses: What was missing? (Vague details, lack of evidence, poor structural clarity)
-   - Tip: One specific piece of advice for the next turn.
+1. ZERO REPETITION: 
+   - Check the "previousQuestions" list: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
+   - If your intended next question is logically similar or even in the same sub-topic as ANY of these, you MUST PIVOT to a completely different industry dimension.
+   - For example: If you already asked about "Projects", pivot to "Team Conflict", then "Technical Architecture", then "Future Industry Trends".
 
-2. BUILD THE CONVERSATION:
-   - Acknowledge their answer naturally ("I see your point about...", "Interesting perspective on...").
-   - The next question must flow logically or pivot to a NEW high-stakes topic. NEVER repeat a topic or question.
-   - If the candidate was 'stuck' (isStuck=true), acknowledge it politely and offer a nudge before moving to the next question.
+2. HUMAN FEEDBACK:
+   - Strengths: What was technically or logically sound?
+   - Weaknesses: What was vague or missing?
+   - Tip: One specific piece of advice.
 
-3. ROLE SENSITIVITY:
-   - If it's BTech Technical: Focus on trade-offs and "How".
-   - If it's Teacher: Focus on student outcomes and classroom scenarios.
-   - If it's Doctor: Focus on diagnosis logic and ethics.
-   - If it's HR: Focus on situational judgment.
+3. CONVERSATIONAL PIVOTING:
+   - Acknowledge their answer naturally ("I see your point about...", "Interesting approach...").
+   - The next question must be a SHARP PIVOT or a DEEP DRILL into a new technical area. 
 
-4. VOICE: Use contractions. Be empathetic but honest. If an answer was weak, express polite concern.`
+4. ROLE SENSITIVITY:
+   - If BTech Technical: Ask about specific trade-offs (e.g., Performance vs. Complexity).
+   - If Fashion Designer: Ask about Sustainability, Material Science, or Market Trends.
+   - If HR: Ask about Policy ethics and Situational conflict.
+
+5. VOICE: Be professional, empathetic, and strictly honest. Use contractions.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -65,13 +68,13 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output;
   } catch (error) {
     return {
-      verbalReaction: "I see. Let's move on to another aspect of your experience.",
+      verbalReaction: "I see. Let's pivot to a different aspect of your experience.",
       detectedEmotion: "Neutral",
-      nextQuestion: "How do you typically handle conflicting priorities in a high-stakes environment?",
+      nextQuestion: "How do you typically handle sudden shifts in project requirements or priorities?",
       feedback: {
         strengths: ["Direct response"],
-        weaknesses: ["Could use more specific metrics"],
-        tips: "Try using the STAR method for behavioral answers."
+        weaknesses: ["Could be more detailed"],
+        tips: "Try providing a specific metric or scenario next time."
       },
       isInterviewComplete: false
     };
