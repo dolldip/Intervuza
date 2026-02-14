@@ -58,6 +58,7 @@ export default function InterviewSessionPage() {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   const [isStuck, setIsStuck] = useState(false)
+  const [terminating, setTerminating] = useState(false)
   
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
@@ -93,7 +94,6 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
-  // Biometric sensitivity logic
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
@@ -179,9 +179,8 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 20) {
              completeTurn(false);
           }
-        }, 5000); 
+        }, 6000); 
 
-        // Stuck Detection logic: 10 seconds of silence/struggle
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
           const { listening: isListeningNow } = stateRef.current;
@@ -189,7 +188,7 @@ export default function InterviewSessionPage() {
             setIsStuck(true);
             completeTurn(true);
           }
-        }, 10000); 
+        }, 12000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -208,7 +207,6 @@ export default function InterviewSessionPage() {
     };
   }, []);
 
-  // Ensure video element receives the stream whenever it is mounted or stream changes
   useEffect(() => {
     if (stream && userVideoRef.current) {
       userVideoRef.current.srcObject = stream;
@@ -294,6 +292,29 @@ export default function InterviewSessionPage() {
     setSpeaking(false);
     setListening(true);
     if (recognitionRef.current) try { recognitionRef.current.start(); } catch (e) {}
+  };
+
+  const terminateSession = async () => {
+    setTerminating(true);
+    const answers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
+    
+    if (user && db && params.id !== "demo-session") {
+      const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
+      await updateDoc(sessionRef, {
+        status: "completed",
+        endTime: new Date().toISOString(),
+        overallScore: Math.round(confidenceLevel * 0.7 + 30)
+      });
+    }
+    
+    toast({
+      title: "Session Terminated",
+      description: "Generating your final performance audit based on the turns completed."
+    });
+    
+    setTimeout(() => {
+      router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
+    }, 1500);
   };
 
   const completeTurn = async (forcedStuck: boolean = false) => {
@@ -411,8 +432,15 @@ export default function InterviewSessionPage() {
             {sessionStorage.getItem('demo_role')} ASSESSMENT
           </span>
         </div>
-        <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-500 font-bold" onClick={() => router.push(`/dashboard`)}>
-          <StopCircle className="w-4 h-4 mr-2" /> TERMINATE
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-slate-500 hover:text-red-500 font-bold" 
+          onClick={terminateSession}
+          disabled={terminating}
+        >
+          {terminating ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <StopCircle className="w-4 h-4 mr-2" />} 
+          TERMINATE & AUDIT
         </Button>
       </div>
 
