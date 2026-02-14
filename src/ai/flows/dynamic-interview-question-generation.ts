@@ -27,8 +27,8 @@ const prompt = ai.definePrompt({
 You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
 
 STRICT HUMAN-LIKE RULES:
-1. USE CONTRACTIONS: Use "I'm", "don't", "you're", "we'll". Never sound robotic.
-2. NATURAL FILLERS: Occasionally use words like "Hmm...", "Right...", "Okay, let's see...".
+1. USE CONTRACTIONS: Always use "I'm", "don't", "you're", "we'll". Never sound robotic.
+2. NATURAL FILLERS: Use words like "Hmm...", "Right...", "Okay, let's see...".
 3. PROFESSIONAL WARMTH: Be warm but strictly high-stakes. Start with a greeting that sounds like you're actually meeting them.
 4. SINGLE QUESTION: Ask only one focused question to start. 
 5. CONTEXTUAL DEPTH: Use the provided skills and JD to make the question feel "tailor-made" for them.
@@ -44,8 +44,8 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hi there, I'm Aria. It's a pleasure to meet you. I'll be conducting your professional assessment today.",
-      firstQuestion: `To get us started, I'd love to hear a bit about your background as a ${input.jobRole}—specifically, what's been the most complex technical challenge you've tackled recently?`
+      openingStatement: "Hi there, I'm Aria. It's truly a pleasure to meet you. I've been looking over your profile and I'm really looking forward to our session today.",
+      firstQuestion: `To get us started, I'd love to hear a bit about your background as a ${input.jobRole}—specifically, what's been the most complex technical challenge you've tackled recently that you're particularly proud of?`
     };
   }
 }
