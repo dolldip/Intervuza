@@ -33,10 +33,19 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
+      let message = "Invalid email or password.";
+      if (error.code === 'auth/invalid-credential') {
+        message = "The credentials provided are incorrect. Please try again.";
+      } else if (error.code === 'auth/user-not-found') {
+        message = "No account found with this email.";
+      } else if (error.code === 'auth/wrong-password') {
+        message = "Incorrect password.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: error.message || "Invalid email or password.",
+        description: message,
       });
     } finally {
       setLoading(false);

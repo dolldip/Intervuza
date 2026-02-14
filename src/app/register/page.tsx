@@ -59,6 +59,8 @@ export default function RegisterPage() {
         message = "This email is already registered. Please log in instead.";
       } else if (error.code === 'auth/weak-password') {
         message = "Password should be at least 6 characters.";
+      } else if (error.code === 'auth/invalid-email') {
+        message = "The email address is not valid.";
       }
       
       toast({
