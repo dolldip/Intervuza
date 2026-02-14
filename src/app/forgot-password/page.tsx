@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -54,9 +54,9 @@ export default function ForgotPasswordPage() {
         <div className="text-center space-y-2">
           <Link className="inline-flex items-center space-x-2" href="/">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <ShieldCheck className="text-white w-6 h-6" />
+              <GraduationCap className="text-white w-6 h-6" />
             </div>
-            <span className="font-headline font-bold text-3xl tracking-tight">AssessAI</span>
+            <span className="font-headline font-bold text-3xl tracking-tight">PrepWise</span>
           </Link>
           <h2 className="text-2xl font-headline font-bold mt-4">Security Recovery</h2>
           <p className="text-muted-foreground">Restore access to your performance audit data.</p>

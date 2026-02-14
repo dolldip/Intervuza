@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ShieldCheck, 
+  GraduationCap, 
   ChevronRight, 
   Zap,
   Video,
@@ -21,9 +21,9 @@ export default function Home() {
       <header className="px-6 h-20 flex items-center glass-dark sticky top-0 z-50">
         <Link className="flex items-center justify-center space-x-2" href="/">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <ShieldCheck className="text-white w-6 h-6" />
+            <GraduationCap className="text-white w-6 h-6" />
           </div>
-          <span className="font-headline font-bold text-2xl tracking-tighter">AssessAI</span>
+          <span className="font-headline font-bold text-2xl tracking-tighter">PrepWise</span>
         </Link>
         <nav className="ml-auto flex gap-8 items-center">
           <Link className="text-sm font-bold text-slate-400 hover:text-white transition-colors hidden md:block" href="#features">
@@ -110,7 +110,7 @@ export default function Home() {
                 {
                   title: "Resume Sync",
                   description: "Upload your background and get hyper-personalized questioning targeting elite firms.",
-                  icon: ShieldCheck,
+                  icon: GraduationCap,
                   color: "bg-indigo-500/10 text-indigo-400"
                 },
                 {
@@ -156,11 +156,11 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             <Link className="flex items-center space-x-2" href="/">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <ShieldCheck className="text-white w-5 h-5" />
+                <GraduationCap className="text-white w-5 h-5" />
               </div>
-              <span className="font-headline font-bold text-xl tracking-tight">AssessAI</span>
+              <span className="font-headline font-bold text-xl tracking-tight">PrepWise</span>
             </Link>
-            <p className="text-sm text-slate-500 font-medium">© 2024 AssessAI Inc. Engineered for the 1%.</p>
+            <p className="text-sm text-slate-500 font-medium">© 2024 PrepWise Inc. Engineered for the 1%.</p>
           </div>
           <div className="flex gap-10">
             <Link className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors" href="#">Terms</Link>

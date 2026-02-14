@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ShieldCheck, Mail, Lock, Loader2, Phone, KeyRound, Sparkles } from 'lucide-react';
+import { GraduationCap, Mail, Lock, Loader2, Phone, KeyRound, Sparkles } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -125,9 +125,9 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <Link className="inline-flex items-center space-x-3 group" href="/">
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 transition-transform group-hover:scale-110">
-              <ShieldCheck className="text-white w-7 h-7" />
+              <GraduationCap className="text-white w-7 h-7" />
             </div>
-            <span className="font-headline font-black text-4xl tracking-tighter">AssessAI</span>
+            <span className="font-headline font-black text-4xl tracking-tighter">PrepWise</span>
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Security Portal</h2>

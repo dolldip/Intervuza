@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -9,7 +10,6 @@ import {
   History, 
   Settings, 
   GraduationCap, 
-  ShieldCheck,
   UserCircle,
   Trophy,
   CreditCard,
@@ -111,9 +111,9 @@ export function AppSidebar() {
       <SidebarHeader className="h-16 flex items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center space-x-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-            <ShieldCheck className="text-white w-5 h-5" />
+            <GraduationCap className="text-white w-5 h-5" />
           </div>
-          <span className="font-headline font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">AssessAI</span>
+          <span className="font-headline font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">PrepWise</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, User, Mail, Lock, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { GraduationCap, User, Mail, Lock, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -108,9 +108,9 @@ export default function RegisterPage() {
         <div className="text-center space-y-4">
           <Link className="inline-flex items-center space-x-3 group" href="/">
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl transition-all group-hover:scale-110">
-              <ShieldCheck className="text-white w-7 h-7" />
+              <GraduationCap className="text-white w-7 h-7" />
             </div>
-            <span className="font-headline font-black text-4xl tracking-tighter">AssessAI</span>
+            <span className="font-headline font-black text-4xl tracking-tighter">PrepWise</span>
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Security Enrollment</h2>

@@ -5,13 +5,13 @@ import {Toaster} from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'AssessAI | Advanced Interview Preparation',
+  title: 'PrepWise | Advanced Interview Preparation',
   description: 'Master your next interview with AI-powered mock interviews and real-time feedback.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'AssessAI',
+    title: 'PrepWise',
   },
   formatDetection: {
     telephone: false,

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -15,7 +16,7 @@ import {
   Play, 
   CheckCircle2,
   Mic,
-  ShieldCheck,
+  GraduationCap,
   BrainCircuit,
   Sparkles,
   Zap,
@@ -354,7 +355,7 @@ export default function InterviewSessionPage() {
       <div className="h-20 glass-dark px-10 flex items-center justify-between z-50 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-6">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-            <ShieldCheck className="text-white w-6 h-6" />
+            <GraduationCap className="text-white w-6 h-6" />
           </div>
           <div className="h-8 w-px bg-white/10" />
           <Badge variant="outline" className="text-[10px] glass border-white/10 text-slate-400 py-2 px-6 rounded-full font-black uppercase tracking-widest">
