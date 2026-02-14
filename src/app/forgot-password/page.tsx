@@ -25,23 +25,22 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      // Triggers the password reset email via Firebase Auth
       await sendPasswordResetEmail(auth, email);
       setSent(true);
       toast({
         title: "Email Sent",
-        description: "A password reset link has been sent to your inbox.",
+        description: "A secure password reset link has been sent to your inbox.",
       });
     } catch (error: any) {
       console.error("Reset error:", error);
-      let message = "Could not send reset email. Please check the address and try again.";
+      let message = "Could not send reset email. Please check the address.";
       if (error.code === 'auth/user-not-found') {
         message = "No account found with this email address.";
       }
       
       toast({
         variant: "destructive",
-        title: "Reset Failed",
+        title: "Security Link Failed",
         description: message,
       });
     } finally {
@@ -59,25 +58,25 @@ export default function ForgotPasswordPage() {
             </div>
             <span className="font-headline font-bold text-3xl tracking-tight">AssessAI</span>
           </Link>
-          <h2 className="text-2xl font-headline font-bold mt-4">Reset your password</h2>
-          <p className="text-muted-foreground">We'll send you a link to get back into your account.</p>
+          <h2 className="text-2xl font-headline font-bold mt-4">Security Recovery</h2>
+          <p className="text-muted-foreground">Restore access to your performance audit data.</p>
         </div>
 
-        <Card className="border-none shadow-xl rounded-[2rem]">
-          <CardHeader>
+        <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-8">
             <CardTitle className="font-headline">Forgot Password</CardTitle>
-            <CardDescription>Enter your email to receive a reset link</CardDescription>
+            <CardDescription>Enter your email to receive a recovery link</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {sent ? (
-              <div className="text-center py-6 space-y-4">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+              <div className="text-center py-6 space-y-6">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <p className="font-medium">Check your email for instructions.</p>
-                <p className="text-xs text-muted-foreground">Don't forget to check your spam folder!</p>
-                <Button variant="outline" className="w-full rounded-xl mt-4" asChild>
-                  <Link href="/login">Return to Login</Link>
+                <p className="font-medium">Recovery instructions sent to your inbox.</p>
+                <p className="text-xs text-muted-foreground">Check your spam folder if you don't see it within 2 minutes.</p>
+                <Button className="w-full h-14 rounded-2xl font-black text-lg" asChild>
+                  <Link href="/login">RETURN TO LOGIN</Link>
                 </Button>
               </div>
             ) : (
@@ -97,16 +96,16 @@ export default function ForgotPasswordPage() {
                     />
                   </div>
                 </div>
-                <Button className="w-full h-12 rounded-xl font-bold text-lg shadow-lg" type="submit" disabled={loading}>
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Send Reset Link"}
+                <Button className="w-full h-14 rounded-2xl font-black text-lg shadow-lg shadow-primary/20" type="submit" disabled={loading}>
+                  {loading ? <Loader2 className="animate-spin" /> : "SEND RECOVERY LINK"}
                 </Button>
               </form>
             )}
           </CardContent>
-          <CardFooter className="justify-center border-t pt-4">
-            <Link href="/login" className="text-sm text-primary font-bold flex items-center hover:underline gap-2">
+          <CardFooter className="justify-center border-t py-6 bg-muted/10">
+            <Link href="/login" className="text-sm text-primary font-black flex items-center hover:underline gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Back to Login
+              BACK TO LOGIN
             </Link>
           </CardFooter>
         </Card>

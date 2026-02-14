@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, User, Mail, Lock, Loader2 } from 'lucide-react';
+import { ShieldCheck, User, Mail, Lock, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,6 +19,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
@@ -36,6 +38,9 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: name });
       
+      // Mandatory Security Step: Email Verification
+      await sendEmailVerification(user);
+      
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: email,
@@ -46,12 +51,11 @@ export default function RegisterPage() {
         dataDeletionRequested: false
       });
 
+      setVerificationSent(true);
       toast({
         title: "Account Created",
-        description: "Welcome to AssessAI! Your professional profile is ready.",
+        description: "Please check your email to verify your security credentials.",
       });
-      
-      router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
       let message = "Something went wrong during registration.";
@@ -59,8 +63,6 @@ export default function RegisterPage() {
         message = "This email is already registered. Please log in instead.";
       } else if (error.code === 'auth/weak-password') {
         message = "Password should be at least 6 characters.";
-      } else if (error.code === 'auth/invalid-email') {
-        message = "The email address is not valid.";
       }
       
       toast({
@@ -73,6 +75,25 @@ export default function RegisterPage() {
     }
   };
 
+  if (verificationSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md text-center space-y-10 animate-fade-in">
+          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle2 className="w-12 h-12" />
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-headline font-bold uppercase tracking-tight">Verify Your Email</h1>
+            <p className="text-muted-foreground text-lg">We've sent a security link to <b>{email}</b>. Please verify your account to access elite AI coaching.</p>
+          </div>
+          <Button asChild className="w-full h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
+            <Link href="/login">RETURN TO LOGIN</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8 animate-fade-in">
@@ -83,16 +104,16 @@ export default function RegisterPage() {
             </div>
             <span className="font-headline font-bold text-3xl tracking-tight">AssessAI</span>
           </Link>
-          <h2 className="text-2xl font-headline font-bold mt-4">Create your account</h2>
+          <h2 className="text-2xl font-headline font-bold mt-4">Security Enrollment</h2>
           <p className="text-muted-foreground">Join 50k+ candidates prepping smarter</p>
         </div>
 
-        <Card className="border-none shadow-xl rounded-[2rem]">
-          <CardHeader>
+        <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-8">
             <CardTitle className="font-headline">Sign Up</CardTitle>
-            <CardDescription>Get started with your AI-powered preparation</CardDescription>
+            <CardDescription>Start your AI-powered performance audit</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -138,14 +159,14 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-              <Button className="w-full h-12 rounded-xl font-bold text-lg" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
+              <Button className="w-full h-14 rounded-2xl font-black text-lg shadow-lg shadow-primary/20" type="submit" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" /> : "CREATE ACCOUNT"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center border-t pt-4">
+          <CardFooter className="justify-center border-t py-6 bg-muted/10">
             <p className="text-sm text-muted-foreground">
-              Already have an account? <Link href="/login" className="text-primary font-bold hover:underline">Log in</Link>
+              Already have an account? <Link href="/login" className="text-primary font-black hover:underline">SIGN IN</Link>
             </p>
           </CardFooter>
         </Card>
