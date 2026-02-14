@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { 
   Users, 
   CreditCard, 
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
             <div className="border-t">
               {usersLoading ? (
                 <div className="p-12 text-center text-muted-foreground">Syncing...</div>
-              ) : users?.slice(0, 5).map((user, i) => (
+              ) : users?.slice(0, 5).map((user) => (
                 <div key={user.id} className="flex items-center justify-between p-6 border-b last:border-none hover:bg-muted/5 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-primary">
@@ -134,7 +135,7 @@ export default function AdminDashboard() {
             <div className="border-t">
               {paymentsLoading ? (
                 <div className="p-12 text-center text-muted-foreground">Syncing...</div>
-              ) : payments?.slice(0, 5).map((payment, i) => (
+              ) : payments?.slice(0, 5).map((payment) => (
                 <div key={payment.id} className="flex items-center justify-between p-6 border-b last:border-none hover:bg-muted/5 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
