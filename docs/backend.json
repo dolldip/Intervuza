@@ -1,45 +1,1333 @@
-
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Stores user education, experience, and target job roles.",
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
+      "description": "Represents a user of the AI Interview Preparation Platform, either a candidate or an administrator. Authentication is handled externally.",
       "properties": {
-        "userId": { "type": "string" },
-        "fullName": { "type": "string" },
-        "education": { "type": "string", "description": "User's educational background" },
-        "targetRole": { "type": "string", "description": "The job role they are preparing for" },
-        "experienceLevel": { "type": "string", "enum": ["junior", "mid", "senior", "lead"] },
-        "skills": { "type": "array", "items": { "type": "string" } }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's unique email address, used for identification and communication.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the system.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "jobRole": {
+          "type": "string",
+          "description": "The primary job role the user is preparing for or is associated with."
+        },
+        "experienceLevel": {
+          "type": "string",
+          "description": "The user's experience level (e.g., 'Entry-Level', 'Mid-Level', 'Senior')."
+        },
+        "skillIds": {
+          "type": "array",
+          "description": "References to Skills the user possesses or is targeting. (Relationship: User N:N Skill)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user account was last updated.",
+          "format": "date-time"
+        },
+        "dataDeletionRequested": {
+          "type": "boolean",
+          "description": "Flag indicating if the user has requested their data to be deleted."
+        }
       },
-      "required": ["userId", "fullName"]
+      "required": [
+        "id",
+        "email",
+        "role",
+        "createdAt",
+        "dataDeletionRequested"
+      ]
+    },
+    "Skill": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Skill",
+      "type": "object",
+      "description": "Represents a specific skill relevant to job roles, used for user profiles and interview question targeting.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Skill entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the skill (e.g., 'Python', 'Leadership', 'Data Analysis')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the skill."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the skill belongs to (e.g., 'Programming', 'Soft Skills', 'Project Management')."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "category"
+      ]
+    },
+    "Resume": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Resume",
+      "type": "object",
+      "description": "Stores details about a user's uploaded resume, including parsed information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Resume entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this resume. (Relationship: User 1:N Resume)"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The original file name of the uploaded resume."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL to the stored resume file (e.g., in cloud storage).",
+          "format": "uri"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "description": "Timestamp when the resume was uploaded.",
+          "format": "date-time"
+        },
+        "parsedSkills": {
+          "type": "array",
+          "description": "Skills extracted from the resume by AI.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parsedExperienceSummary": {
+          "type": "string",
+          "description": "A summary of experience extracted from the resume by AI."
+        },
+        "parsedKeywords": {
+          "type": "array",
+          "description": "Keywords extracted from the resume by AI.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fileName",
+        "fileUrl",
+        "uploadedAt"
+      ]
+    },
+    "JobDescription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JobDescription",
+      "type": "object",
+      "description": "Stores a job description provided by a user for interview preparation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the JobDescription entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who provided this job description. (Relationship: User 1:N JobDescription)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the job description."
+        },
+        "company": {
+          "type": "string",
+          "description": "The company associated with the job description (optional)."
+        },
+        "descriptionText": {
+          "type": "string",
+          "description": "The full text content of the job description."
+        },
+        "uploadedAt": {
+          "type": "string",
+          "description": "Timestamp when the job description was uploaded/pasted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "descriptionText",
+        "uploadedAt"
+      ]
     },
     "InterviewSession": {
-      "title": "Interview Session",
-      "description": "Records of a specific mock interview session.",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InterviewSession",
       "type": "object",
+      "description": "Represents a single mock interview session conducted by a user.",
       "properties": {
-        "userId": { "type": "string" },
-        "role": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "questions": { "type": "array", "items": { "type": "string" } },
-        "answers": { "type": "array", "items": { "type": "object" } },
-        "overallScore": { "type": "number" }
-      }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InterviewSession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who conducted this interview. (Relationship: User 1:N InterviewSession)"
+        },
+        "jobRole": {
+          "type": "string",
+          "description": "The job role for which this interview was conducted."
+        },
+        "experienceLevel": {
+          "type": "string",
+          "description": "The experience level targeted for this interview."
+        },
+        "targetSkills": {
+          "type": "array",
+          "description": "Skills targeted during this interview session, derived from user profile/JD.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "jobDescriptionId": {
+          "type": "string",
+          "description": "Optional reference to the JobDescription used for this interview. (Relationship: JobDescription 1:N InterviewSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp when the interview session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Timestamp when the interview session ended (if completed).",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the interview session.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "description": "Overall difficulty level of the interview session.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "overallScore": {
+          "type": "number",
+          "description": "Overall performance score for the entire interview."
+        },
+        "confidenceScore": {
+          "type": "number",
+          "description": "Overall confidence score based on multimodal analysis."
+        },
+        "communicationScore": {
+          "type": "number",
+          "description": "Overall communication score."
+        },
+        "technicalRoleFitScore": {
+          "type": "number",
+          "description": "Overall technical/role-fit score."
+        },
+        "bodyLanguageEmotionReport": {
+          "type": "string",
+          "description": "A comprehensive report on body language and emotions detected during the interview (can be JSON string)."
+        },
+        "videoRecordingUrl": {
+          "type": "string",
+          "description": "URL to the recorded video of the interview.",
+          "format": "uri"
+        },
+        "audioRecordingUrl": {
+          "type": "string",
+          "description": "URL to the recorded audio of the interview.",
+          "format": "uri"
+        },
+        "transcriptText": {
+          "type": "string",
+          "description": "Full transcript of the user's answers and AI questions during the interview."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the interview session was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the interview session was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "jobRole",
+        "experienceLevel",
+        "startTime",
+        "status",
+        "createdAt"
+      ]
+    },
+    "InterviewQuestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InterviewQuestion",
+      "type": "object",
+      "description": "Details of a single question asked within an InterviewSession, including the user's answer and AI analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InterviewQuestion entity (representing one question's lifecycle within a session)."
+        },
+        "interviewSessionId": {
+          "type": "string",
+          "description": "Reference to the InterviewSession this question belongs to. (Relationship: InterviewSession 1:N InterviewQuestion)"
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The full text of the question asked."
+        },
+        "questionType": {
+          "type": "string",
+          "description": "The type of question asked.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "difficultyAsked": {
+          "type": "string",
+          "description": "The difficulty level of this specific question.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "askedAt": {
+          "type": "string",
+          "description": "Timestamp when the question was presented to the user.",
+          "format": "date-time"
+        },
+        "userAnswerText": {
+          "type": "string",
+          "description": "The transcribed text of the user's answer."
+        },
+        "userAnswerAudioUrl": {
+          "type": "string",
+          "description": "URL to the audio recording of the user's answer.",
+          "format": "uri"
+        },
+        "userAnswerVideoUrl": {
+          "type": "string",
+          "description": "URL to the video recording segment of the user's answer.",
+          "format": "uri"
+        },
+        "orderInSession": {
+          "type": "number",
+          "description": "The sequential order of this question within the interview session."
+        },
+        "feedbackStrengths": {
+          "type": "string",
+          "description": "AI-generated feedback on strengths of the user's answer."
+        },
+        "feedbackWeaknesses": {
+          "type": "string",
+          "description": "AI-generated feedback on weaknesses of the user's answer."
+        },
+        "feedbackSampleAnswer": {
+          "type": "string",
+          "description": "An improved sample answer suggested by AI."
+        },
+        "textAnalysisRelevance": {
+          "type": "number",
+          "description": "Score for relevance of the answer content (0-100)."
+        },
+        "textAnalysisStructure": {
+          "type": "number",
+          "description": "Score for structure and coherence of the answer (0-100)."
+        },
+        "textAnalysisClarity": {
+          "type": "number",
+          "description": "Score for clarity of the answer's language (0-100)."
+        },
+        "voiceAnalysisTone": {
+          "type": "number",
+          "description": "Score for the tone of voice (e.g., confidence, professionalism) (0-100)."
+        },
+        "voiceAnalysisSpeed": {
+          "type": "number",
+          "description": "Speaking speed score (0-100)."
+        },
+        "voiceAnalysisConfidence": {
+          "type": "number",
+          "description": "Voice-based confidence score (0-100)."
+        },
+        "voiceAnalysisFillers": {
+          "type": "array",
+          "description": "List of filler words detected (e.g., 'um', 'uh', 'like').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cameraAnalysisEyeContact": {
+          "type": "number",
+          "description": "Score for eye contact percentage/consistency (0-100)."
+        },
+        "cameraAnalysisFacialExpressions": {
+          "type": "string",
+          "description": "Summary of detected facial expressions (e.g., 'Positive', 'Neutral', 'Slightly Nervous')."
+        },
+        "cameraAnalysisNervousness": {
+          "type": "number",
+          "description": "Score for detected nervousness (0-100)."
+        },
+        "cameraAnalysisConfidence": {
+          "type": "number",
+          "description": "Camera-based confidence score (0-100)."
+        },
+        "emotionDetectionResults": {
+          "type": "string",
+          "description": "Detailed results of emotion detection (JSON string, e.g., {'happy': 0.1, 'sad': 0.05})."
+        },
+        "confidenceConsistencyScore": {
+          "type": "number",
+          "description": "A score indicating consistency of confidence across different modalities (0-100)."
+        },
+        "grammarSuggestions": {
+          "type": "string",
+          "description": "AI suggestions for grammar improvement in the answer."
+        },
+        "fluencyScore": {
+          "type": "number",
+          "description": "Score for speaking fluency (0-100)."
+        },
+        "accentNeutralityTips": {
+          "type": "string",
+          "description": "AI tips for accent neutrality."
+        },
+        "speakingClarityImprovements": {
+          "type": "string",
+          "description": "AI suggestions for improving speaking clarity."
+        },
+        "rawAnalysisData": {
+          "type": "string",
+          "description": "Raw, detailed output from AI analysis APIs (can be a JSON string)."
+        }
+      },
+      "required": [
+        "id",
+        "interviewSessionId",
+        "questionText",
+        "questionType",
+        "difficultyAsked",
+        "askedAt",
+        "userAnswerText",
+        "orderInSession",
+        "feedbackStrengths",
+        "feedbackWeaknesses",
+        "feedbackSampleAnswer"
+      ]
+    },
+    "ImprovementPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ImprovementPlan",
+      "type": "object",
+      "description": "A personalized improvement plan generated by the AI Interview Coach for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ImprovementPlan entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User for whom this plan was generated. (Relationship: User 1:N ImprovementPlan)"
+        },
+        "generatedAt": {
+          "type": "string",
+          "description": "Timestamp when the improvement plan was generated.",
+          "format": "date-time"
+        },
+        "planSummary": {
+          "type": "string",
+          "description": "A summary of the personalized improvement plan."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the improvement plan.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lastReviewedAt": {
+          "type": "string",
+          "description": "Timestamp when the plan was last reviewed or updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "generatedAt",
+        "planSummary",
+        "status"
+      ]
+    },
+    "PracticeSuggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PracticeSuggestion",
+      "type": "object",
+      "description": "Individual practice suggestions or drills as part of an ImprovementPlan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PracticeSuggestion entity."
+        },
+        "improvementPlanId": {
+          "type": "string",
+          "description": "Reference to the ImprovementPlan this suggestion belongs to. (Relationship: ImprovementPlan 1:N PracticeSuggestion)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of practice suggestion.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the practice suggestion or drill."
+        },
+        "targetArea": {
+          "type": "string",
+          "description": "The specific area or skill this practice targets (e.g., 'Eye Contact', 'Technical Questions', 'Fluency')."
+        },
+        "suggestedDate": {
+          "type": "string",
+          "description": "The date/time suggested for this practice.",
+          "format": "date-time"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates if the user has completed this practice suggestion."
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the practice was completed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "improvementPlanId",
+        "type",
+        "description",
+        "targetArea",
+        "suggestedDate",
+        "isCompleted"
+      ]
+    },
+    "Achievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Achievement",
+      "type": "object",
+      "description": "Represents an administrative-defined achievement or badge for gamification.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Achievement entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the achievement (e.g., 'First Interviewer', 'Streak Master')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what the achievement entails."
+        },
+        "criteria": {
+          "type": "string",
+          "description": "The conditions required to unlock this achievement (e.g., 'Complete 5 interviews')."
+        },
+        "badgeImageUrl": {
+          "type": "string",
+          "description": "URL to the image representing the achievement badge.",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "description": "The category of achievement.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rewardPoints": {
+          "type": "number",
+          "description": "Optional points awarded for achieving this milestone."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "criteria",
+        "badgeImageUrl",
+        "type"
+      ]
+    },
+    "UserAchievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAchievement",
+      "type": "object",
+      "description": "Links a User to an Achievement they have earned.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserAchievement entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who earned the achievement. (Relationship: User 1:N UserAchievement)"
+        },
+        "achievementId": {
+          "type": "string",
+          "description": "Reference to the Achievement earned. (Relationship: Achievement 1:N UserAchievement)"
+        },
+        "achievedAt": {
+          "type": "string",
+          "description": "Timestamp when the achievement was earned.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "achievementId",
+        "achievedAt"
+      ]
+    },
+    "UserStreak": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserStreak",
+      "type": "object",
+      "description": "Tracks a user's consecutive daily practice streaks for gamification.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserStreak entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User maintaining this streak. (Relationship: User 1:N UserStreak)"
+        },
+        "streakType": {
+          "type": "string",
+          "description": "The type of streak being tracked (e.g., 'dailyPractice')."
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "The current number of consecutive days/periods in the streak."
+        },
+        "longestStreak": {
+          "type": "number",
+          "description": "The longest streak achieved by the user for this type."
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "The last date on which the user performed an action to maintain the streak.",
+          "format": "date"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the streak record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the streak record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "streakType",
+        "currentStreak",
+        "longestStreak",
+        "lastActiveDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SubscriptionPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubscriptionPlan",
+      "type": "object",
+      "description": "Defines the various subscription tiers and their associated features and pricing.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SubscriptionPlan entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the subscription plan (e.g., 'Free', 'Standard', 'Premium')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the plan."
+        },
+        "features": {
+          "type": "array",
+          "description": "A list of features included in this plan.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "priceMonthly": {
+          "type": "number",
+          "description": "Monthly price of the subscription plan (0 for free plans)."
+        },
+        "priceQuarterly": {
+          "type": "number",
+          "description": "Quarterly price of the subscription plan."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if the subscription plan is currently active and available for purchase."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the subscription plan was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the subscription plan was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "features",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserSubscription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserSubscription",
+      "type": "object",
+      "description": "Tracks a user's active or past subscription to a plan.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserSubscription entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this subscription. (Relationship: User 1:N UserSubscription)"
+        },
+        "planId": {
+          "type": "string",
+          "description": "Reference to the SubscriptionPlan the user is subscribed to. (Relationship: SubscriptionPlan 1:N UserSubscription)"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date when the subscription started.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The date when the subscription is set to end or has ended.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the user's subscription.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paymentGatewaySubscriptionId": {
+          "type": "string",
+          "description": "Reference ID from the external payment gateway for this subscription."
+        },
+        "lastPaymentDate": {
+          "type": "string",
+          "description": "The date of the last successful payment.",
+          "format": "date-time"
+        },
+        "nextPaymentDate": {
+          "type": "string",
+          "description": "The date of the next scheduled payment.",
+          "format": "date-time"
+        },
+        "trialEndsAt": {
+          "type": "string",
+          "description": "The date when the free trial period ends, if applicable.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user subscription record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user subscription record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "planId",
+        "startDate",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PaymentTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentTransaction",
+      "type": "object",
+      "description": "Records individual payment transactions made by users.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PaymentTransaction entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who made the payment. (Relationship: User 1:N PaymentTransaction)"
+        },
+        "userSubscriptionId": {
+          "type": "string",
+          "description": "Optional reference to the UserSubscription related to this payment. (Relationship: UserSubscription 1:N PaymentTransaction)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the transaction."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency of the transaction (e.g., 'USD', 'EUR')."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "Timestamp when the transaction occurred.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the payment transaction.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paymentGatewayReference": {
+          "type": "string",
+          "description": "Transaction ID provided by the external payment gateway."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the transaction (e.g., 'Monthly subscription payment')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the payment transaction record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "amount",
+        "currency",
+        "transactionDate",
+        "status",
+        "paymentGatewayReference",
+        "createdAt"
+      ]
+    },
+    "QuestionBankItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuestionBankItem",
+      "type": "object",
+      "description": "A question available in the system's central question bank, managed by admins.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the QuestionBankItem entity."
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The text of the interview question."
+        },
+        "questionType": {
+          "type": "string",
+          "description": "The type of the question.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "The inherent difficulty level of the question.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags associated with the question for filtering and targeting (e.g., 'Python', 'Leadership').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sampleAnswer": {
+          "type": "string",
+          "description": "An ideal sample answer for this question, used for AI analysis reference or display."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Reference to the User (Admin) who created this question bank item. (Relationship: User 1:N QuestionBankItem)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the question bank item was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the question bank item was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "questionText",
+        "questionType",
+        "difficulty",
+        "tags",
+        "createdAt"
+      ]
+    },
+    "Company": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Company",
+      "type": "object",
+      "description": "Represents a company using the platform for recruiter features.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Company entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The legal name of the company."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the company."
+        },
+        "adminUserId": {
+          "type": "string",
+          "description": "Reference to the primary User (Recruiter) managing this company's account. (Relationship: User 1:N Company)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the company record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the company record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "adminUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CompanyJobPosting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CompanyJobPosting",
+      "type": "object",
+      "description": "A job posting created by a company, for which candidates can be invited for AI interviews.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CompanyJobPosting entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company that posted this job. (Relationship: Company 1:N CompanyJobPosting)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the job posting."
+        },
+        "descriptionText": {
+          "type": "string",
+          "description": "The full text content of the job description for this posting."
+        },
+        "requirements": {
+          "type": "string",
+          "description": "Key requirements for the job role."
+        },
+        "postedAt": {
+          "type": "string",
+          "description": "Timestamp when the job posting was made active.",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "Timestamp when the job posting is set to expire.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the job posting.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdByUserId": {
+          "type": "string",
+          "description": "Reference to the User (Recruiter) who created this job posting. (Relationship: User 1:N CompanyJobPosting)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the job posting record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the job posting record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "title",
+        "descriptionText",
+        "requirements",
+        "postedAt",
+        "status",
+        "createdByUserId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CandidateApplication": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CandidateApplication",
+      "type": "object",
+      "description": "Represents a candidate's application to a specific job posting from a company, including AI interview results.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CandidateApplication entity."
+        },
+        "companyJobPostingId": {
+          "type": "string",
+          "description": "Reference to the CompanyJobPosting the candidate applied to. (Relationship: CompanyJobPosting 1:N CandidateApplication)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User (candidate) who submitted this application. (Relationship: User 1:N CandidateApplication)"
+        },
+        "appliedAt": {
+          "type": "string",
+          "description": "Timestamp when the candidate applied.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the application.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "interviewSessionId": {
+          "type": "string",
+          "description": "Optional reference to the InterviewSession conducted for this application. (Relationship: InterviewSession 1:N CandidateApplication)"
+        },
+        "recruiterComments": {
+          "type": "string",
+          "description": "Comments or notes added by the recruiter regarding this application."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the application record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the application record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyJobPostingId",
+        "userId",
+        "appliedAt",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com", "password"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "UserProfile",
-      "description": "User profile data"
-    },
-    "/interviews/{interviewId}": {
-      "schema": "InterviewSession",
-      "description": "Interview session records"
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "user",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Owned by the user, with admin access. User 'role' is stored in the document, and admin status is tracked via a separate '/roles_admin/{userId}' collection for DBAC."
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "user",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Dummy documents indicating users with global 'admin' role. Used for efficient existence checks in security rules (DBAC).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who is an administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/skills/{skillId}",
+        "definition": {
+          "entityName": "skill",
+          "schema": {
+            "$ref": "#/backend/entities/Skill"
+          },
+          "description": "Globally accessible catalog of skills. Read-only for all users, write access for administrators."
+        }
+      },
+      {
+        "path": "/users/{userId}/resumes/{resumeId}",
+        "definition": {
+          "entityName": "resume",
+          "schema": {
+            "$ref": "#/backend/entities/Resume"
+          },
+          "description": "Stores individual resume documents uploaded by a user. Each resume is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/jobDescriptions/{jobDescriptionId}",
+        "definition": {
+          "entityName": "jobdescription",
+          "schema": {
+            "$ref": "#/backend/entities/JobDescription"
+          },
+          "description": "Stores job descriptions provided by a user. Each job description is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/interviewSessions/{interviewSessionId}",
+        "definition": {
+          "entityName": "interviewsession",
+          "schema": {
+            "$ref": "#/backend/entities/InterviewSession"
+          },
+          "description": "Records details of a mock interview session. Each session is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/interviewSessions/{interviewSessionId}/interviewQuestions/{interviewQuestionId}",
+        "definition": {
+          "entityName": "interviewquestion",
+          "schema": {
+            "$ref": "#/backend/entities/InterviewQuestion"
+          },
+          "description": "Stores individual questions and answers within an interview session. Privately owned via the parent interview session and user ID in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/improvementPlans/{improvementPlanId}",
+        "definition": {
+          "entityName": "improvementplan",
+          "schema": {
+            "$ref": "#/backend/entities/ImprovementPlan"
+          },
+          "description": "Stores personalized improvement plans generated for a user. Each plan is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/improvementPlans/{improvementPlanId}/practiceSuggestions/{practiceSuggestionId}",
+        "definition": {
+          "entityName": "practicesuggestion",
+          "schema": {
+            "$ref": "#/backend/entities/PracticeSuggestion"
+          },
+          "description": "Stores individual practice suggestions within an improvement plan. Privately owned via the parent improvement plan and user ID in the path."
+        }
+      },
+      {
+        "path": "/achievements/{achievementId}",
+        "definition": {
+          "entityName": "achievement",
+          "schema": {
+            "$ref": "#/backend/entities/Achievement"
+          },
+          "description": "Globally accessible catalog of administrative-defined achievements. Read-only for all users, write access for administrators."
+        }
+      },
+      {
+        "path": "/users/{userId}/userAchievements/{userAchievementId}",
+        "definition": {
+          "entityName": "userachievement",
+          "schema": {
+            "$ref": "#/backend/entities/UserAchievement"
+          },
+          "description": "Links a user to an achievement they have earned. Each user achievement is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/userStreaks/{userStreakId}",
+        "definition": {
+          "entityName": "userstreak",
+          "schema": {
+            "$ref": "#/backend/entities/UserStreak"
+          },
+          "description": "Tracks a user's daily practice streaks. Each streak record is privately owned by the specified userId in the path."
+        }
+      },
+      {
+        "path": "/subscriptionPlans/{planId}",
+        "definition": {
+          "entityName": "subscriptionplan",
+          "schema": {
+            "$ref": "#/backend/entities/SubscriptionPlan"
+          },
+          "description": "Globally accessible definitions of subscription tiers. Read-only for all users (to browse plans), write access for administrators."
+        }
+      },
+      {
+        "path": "/users/{userId}/userSubscriptions/{userSubscriptionId}",
+        "definition": {
+          "entityName": "usersubscription",
+          "schema": {
+            "$ref": "#/backend/entities/UserSubscription"
+          },
+          "description": "Tracks a user's active or past subscription. Each subscription record is privately owned by the specified userId in the path. Admins can also access for support."
+        }
+      },
+      {
+        "path": "/users/{userId}/paymentTransactions/{paymentTransactionId}",
+        "definition": {
+          "entityName": "paymenttransaction",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentTransaction"
+          },
+          "description": "Records individual payment transactions made by users. Each transaction is privately owned by the specified userId in the path. Admins can also access for auditing."
+        }
+      },
+      {
+        "path": "/questionBankItems/{questionBankItemId}",
+        "definition": {
+          "entityName": "questionbankitem",
+          "schema": {
+            "$ref": "#/backend/entities/QuestionBankItem"
+          },
+          "description": "Stores a central bank of interview questions managed by administrators. Read/write access for administrators only; used by the AI engine."
+        }
+      },
+      {
+        "path": "/companies/{companyId}",
+        "definition": {
+          "entityName": "company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Represents a company using recruiter features. Owned by the 'adminUserId' specified within the document."
+        }
+      },
+      {
+        "path": "/companies/{companyId}/jobPostings/{jobPostingId}",
+        "definition": {
+          "entityName": "companyjobposting",
+          "schema": {
+            "$ref": "#/backend/entities/CompanyJobPosting"
+          },
+          "description": "Stores job postings created by a company. Includes denormalized 'companyAdminUserId' for authorization independence. Recruiters (createdByUserId) and company admins have write access; published postings can be read by candidates."
+        }
+      },
+      {
+        "path": "/companies/{companyId}/jobPostings/{jobPostingId}/candidateApplications/{candidateApplicationId}",
+        "definition": {
+          "entityName": "candidateapplication",
+          "schema": {
+            "$ref": "#/backend/entities/CandidateApplication"
+          },
+          "description": "Represents a candidate's application to a job posting. Includes denormalized 'companyAdminUserId' and 'jobPostingCreatedByUserId' for authorization independence. Owned by the candidate (userId) and accessible by relevant recruiters/company admins."
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore data structure prioritizes security, scalability, and debuggability in alignment with the core design principles. The structure leverages hierarchical paths for user-owned data and denormalization for authorization independence in shared contexts, enabling robust and clear security rules.\n\n**Authorization Independence (CRITICAL):**\n1.  **User-Owned Data:** For all entities directly owned by a user (e.g., Resumes, Job Descriptions, Interview Sessions, Improvement Plans, User Achievements, User Streaks, User Subscriptions, Payment Transactions), a path-based ownership model is used: `/users/{userId}/<entity_plural_name>/{entityId}`. This design makes the `userId` available directly in the security rules as a wildcard parameter. Consequently, rules can simply state `allow read, write: if request.auth.uid == userId;` without requiring any `get()` calls to parent documents to ascertain ownership. This ensures atomic operations and simplifies rule debugging.\n2.  **Company/Recruiter Data:** For entities that involve multiple actors or cross-entity authorization (like `CompanyJobPosting` and `CandidateApplication`), authorization attributes are denormalized. For `CompanyJobPosting`, the `companyAdminUserId` from the parent `Company` document is copied into each `CompanyJobPosting` document. Similarly, for `CandidateApplication`, both `companyAdminUserId` and `jobPostingCreatedByUserId` are denormalized into the application document. This eliminates the need for `get()` calls in security rules to check parent document ownership or membership, fulfilling the Authorization Independence mandate and allowing for atomic creation/updates across related entities.\n\n**QAPs (Rules are not Filters):**\n1.  **Private User Data:** All user-specific subcollections (e.g., `/users/{userId}/resumes`) are secured by `request.auth.uid == userId`. Any `list` query on these paths will inherently be scoped to the authenticated user, thus ensuring that security rules are not used as filters and only valid, permissioned queries are allowed.\n2.  **Public Read-Only Data:** Collections like `/skills`, `/achievements`, and `/subscriptionPlans` are designed for public read access. Security rules will grant `allow read: true;`. `list` operations are secure as all data is intended to be publicly available.\n3.  **Admin-Managed Data:** Collections like `/roles_admin` and `/questionBankItems` are primarily for administrative access. Rules will enforce `allow read, write: if exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));`. `list` operations are secure because only authenticated administrators can access them, requiring no further filtering.\n4.  **Company/Recruiter and Candidate Data:** For `CompanyJobPosting`, `list` operations by recruiters can be secured by `request.auth.uid == resource.data.createdByUserId || request.auth.uid == resource.data.companyAdminUserId`. Published job postings can be read publicly by candidates, possibly with a `status: 'PUBLISHED'` filter that rules can validate. For `CandidateApplication`, `list` operations can be secured for the candidate by `request.auth.uid == resource.data.userId` and for recruiters by `request.auth.uid == resource.data.jobPostingCreatedByUserId || request.auth.uid == resource.data.companyAdminUserId`. The client-side queries for these collections are expected to include the necessary filters (e.g., `where('companyId', '==', '...')` and `where('userId', '==', '...')`), and the rules explicitly validate that the requesting user has permission to view the requested data, preventing unauthorized `list` disclosures.\n\n**Structural Segregation & Access Modeling:**\n*   Data is segregated based on its security posture (e.g., public data in root collections, private user data in `/users/{uid}/...` subcollections, admin data in dedicated collections). This ensures homogeneous security requirements within each collection.\n*   Standardized hierarchical paths (`/users/{userId}/...`) are used for all user-owned 1:N relationships, making ownership highly explicit.\n*   Global roles are managed through existence checks in a dedicated `/roles_admin/{userId}` collection, simplifying admin checks (`exists(...)`).\n\n**Data Clarity and Predictability:**\n*   Consistent naming conventions are used for wildcards (e.g., `{userId}`, `{jobPostingId}`).\n*   Explicit state modeling is encouraged (e.g., `status` field for `InterviewSession`, `CompanyJobPosting`).\n\nThis robust structure provides a clear foundation for writing efficient, secure, and debuggable Firestore security rules for your AI Interview Preparation Platform MVP."
   }
 }

@@ -1,65 +1,50 @@
+'use client';
 
-"use client"
+import { firebaseConfig } from '@/firebase/config';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore'
 
-import { useState, useEffect } from "react";
-import { auth, db } from "./config";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { 
-  doc, 
-  onSnapshot, 
-  DocumentReference, 
-  DocumentData,
-  Firestore
-} from "firebase/firestore";
-
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  return { user, loading };
-}
-
-export function useFirestore(): Firestore | null {
-  return db;
-}
-
-export function useDoc(docRef: DocumentReference<DocumentData> | null) {
-  const [data, setData] = useState<DocumentData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (!docRef) {
-      setLoading(false);
-      return;
+// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+export function initializeFirebase() {
+  if (!getApps().length) {
+    // Important! initializeApp() is called without any arguments because Firebase App Hosting
+    // integrates with the initializeApp() function to provide the environment variables needed to
+    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
+    // without arguments.
+    let firebaseApp;
+    try {
+      // Attempt to initialize via Firebase App Hosting environment variables
+      firebaseApp = initializeApp();
+    } catch (e) {
+      // Only warn in production because it's normal to use the firebaseConfig to initialize
+      // during development
+      if (process.env.NODE_ENV === "production") {
+        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+      }
+      firebaseApp = initializeApp(firebaseConfig);
     }
 
-    const unsubscribe = onSnapshot(
-      docRef,
-      (doc) => {
-        setData(doc.exists() ? doc.data() : null);
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Error fetching document:", err);
-        setError(err);
-        setLoading(false);
-      }
-    );
+    return getSdks(firebaseApp);
+  }
 
-    return () => unsubscribe();
-  }, [docRef]);
-
-  return { data, loading, error };
+  // If already initialized, return the SDKs with the already initialized App
+  return getSdks(getApp());
 }
 
-export { auth, db };
+export function getSdks(firebaseApp: FirebaseApp) {
+  return {
+    firebaseApp,
+    auth: getAuth(firebaseApp),
+    firestore: getFirestore(firebaseApp)
+  };
+}
+
+export * from './provider';
+export * from './client-provider';
+export * from './firestore/use-collection';
+export * from './firestore/use-doc';
+export * from './non-blocking-updates';
+export * from './non-blocking-login';
+export * from './errors';
+export * from './error-emitter';

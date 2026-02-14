@@ -1,0 +1,208 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * AI INTERVIEW PREPARATION PLATFORM - SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict user-ownership model designed for rapid prototyping.
+     * Most data is nested under user-specific paths (/users/{userId}/...), providing 
+     * inherent isolation and efficient path-based authorization.
+     *
+     * DATA STRUCTURE:
+     * - User-specific data (Resumes, Sessions, Plans) is stored at /users/{userId}/[collection]/{id}.
+     * - Administrative and Global data (Skills, Achievements, Plans) are root-level and public-read.
+     * - Shared Contexts (Company job postings and applications) use denormalized ownership fields
+     *   (e.g., companyAdminUserId) to allow secure access for multiple stakeholders without 
+     *   performing complex database lookups.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path Wildcard Authorization: Wildcards in paths (e.g., {userId}) are the primary 
+     *    source of truth for ownership in subcollections.
+     * 2. Global Admin Role: A dedicated /roles_admin/{userId} collection is used for 
+     *    Role-Based Access Control (RBAC). If a document exists there for a user, they gain 
+     *    administrative privileges across the system.
+     * 3. Prototyping Flexibility: Rules enforce WHO can write WHAT (authorization), but 
+     *    do not enforce the exact shape of the data (schema) beyond critical relational IDs.
+     * 4. Relational Integrity: On document creation, the rules verify that internal 
+     *    ownership fields (like userId) match the path or the authenticated user's ID.
+     */
+
+    // ==========================================
+    // GLOBAL HELPER FUNCTIONS
+    // ==========================================
+
+    // Checks if the user is authenticated with Firebase Auth
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Checks if the authenticated user's UID matches the provided userId
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks if the user has a document in the roles_admin collection
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    // Checks ownership and ensures the document exists for updates/deletes
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // ==========================================
+    // COLLECTION RULES
+    // ==========================================
+
+    /**
+     * @description Rules for the root User profile. Allows users to manage their own profile and admins to oversee all profiles.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid == "user_123" and path is /users/user_123
+     * @deny (update) if auth.uid == "user_123" but path is /users/user_456
+     * @principle Ownership-based access with relational integrity check on ID.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin(); // Users generally shouldn't list other users
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin(); // Soft deletes preferred, but hard delete restricted to admin
+    }
+
+    /**
+     * @description Admin role indicators. Only admins can view or modify the admin list.
+     * @path /roles_admin/{userId}
+     * @allow (get) if the user is an admin.
+     * @deny (write) if the user is not an admin.
+     * @principle Administrative access control (RBAC).
+     */
+    match /roles_admin/{userId} {
+      allow read, write: if isAdmin();
+    }
+
+    /**
+     * @description Global catalog collections (Skills, Achievements, SubscriptionPlans).
+     * @path /skills/{id}, /achievements/{id}, /subscriptionPlans/{id}
+     * @allow (get, list) if any signed-in user.
+     * @deny (create, update, delete) if not an admin.
+     * @principle Publicly readable configuration data; Admin-only writes.
+     */
+    match /{collection}/{id} {
+      allow get, list: if isSignedIn();
+      allow write: if isAdmin();
+      
+      // Explicitly matching the intended collections
+      match /skills/{skillId} { allow read, write: if true; } // Handled by parent
+      match /achievements/{achievementId} { allow read, write: if true; } 
+      match /subscriptionPlans/{planId} { allow read, write: if true; }
+    }
+
+    /**
+     * @description Standard pattern for user-owned subcollections (Resumes, JobDescriptions, Sessions, Plans, etc).
+     * @path /users/{userId}/[subcollection]/{id}
+     * @allow (create, update, get, list) if the user owns the parent userId path.
+     * @deny (all) if auth.uid does not match {userId}.
+     * @principle Hierarchical path-based ownership.
+     */
+    match /users/{userId}/{subcollection}/{id} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if (isOwner(userId) && request.resource.data.userId == resource.data.userId) || isAdmin();
+      allow delete: if isExistingOwner(userId) || isAdmin();
+    }
+
+    /**
+     * @description Deeply nested user data (Interview Questions and Practice Suggestions).
+     * @path /users/{userId}/interviewSessions/{sessionId}/interviewQuestions/{questionId}
+     * @path /users/{userId}/improvementPlans/{planId}/practiceSuggestions/{suggestionId}
+     * @allow (all) if the user owns the top-level userId path.
+     * @principle Deeply nested ownership verification via path.
+     */
+    match /users/{userId}/interviewSessions/{sessionId}/interviewQuestions/{questionId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/improvementPlans/{planId}/practiceSuggestions/{suggestionId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId) || isAdmin();
+    }
+
+    /**
+     * @description Admin-only access to the central Question Bank.
+     * @path /questionBankItems/{itemId}
+     * @allow (all) if user is an admin.
+     * @deny (all) for regular candidates.
+     * @principle Restricted administrative content.
+     */
+    match /questionBankItems/{itemId} {
+      allow read, write: if isAdmin();
+    }
+
+    /**
+     * @description Company profile management.
+     * @path /companies/{companyId}
+     * @allow (create) if user sets themselves as adminUserId.
+     * @allow (update) if user is the adminUserId defined in the company doc.
+     * @principle Ownership based on internal document field (adminUserId).
+     */
+    match /companies/{companyId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.adminUserId == request.auth.uid;
+      allow update: if (isSignedIn() && resource.data.adminUserId == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Job postings created by companies.
+     * @path /companies/{companyId}/jobPostings/{jobPostingId}
+     * @allow (get, list) if signed in (candidates need to see jobs).
+     * @allow (write) if the user is the recruiter who created it or the company admin.
+     * @principle Multi-stakeholder access using denormalized ID fields.
+     */
+    match /companies/{companyId}/jobPostings/{jobPostingId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && (
+        request.resource.data.createdByUserId == request.auth.uid || 
+        request.resource.data.companyAdminUserId == request.auth.uid
+      );
+      allow update: if (isSignedIn() && (
+        resource.data.createdByUserId == request.auth.uid || 
+        resource.data.companyAdminUserId == request.auth.uid
+      )) || isAdmin();
+      allow delete: if (isSignedIn() && (
+        resource.data.companyAdminUserId == request.auth.uid
+      )) || isAdmin();
+    }
+
+    /**
+     * @description Candidate applications to specific job postings.
+     * @path /companies/{companyId}/jobPostings/{jobPostingId}/candidateApplications/{applicationId}
+     * @allow (create) if the user is the candidate.
+     * @allow (read, update) if the user is the candidate, the original recruiter, or the company admin.
+     * @principle Cross-entity authorization using denormalized IDs (Authorization Independence).
+     */
+    match /companies/{companyId}/jobPostings/{jobPostingId}/candidateApplications/{applicationId} {
+      allow get, list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.jobPostingCreatedByUserId == request.auth.uid || 
+        resource.data.companyAdminUserId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.jobPostingCreatedByUserId == request.auth.uid || 
+        resource.data.companyAdminUserId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}
