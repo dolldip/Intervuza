@@ -24,7 +24,8 @@ import {
   X,
   TrendingUp,
   ChevronRight,
-  Lightbulb
+  Lightbulb,
+  Code2
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -32,6 +33,7 @@ import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-
 import { useToast } from "@/hooks/use-toast"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
 import { cn } from "@/lib/utils"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -63,6 +65,10 @@ export default function InterviewSessionPage() {
   const [turnFeedback, setTurnFeedback] = useState<any>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   
+  // Coding Logic Pad State
+  const [code, setCode] = useState("// Write your logic or explanation here...")
+  const [showCodePad, setShowCodePad] = useState(false)
+  
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
 
@@ -72,7 +78,7 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // IRONCLAD MEMORY: Tracks every single question to prevent any repetition.
+  // IRONCLAD MEMORY: Tracks every single question asked to prevent ANY repetition.
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -185,11 +191,10 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
-        // Commit first question to history IMMEDIATELY
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        const fb = "How do you ensure your technical knowledge stays relevant in such a fast-paced industry?"
+        const fb = "Given your background, what do you think is the biggest challenge in your industry today?"
         setCurrentQuestion(fb)
         historyRef.current = [fb]
       } finally {
@@ -267,17 +272,17 @@ export default function InterviewSessionPage() {
     setListening(false);
     if (recognitionRef.current) try { recognitionRef.current.stop(); } catch(e) {}
 
-    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
+    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Code Submission: ${code}]` : "");
     
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
         userAnswer: fullAnswer || "Silence.",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
-        experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
+        experienceLevel: sessionStorage.getItem('demo_exp') || "junior",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current, // Passing history to the AI
+        previousQuestions: historyRef.current,
         isStuck: forcedStuck || isStuck
       });
       
@@ -289,7 +294,7 @@ export default function InterviewSessionPage() {
         setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
         
-        // COMMIT NEXT QUESTION TO HISTORY IMMEDIATELY
+        // COMMIT NEXT QUESTION TO HISTORY IMMEDIATELY BEFORE PROMPT
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
@@ -335,7 +340,7 @@ export default function InterviewSessionPage() {
               <TrendingUp className="w-3 h-3" /> {roleCategory} Sector Active
             </Badge>
             <h1 className="text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
-            <p className="text-slate-500 text-lg">Aria is ready to begin your professional audit. Her questions will be role-specific and progressive.</p>
+            <p className="text-slate-500 text-lg">Aria is ready to begin your professional audit. Questions are calibrated for your specific level and industry.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" onClick={startSession}>
             START INTERVIEW
@@ -363,6 +368,15 @@ export default function InterviewSessionPage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn("h-12 px-6 rounded-2xl glass-button font-black transition-all", showCodePad ? "bg-primary text-white" : "text-slate-500")}
+            onClick={() => setShowCodePad(!showCodePad)}
+          >
+            <Code2 className="w-5 h-5 mr-3" />
+            {showCodePad ? "HIDE LOGIC PAD" : "SHOW LOGIC PAD"}
+          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -429,6 +443,26 @@ export default function InterviewSessionPage() {
             </div>
           </div>
         </div>
+
+        {showCodePad && (
+          <div className="w-[600px] glass-dark border-l border-white/10 flex flex-col z-40 shadow-2xl animate-in slide-in-from-right duration-500">
+            <div className="p-10 flex-1 space-y-6 flex flex-col">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-3">
+                  <Code2 className="w-4 h-4" /> Logic & Coding Pad
+                </span>
+                <Badge className="bg-primary/10 text-primary border-none">Visual Editor</Badge>
+              </div>
+              <Textarea 
+                value={code} 
+                onChange={(e) => setCode(e.target.value)}
+                className="flex-1 bg-black/40 border-white/5 rounded-[2rem] p-10 font-code text-green-400 resize-none focus:ring-1 focus:ring-primary/30"
+                placeholder="Write your code or architectural explanation here..."
+              />
+              <p className="text-[10px] text-slate-500 italic">This content will be submitted along with your verbal response.</p>
+            </div>
+          </div>
+        )}
 
         <div className="w-[480px] glass-dark border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden">
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
