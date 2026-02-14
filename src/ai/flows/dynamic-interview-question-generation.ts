@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Dynamically generates interview questions with quota fallbacks.
+ * @fileOverview Dynamically generates interview questions with persona-driven logic.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,17 +12,31 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
   skills: z.array(z.string()),
   resumeText: z.string().optional(),
   jobDescriptionText: z.string().optional(),
+  roundType: z.enum(['technical', 'hr', 'both']).default('both'),
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  questions: z.array(z.string()),
+  technicalQuestions: z.array(z.string()).describe('Questions focused on technical skills and scenarios.'),
+  hrQuestions: z.array(z.string()).describe('Questions focused on behavioral, soft skills, and attitude.'),
+  openingStatement: z.string().describe('Sarah\'s professional opening greeting.'),
 });
 
 const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `Generate 5 interview questions for a {{jobRole}} ({{experienceLevel}} level). Skills: {{#each skills}}{{{this}}}, {{/each}}`,
+  prompt: `You are Sarah, a professional human-like AI interviewer. Your role is to conduct a realistic job interview.
+User Profile:
+Role: {{{jobRole}}} ({{{experienceLevel}}})
+Skills: {{#each skills}}{{{this}}}, {{/each}}
+JD: {{{jobDescriptionText}}}
+
+Generate an opening statement and two sets of questions:
+1. Technical Round: Logic, scenario-based, and skill-specific.
+2. HR Round: Behavioral, soft skills, and stress handling.
+
+Opening: Greeting the candidate and setting a professional but conversational tone.
+Make the questions feel authentic, not like a chatbot.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
@@ -30,14 +44,18 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     const { output } = await prompt(input);
     return output!;
   } catch (error) {
-    console.warn("Quota exceeded. Using standard questions.");
+    console.warn("AI Quota hit. Using high-quality fallback questions.");
     return {
-      questions: [
-        "Tell me about a difficult technical challenge you've faced.",
-        "How do you stay up-to-date with industry trends?",
-        "Describe a time you had a conflict with a teammate.",
-        "What is your approach to learning a new technology?",
-        "Where do you see yourself in five years?"
+      openingStatement: "Hello. I'm Sarah. I'll be conducting your interview today. Let's start with your technical background.",
+      technicalQuestions: [
+        "Can you walk me through a complex technical challenge you solved recently?",
+        "How do you ensure code quality and scalability in your projects?",
+        "If you were tasked with optimizing a slow system, what would be your first three steps?"
+      ],
+      hrQuestions: [
+        "Tell me about a time you had a significant disagreement with a teammate.",
+        "How do you handle high-pressure deadlines while maintaining quality?",
+        "Where do you see yourself contributing the most value to our team culture?"
       ]
     };
   }

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -23,7 +22,8 @@ import {
   RefreshCw,
   Play,
   Waves,
-  ChevronRight
+  ChevronRight,
+  Info
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -40,15 +40,19 @@ export default function InterviewSessionPage() {
   const userDocRef = user ? doc(db!, "users", user.uid) : null
   const { data: profile } = useDoc(userDocRef)
 
-  const [questions, setQuestions] = useState<string[]>([])
+  const [opening, setOpening] = useState("")
+  const [techQuestions, setTechQuestions] = useState<string[]>([])
+  const [hrQuestions, setHrQuestions] = useState<string[]>([])
+  const [allQuestions, setAllQuestions] = useState<string[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
+  
   const [transcript, setTranscript] = useState("")
   const [interimTranscript, setInterimTranscript] = useState("")
   const [initializing, setInitializing] = useState(true)
   const [sessionStarted, setSessionStarted] = useState(false)
   const [processingTurn, setProcessingTurn] = useState(false)
   const [fetchingAudio, setFetchingAudio] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(300)
+  const [timeLeft, setTimeLeft] = useState(600)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [speaking, setSpeaking] = useState(false)
   const [listening, setListening] = useState(false)
@@ -75,13 +79,8 @@ export default function InterviewSessionPage() {
         setStream(mediaStream)
         setHasCameraPermission(true)
       } catch (error) {
-        console.error('Error accessing media:', error);
+        console.error('Media Access Denied:', error);
         setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Permissions Required',
-          description: 'Please enable camera and mic for the AI interview.',
-        });
       }
     }
     setupMedia();
@@ -113,18 +112,10 @@ export default function InterviewSessionPage() {
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const totalText = transcriptAccumulatorRef.current + interimText;
-          if (totalText.trim().length > 10) {
+          if (totalText.trim().length > 15 && !processingTurn && !speaking) {
             completeTurn();
           }
-        }, 4000); 
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error("Speech Recognition Error:", event.error);
-        if (event.error === 'no-speech') {
-          // Restart if silent for too long
-          try { recognitionRef.current.stop(); } catch(e) {}
-        }
+        }, 3500); 
       };
     }
 
@@ -144,38 +135,32 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     if (sessionStarted && !processingTurn && !fetchingAudio) {
       const interval = setInterval(() => {
-        const emotions = ["Confident", "Analyzing", "Focused", "Calm", "Thinking"]
-        setCurrentEmotion(emotions[Math.floor(Math.random() * emotions.length)])
         setConfidenceLevel(prev => Math.max(40, Math.min(98, prev + (Math.floor(Math.random() * 11) - 5))))
         setEyeAlignment(prev => Math.max(30, Math.min(99, prev + (Math.floor(Math.random() * 15) - 7))))
-      }, 3000)
+      }, 4000)
       return () => clearInterval(interval)
     }
   }, [sessionStarted, processingTurn, fetchingAudio])
 
   useEffect(() => {
     async function init() {
-      const demoRole = sessionStorage.getItem('demo_role') || "Professional Candidate";
+      const demoRole = sessionStorage.getItem('demo_role') || "Senior Professional";
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
-      const demoJD = sessionStorage.getItem('demo_jd') || "Target role.";
+      const demoJD = sessionStorage.getItem('demo_jd') || "Target job description.";
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: profile?.skills || ["Professional Communication"],
-          resumeText: profile?.education || "Standard profile.",
+          skills: profile?.skills || ["Professionalism", "Strategy"],
           jobDescriptionText: demoJD
         })
-        if (result?.questions?.length > 0) setQuestions(result.questions)
-        else throw new Error("No questions")
+        setOpening(result.openingStatement)
+        const combined = [...result.technicalQuestions, ...result.hrQuestions]
+        setAllQuestions(combined)
+        setTechQuestions(result.technicalQuestions)
+        setHrQuestions(result.hrQuestions)
       } catch (err) {
-        setQuestions([
-          "Walk me through your professional journey.",
-          "Describe a major challenge you've overcome.",
-          "How do you handle workplace conflict?",
-          "What is your greatest professional achievement?",
-          "Where do you see yourself in five years?"
-        ])
+        setAllQuestions(["Tell me about your journey.", "Why should we hire you?"])
       } finally {
         setInitializing(false)
       }
@@ -197,7 +182,6 @@ export default function InterviewSessionPage() {
     setListening(false)
     setFetchingAudio(true)
     
-    // Stop recognition while AI is speaking
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch(e) {}
     }
@@ -214,15 +198,11 @@ export default function InterviewSessionPage() {
           audioRef.current.load()
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.warn("Auto-play failed, using local speech fallback.");
-              useLocalSpeech(text);
-            });
+            playPromise.catch(() => useLocalSpeech(text));
           }
         }
       }
     } catch (err) {
-      console.error("Audio error:", err)
       setFetchingAudio(false)
       useLocalSpeech(text);
     }
@@ -236,27 +216,24 @@ export default function InterviewSessionPage() {
   }
 
   const startSession = () => {
-    // Crucial: Unlock audio on user gesture
     if (audioRef.current) {
       audioRef.current.play().catch(() => {});
       audioRef.current.pause();
     }
     setSessionStarted(true);
-    triggerSpeech(questions[0]);
+    triggerSpeech(`${opening}. ${allQuestions[0]}`);
   };
 
   const handleAudioEnded = () => {
     setSpeaking(false);
     setListening(true);
     if (recognitionRef.current) {
-      try { recognitionRef.current.start(); } catch (e) {
-        console.warn("Recognition start failed:", e);
-      }
+      try { recognitionRef.current.start(); } catch (e) {}
     }
   };
 
   const completeTurn = async () => {
-    if (processingTurn || fetchingAudio) return;
+    if (processingTurn || fetchingAudio || speaking) return;
     setProcessingTurn(true);
     setListening(false);
     if (recognitionRef.current) {
@@ -266,42 +243,42 @@ export default function InterviewSessionPage() {
     const fullAnswer = transcriptAccumulatorRef.current + interimTranscript;
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
     currentAnswers.push({
-      question: questions[currentIdx],
+      question: allQuestions[currentIdx],
       answer: fullAnswer || "Silent response.",
-      emotion: currentEmotion,
-      confidence: confidenceLevel,
-      eyeContact: eyeAlignment
+      round: currentIdx < techQuestions.length ? 'technical' : 'hr'
     });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
-      if (currentIdx < questions.length - 1) {
-        const feedback = await instantTextualAnswerFeedback({
-          interviewQuestion: questions[currentIdx],
-          userAnswer: fullAnswer || "...",
-          jobRole: sessionStorage.getItem('demo_role') || "Candidate"
-        });
-        
+      const feedback = await instantTextualAnswerFeedback({
+        interviewQuestion: allQuestions[currentIdx],
+        userAnswer: fullAnswer || "...",
+        jobRole: sessionStorage.getItem('demo_role') || "Candidate",
+        currentRound: currentIdx < techQuestions.length ? 'technical' : 'hr'
+      });
+      
+      setCurrentEmotion(feedback.detectedEmotion);
+      
+      if (currentIdx < allQuestions.length - 1) {
         const nextIdx = currentIdx + 1;
         setCurrentIdx(nextIdx);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
         
-        const reactionText = feedback.relevanceFeedback.split('.')[0];
-        const responseText = `${reactionText}. Let's move on. ${questions[nextIdx]}`;
+        const responseText = `${feedback.verbalReaction}. ${allQuestions[nextIdx]}`;
         await triggerSpeech(responseText);
       } else {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
-      if (currentIdx < questions.length - 1) {
+      if (currentIdx < allQuestions.length - 1) {
         const nextIdx = currentIdx + 1;
         setCurrentIdx(nextIdx);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
-        triggerSpeech(`Understood. Next question: ${questions[nextIdx]}`);
+        triggerSpeech(`Understood. Moving on to: ${allQuestions[nextIdx]}`);
       } else {
         router.push(`/results/demo-results`);
       }
@@ -314,8 +291,8 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
         <BrainCircuit className="w-24 h-24 text-primary animate-pulse mb-8" />
-        <h2 className="text-3xl font-headline font-bold mb-4 uppercase tracking-widest text-primary">Neural Link Active</h2>
-        <p className="text-slate-400 text-lg">Initializing Sarah's AI voice and sensors...</p>
+        <h2 className="text-3xl font-headline font-bold mb-4 uppercase tracking-widest text-primary">Neural Link Loading</h2>
+        <p className="text-slate-400 text-lg">Sarah is preparing your customized one-on-one session...</p>
       </div>
     )
   }
@@ -327,12 +304,16 @@ export default function InterviewSessionPage() {
           <div className="w-40 h-40 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto shadow-2xl">
             <User className="w-16 h-16 text-primary" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-headline font-bold">Start Neural Interview</h1>
-            <p className="text-slate-400 text-lg">Sarah will speak to you naturally. Just speak when she finishes.</p>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-headline font-bold">Ready to Start?</h1>
+            <p className="text-slate-400 text-lg">Sarah will speak to you naturally. This is a hands-free conversational experience. Just speak when she finishes.</p>
+            <div className="flex items-center justify-center gap-4 text-xs font-mono text-primary/60">
+              <span className="flex items-center gap-1"><Mic className="w-3 h-3" /> MIC READY</span>
+              <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> NEURAL ACTIVE</span>
+            </div>
           </div>
           <Button 
-            className="w-full h-20 rounded-full bg-primary hover:bg-primary/90 text-xl font-bold transition-all hover:scale-105"
+            className="w-full h-20 rounded-full bg-primary hover:bg-primary/90 text-xl font-bold transition-all hover:scale-105 shadow-2xl"
             onClick={startSession}
           >
             BEGIN ASSESSMENT
@@ -345,13 +326,13 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
-      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50">
+      <div className="h-16 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50 shadow-lg">
         <div className="flex items-center gap-6">
           <ShieldCheck className="text-primary w-6 h-6" />
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Link v4.2</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assessment Mode</span>
             <span className="text-xs font-mono text-primary uppercase">
-              {fetchingAudio ? 'SYNCING' : listening ? 'LISTENING' : speaking ? 'SARAH SPEAKING' : 'READY'}
+              {currentIdx < techQuestions.length ? 'ROUND 1: TECHNICAL' : 'ROUND 2: HR'}
             </span>
           </div>
         </div>
@@ -368,31 +349,31 @@ export default function InterviewSessionPage() {
       <div className="flex-1 flex relative bg-slate-950">
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <img 
-            src="https://picsum.photos/seed/sarah-ai-interviewer/1200/1200" 
+            src={`https://picsum.photos/seed/sarah-persona-${currentEmotion}/1200/1200`} 
             alt="Sarah AI" 
-            className={`w-full h-full object-cover transition-opacity duration-1000 ${speaking ? 'opacity-100' : 'opacity-60'}`}
+            className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105' : 'opacity-60 grayscale-[0.5]'}`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
           
           <div className="absolute top-8 left-8 z-20 space-y-3">
-             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse text-white px-4 py-2">SARAH IS THINKING...</Badge>}
+             {fetchingAudio && <Badge className="bg-blue-600 animate-pulse text-white px-4 py-2">SARAH IS PROCESSING...</Badge>}
              {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse text-white px-4 py-2">SARAH IS SPEAKING...</Badge>}
              {listening && <Badge className="bg-green-600 animate-bounce text-white px-4 py-2">SARAH IS LISTENING...</Badge>}
           </div>
 
           <div className="absolute bottom-8 inset-x-8 z-20">
-            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl">
+            <div className="max-w-4xl mx-auto bg-slate-950/90 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
               <div className="flex items-start gap-6">
-                <div className={`p-5 rounded-2xl ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
+                <div className={`p-5 rounded-2xl transition-colors ${speaking ? 'bg-primary' : 'bg-slate-800'}`}>
                   <Volume2 className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1 pt-1">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 block">Question {currentIdx + 1} of {questions.length}</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 block">Sarah's Question</span>
                   <h3 className="text-xl md:text-2xl font-headline font-bold leading-tight">
-                    {questions[currentIdx]}
+                    {allQuestions[currentIdx]}
                   </h3>
                   {!speaking && !fetchingAudio && (
-                    <Button variant="outline" size="sm" className="mt-4 border-white/10 text-xs text-slate-400 hover:text-white" onClick={() => triggerSpeech(questions[currentIdx])}>
+                    <Button variant="outline" size="sm" className="mt-4 border-white/10 text-xs text-slate-400 hover:text-white" onClick={() => triggerSpeech(allQuestions[currentIdx])}>
                       <RefreshCw className="w-3 h-3 mr-2" /> Replay Sarah's Voice
                     </Button>
                   )}
@@ -402,7 +383,7 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        <div className="w-[400px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl">
+        <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl">
           <div className="p-6 space-y-6 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2">
@@ -412,18 +393,18 @@ export default function InterviewSessionPage() {
                    <span className="text-[9px] text-red-500 font-bold uppercase">Scanning...</span>
                 </div>
               </div>
-              <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 relative">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1] grayscale-[0.3]" />
-                <div className="absolute inset-x-0 h-[1px] bg-primary/40 shadow-[0_0_10px_#3b82f6] animate-[scan_4s_linear_infinite]" />
+              <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 relative shadow-inner">
+                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1] grayscale-[0.4]" />
+                <div className="absolute inset-x-0 h-[1px] bg-primary/40 shadow-[0_0_15px_#3b82f6] animate-[scan_5s_linear_infinite]" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Confidence", value: `${confidenceLevel}%`, icon: Activity },
-                { label: "Eye Alignment", value: `${eyeAlignment}%`, icon: Target },
+                { label: "Eye Focus", value: `${eyeAlignment}%`, icon: Target },
               ].map((stat, i) => (
-                <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
+                <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2 hover:bg-white/10 transition-colors">
                   <stat.icon className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{stat.label}</p>
@@ -436,33 +417,40 @@ export default function InterviewSessionPage() {
             <div className="space-y-3">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                 <Waves className={`w-3 h-3 ${listening ? 'text-green-500' : 'text-slate-700'}`} />
-                Live Transcript
+                Live Neural Transcript
               </span>
-              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 h-40 overflow-y-auto scrollbar-hide">
+              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6 h-48 overflow-y-auto scrollbar-hide shadow-inner">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-sm leading-relaxed text-slate-300 italic">
+                  <p className="text-sm leading-relaxed text-slate-300 italic font-medium">
                     {transcript}
                     <span className="text-slate-500">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <p className="text-sm text-slate-600 italic">Sarah is waiting for your response...</p>
+                  <div className="flex flex-col items-center justify-center h-full text-slate-600 space-y-2">
+                    <Loader2 className="w-5 h-5 animate-spin opacity-20" />
+                    <p className="text-xs italic">Awaiting candidate voice input...</p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="p-8 border-t border-white/5">
+          <div className="p-8 border-t border-white/5 bg-slate-900/20">
             {listening ? (
-              <Button className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold text-lg shadow-xl" onClick={completeTurn}>
+              <Button 
+                className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-500 font-bold text-lg shadow-[0_10px_30px_rgba(22,163,74,0.3)] transition-all active:scale-95" 
+                onClick={completeTurn}
+              >
                 FINISH ANSWER
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             ) : (
-              <Button disabled className="w-full h-16 rounded-2xl bg-slate-800 text-slate-400 font-bold">
-                <Loader2 className="animate-spin h-5 w-5 mr-3" />
-                NEURAL SYNC...
-              </Button>
+              <div className="w-full h-16 rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center text-slate-500 font-bold gap-3">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span className="uppercase text-xs tracking-widest">Neural Syncing...</span>
+              </div>
             )}
+            <p className="text-[9px] text-center text-slate-600 uppercase mt-4 tracking-widest">Voice will auto-submit after 4 seconds of silence</p>
           </div>
         </div>
       </div>
@@ -477,9 +465,9 @@ export default function InterviewSessionPage() {
       <style jsx global>{`
         @keyframes scan {
           0% { transform: translateY(0); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(200px); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(220px); opacity: 0; }
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
