@@ -17,12 +17,14 @@ import {
   Waves, 
   ChevronRight,
   ShieldCheck,
-  BrainCircuit
+  BrainCircuit,
+  AlertCircle
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
 import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-feedback"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -42,8 +44,7 @@ export default function InterviewSessionPage() {
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
-  const [confidenceLevel, setConfidenceLevel] = useState(75)
-  const [eyeAlignment, setEyeAlignment] = useState(60)
+  const [hasCameraPermission, setHasCameraPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -52,12 +53,13 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // Use refs to access latest state in event callbacks
+  // Ref for latest state in callbacks
   const stateRef = useRef({ speaking, listening, processingTurn, turnCount, currentQuestion })
   useEffect(() => {
     stateRef.current = { speaking, listening, processingTurn, turnCount, currentQuestion }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion])
 
+  // Camera and Mic Setup
   useEffect(() => {
     async function setupMedia() {
       try {
@@ -66,18 +68,20 @@ export default function InterviewSessionPage() {
           audio: true 
         });
         setStream(mediaStream)
-        if (videoRef.current) videoRef.current.srcObject = mediaStream;
+        setHasCameraPermission(true)
       } catch (error) {
         console.error('Media Access Denied:', error);
+        setHasCameraPermission(false)
         toast({
           variant: "destructive",
           title: "Camera/Mic Required",
-          description: "Please enable permissions for a conversational experience."
+          description: "Please enable permissions to proceed with the interview."
         })
       }
     }
     setupMedia();
 
+    // Setup Speech Recognition
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
@@ -107,22 +111,27 @@ export default function InterviewSessionPage() {
         setInterimTranscript(interimText);
 
         const currentFull = (transcriptAccumulatorRef.current + interimText).toLowerCase();
-        const finishPhrases = ["i'm done", "that's all", "i am done", "that is all", "finish answer"];
+        const finishPhrases = ["i'm done", "that's all", "i am done", "that is all", "finish answer", "no idea", "i don't know"];
         const detectedFinish = finishPhrases.some(p => currentFull.includes(p));
 
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         
         silenceTimeoutRef.current = setTimeout(() => {
-          if (currentFull.trim().length > 5) {
+          const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
+          if (combinedText.length > 5 || detectedFinish) {
             completeTurn();
           }
-        }, detectedFinish ? 1000 : 4000);
+        }, detectedFinish ? 1500 : 4000);
       };
 
       recognitionRef.current.onerror = (event: any) => {
-        console.error("Speech Recognition Error", event.error);
         if (event.error === 'no-speech' && stateRef.current.listening) {
-          // Restart if it died due to silence
+          try { recognitionRef.current.start(); } catch(e) {}
+        }
+      };
+
+      recognitionRef.current.onend = () => {
+        if (stateRef.current.listening && !stateRef.current.speaking && !stateRef.current.processingTurn) {
           try { recognitionRef.current.start(); } catch(e) {}
         }
       };
@@ -131,9 +140,18 @@ export default function InterviewSessionPage() {
     return () => {
       if (recognitionRef.current) recognitionRef.current.stop();
       if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+      if (stream) stream.getTracks().forEach(track => track.stop());
     };
   }, []);
 
+  // Ensure videoRef is updated when stream or session state changes
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, sessionStarted, initializing]);
+
+  // Initial Question Fetch
   useEffect(() => {
     async function init() {
       const demoRole = sessionStorage.getItem('demo_role') || "Professional";
@@ -224,7 +242,7 @@ export default function InterviewSessionPage() {
       try { recognitionRef.current.stop(); } catch(e) {}
     }
 
-    const fullAnswer = transcriptAccumulatorRef.current + interimTranscript;
+    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
     currentAnswers.push({ question: question, answer: fullAnswer || "Candidate provided no spoken answer." });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
@@ -235,17 +253,16 @@ export default function InterviewSessionPage() {
         userAnswer: fullAnswer || "...",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
-        currentRound: currentTurn < 5 ? 'technical' : 'hr'
+        currentRound: currentTurn < 4 ? 'technical' : 'hr'
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
       const nextTurnCount = currentTurn + 1;
       setTurnCount(nextTurnCount);
 
-      // Force continue if turnCount is low, ignore early AI completion requests for realism
       const shouldFinish = feedback.isInterviewComplete && nextTurnCount >= 6;
 
-      if (!shouldFinish && nextTurnCount < 12) {
+      if (!shouldFinish && nextTurnCount < 10) {
         setCurrentQuestion(feedback.nextQuestion);
         setTranscript("");
         setInterimTranscript("");
@@ -258,12 +275,16 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       console.error("Turn processing error", err);
-      // Fallback behavior
+      // Fallback behavior to prevent stopping
       const nextTurnCount = currentTurn + 1;
       setTurnCount(nextTurnCount);
       if (nextTurnCount < 6) {
-        setCurrentQuestion("That's interesting. Moving on, can you tell me more about your experience with team collaboration?");
-        await triggerSpeech("I see. Moving on, can you tell me more about your experience with team collaboration?");
+        const fallbackNext = "I see. Let's move on. Can you describe a challenging project you worked on recently?";
+        setCurrentQuestion(fallbackNext);
+        setTranscript("");
+        setInterimTranscript("");
+        transcriptAccumulatorRef.current = "";
+        await triggerSpeech(fallbackNext);
       } else {
         router.push(`/results/demo-results`);
       }
@@ -286,17 +307,28 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <div className="max-w-2xl w-full text-center space-y-8">
-          <div className="w-40 h-40 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto">
-            <User className="w-16 h-16 text-primary" />
+          <div className="w-40 h-40 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto relative overflow-hidden">
+            {stream ? (
+              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover scale-150" />
+            ) : (
+              <User className="w-16 h-16 text-primary" />
+            )}
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold">Ready to Start?</h1>
-            <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. No clicking required.</p>
+            <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. The interview will proceed automatically.</p>
           </div>
           <Button className="w-full h-20 rounded-full bg-primary text-xl font-bold shadow-2xl hover:scale-105 transition-transform" onClick={startSession}>
             BEGIN ASSESSMENT
             <Play className="ml-3 w-5 h-5 fill-current" />
           </Button>
+          {!hasCameraPermission && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive-foreground">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Camera Access Required</AlertTitle>
+              <AlertDescription>Please enable your camera and microphone to begin the interview.</AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
     )
@@ -320,6 +352,7 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative bg-slate-950">
+        {/* Sarah View */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <img 
             src={`https://picsum.photos/seed/sarah-${currentEmotion}/1200/1200`} 
@@ -352,13 +385,25 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
+        {/* User View & Stats */}
         <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30">
           <div className="p-6 space-y-6 flex-1 overflow-y-auto">
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Neural Live Feed</span>
               <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-white/10 relative">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale-[0.4]" />
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  className="w-full h-full object-cover grayscale-[0.4]" 
+                />
                 <div className="absolute inset-x-0 h-[1px] bg-primary/40 shadow-[0_0_15px_#3b82f6] animate-[scan_5s_linear_infinite]" />
+                {!hasCameraPermission && (
+                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-center p-4">
+                     <p className="text-xs text-slate-400">Camera access is required to see your feed.</p>
+                   </div>
+                )}
               </div>
             </div>
 
@@ -406,7 +451,7 @@ export default function InterviewSessionPage() {
               </div>
             )}
             <p className="text-[10px] text-center text-slate-600 mt-4 uppercase tracking-tighter">
-              Hands-free mode active. Interview will proceed automatically.
+              Hands-free mode active. Interview proceeds automatically.
             </p>
           </div>
         </div>

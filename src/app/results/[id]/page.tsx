@@ -35,7 +35,7 @@ export default function ResultsPage() {
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level"
       const answers = JSON.parse(sessionStorage.getItem('session_answers') || '[]')
       
-      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Completed ${answers.length} turns.`
+      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Completed ${answers.length} conversational turns with adaptive AI behavior.`
 
       try {
         const result = await comprehensiveInterviewFeedbackReport({
@@ -159,15 +159,15 @@ export default function ResultsPage() {
                   <img src={`https://picsum.photos/seed/face-map/800/600`} className="object-cover w-full h-full opacity-60" alt="Biometrics" />
                 </div>
                 <p className="text-lg text-slate-700 leading-relaxed italic">
-                  "{report?.bodyLanguageReport || "Generally professional demeanor. Eye focus was consistent throughout the technical segments, though slightly more focused on the screen during HR questions."}"
+                  "{report?.bodyLanguageReport || "Generally professional demeanor. Eye focus was consistent throughout the session."}"
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                  {[
-                   { label: "Vocal Clarity", value: "Normal", icon: MessageSquare },
-                   { label: "Eye Focus", value: "Excellent", icon: Target },
                    { label: "Stability", value: "High", icon: ShieldCheck },
+                   { label: "Eye Focus", value: "Excellent", icon: Target },
                    { label: "Stress Markers", value: "Minimal", icon: Activity },
+                   { label: "Vocal Clarity", value: "Normal", icon: MessageSquare },
                  ].map((b, i) => (
                    <div key={i} className="p-6 rounded-2xl border bg-white flex flex-col gap-2 shadow-sm">
                       <b.icon className="w-5 h-5 text-primary opacity-50" />
@@ -184,7 +184,7 @@ export default function ResultsPage() {
           <Card className="bg-slate-950 rounded-[3rem] text-white p-16 relative overflow-hidden border-none shadow-2xl">
             <h2 className="text-5xl font-headline font-bold mb-8 relative z-10">Improvement Plan</h2>
             <div className="prose prose-invert max-w-none text-xl relative z-10 leading-relaxed">
-              <p>{report?.improvementPlan || "Focus on quantifying your achievements in technical answers. Practice the STAR method to ensure every behavioral response has a clear result. We recommend daily 10-minute drills on system design."}</p>
+              <p>{report?.improvementPlan || "Focus on quantifying your achievements in technical answers. Practice the STAR method to ensure every behavioral response has a clear result."}</p>
             </div>
             <Button className="mt-12 h-16 rounded-2xl bg-primary text-xl font-bold px-12 shadow-lg shadow-primary/20" asChild>
               <Link href="/dashboard">Return to Dashboard</Link>
