@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for JD-aware follow-ups.
- * Updated: Human-like verbal reactions (Yes, Yeah, Good, Poor) and strict JD alignment.
+ * Natural Conversational Loop: Handles "human" reactions and high-stakes logical pivots.
  */
 
 import {ai} from '@/ai/genkit';
@@ -21,7 +21,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction (e.g., "Yeah," "I see," "Good point," "That seems a bit shallow"). Must reference specific candidate details.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction (e.g., "Yeah," "I see," "Good point," "That seems a bit shallow"). Must be conversational.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC but strictly related to the JD/Role.'),
   feedback: z.object({
@@ -40,22 +40,23 @@ const prompt = ai.definePrompt({
   prompt: `You are Aria, an elite human-like AI interviewer for the position of {{{jobRole}}}. 
 
 CORE OBJECTIVE:
-React to the candidate's answer naturally and generate a follow-up that explores a DIFFERENT requirement.
+React to the candidate's answer naturally in a 1-to-1 conversation, then generate a follow-up that explores a DIFFERENT requirement from the JD.
 
-REACTION PROTOCOL (Be Human):
+CONVERSATIONAL PROTOCOL:
 1. VERBAL REACTION: Start with a natural acknowledgment like "Yeah," "I see," "Right," "Good point," or a skeptical "I'm not sure about that," "That's a bit brief." 
-2. Reference a specific detail from their answer: "{{{userAnswer}}}" to prove you are listening.
-3. Be honest. If the answer was "poor" or "vague," let your reaction reflect that professional skepticism.
+2. Be human. Reference specific details from their answer: "{{{userAnswer}}}" to prove you are listening.
+3. If the answer was "poor" or "vague," let your reaction reflect that professional skepticism immediately.
 
-EVALUATION CRITERIA (Strict Analysis):
-1. CORRECTNESS: Is the answer technically or logically sound?
-2. CLARITY: Is the communication structured?
-3. COMPLETENESS: Did they address the core of your previous question?
-4. CONFIDENCE: Does the language suggest mastery?
+STRICT AUDIT CRITERIA (NLP Analysis):
+- CORRECTNESS: Is the answer technically or logically sound?
+- CLARITY: Is the communication structured?
+- COMPLETENESS: Did they address the core of your previous question?
+- CONFIDENCE: Does the language suggest mastery?
 
-NEXT QUESTION: 
+NEXT QUESTION STRATEGY: 
 - Look at the Job Description ({{{jobDescriptionText}}}).
-- Pick a DIFFERENT requirement or skill that hasn't been discussed.
+- Pick a DIFFERENT requirement or skill that hasn't been discussed yet.
+- PIVOT dimensions: If the last question was technical, consider a behavioral or architectural challenge.
 - AVOID these previous questions: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
 
 Candidate Answer: "{{{userAnswer}}}" 
@@ -77,16 +78,16 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 2500 * attempt));
         continue;
       }
 
       return {
         verbalReaction: "I see your point on that. Let's shift focus to another requirement of this role.",
         detectedEmotion: "Neutral",
-        nextQuestion: `Looking at the requirements for a ${input.jobRole}, how do you handle complex cross-functional alignment when stakeholders have conflicting technical priorities?`,
+        nextQuestion: `Given the requirements for a ${input.jobRole}, how do you handle complex cross-functional alignment when stakeholders have conflicting technical priorities?`,
         feedback: {
-          analysis: "Your answer provided a basic overview but lacked the depth required for this seniority level. Focus on providing specific examples and metrics to demonstrate completeness and confidence.",
+          analysis: "Your answer provided a basic overview but lacked the structural depth required for this seniority level. Focus on providing specific evidence and metrics to demonstrate mastery.",
           strengths: ["Clear communication"],
           weaknesses: ["Lacked technical depth", "No specific framework used"],
           tips: "Try using the STAR method to structure your next response more effectively."

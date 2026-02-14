@@ -16,16 +16,14 @@ import {
   Play, 
   CheckCircle2,
   Mic,
-  GraduationCap,
   BrainCircuit,
   Sparkles,
   Zap,
-  Terminal,
   X,
   TrendingUp,
-  ChevronRight,
   Lightbulb,
-  Code2
+  Code2,
+  Waves
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -64,7 +62,7 @@ export default function InterviewSessionPage() {
   const [turnFeedback, setTurnFeedback] = useState<any>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   
-  const [code, setCode] = useState("// Write your logic or explanation here...")
+  const [code, setCode] = useState("// Natural logic pad active...")
   const [showCodePad, setShowCodePad] = useState(false)
   
   const [confidenceLevel, setConfidenceLevel] = useState(85)
@@ -81,7 +79,7 @@ export default function InterviewSessionPage() {
     if (node && stream) {
       node.srcObject = stream;
     }
-  }, [stream, sessionStarted]);
+  }, [stream]);
 
   const stateRef = useRef({ 
     speaking, 
@@ -104,6 +102,58 @@ export default function InterviewSessionPage() {
       isStuck
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, sessionStarted, isStuck])
+
+  const completeTurn = async (forcedStuck: boolean = false) => {
+    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
+    if (isProcessing) return;
+    
+    setProcessingTurn(true);
+    setListening(false);
+    if (recognitionRef.current) try { recognitionRef.current.stop(); } catch(e) {}
+
+    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Visual Submission: ${code}]` : "");
+    
+    try {
+      const feedback = await instantTextualAnswerFeedback({
+        interviewQuestion: question,
+        userAnswer: fullAnswer || "Silence.",
+        jobRole: sessionStorage.getItem('demo_role') || "Candidate",
+        experienceLevel: sessionStorage.getItem('demo_exp') || "mid",
+        currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
+        jobDescriptionText: sessionStorage.getItem('demo_jd') || "",
+        resumeText: sessionStorage.getItem('demo_resume') || "",
+        previousQuestions: historyRef.current,
+        isStuck: forcedStuck || isStuck
+      });
+      
+      setCurrentEmotion(feedback.detectedEmotion);
+      setTurnFeedback(feedback.feedback);
+      setShowFeedback(true);
+      
+      if (!feedback.isInterviewComplete && currentTurn < 6) {
+        historyRef.current = [...historyRef.current, feedback.nextQuestion];
+        
+        setTurnCount(currentTurn + 1);
+        setCurrentQuestion(feedback.nextQuestion);
+        
+        setTranscript("");
+        setInterimTranscript("");
+        transcriptAccumulatorRef.current = "";
+        
+        const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
+        setTimeout(() => {
+          triggerSpeech(finalPrompt);
+        }, 1200);
+      } else {
+        terminateSession();
+      }
+    } catch (err) {
+      terminateSession();
+    } finally {
+      setProcessingTurn(false);
+      setIsStuck(false);
+    }
+  };
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -150,17 +200,26 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
+        // SILENCE DETECTION FOR AUTO-SUBMIT (Natural Conversational Loop)
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = setTimeout(() => {
-          const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 5) completeTurn(false);
-          else if (combinedText.length === 0) setIsStuck(true);
-        }, 15000); 
+        
+        const totalTextLen = (transcriptAccumulatorRef.current + interimText).trim().length;
+        if (totalTextLen > 5) {
+          // If the user has said something substantial, trigger auto-submit after 2.5s of silence
+          silenceTimeoutRef.current = setTimeout(() => {
+            completeTurn(false);
+          }, 2500); 
+        } else if (totalTextLen === 0) {
+          // If they haven't started talking yet, wait longer before flagging as "stuck"
+          silenceTimeoutRef.current = setTimeout(() => {
+            setIsStuck(true);
+          }, 8000);
+        }
       };
 
       recognitionRef.current.onend = () => {
-        const { sessionStarted: isStarted, listening: isListening } = stateRef.current;
-        if (isStarted && isListening) {
+        const { sessionStarted: isStarted, listening: isListening, speaking: isSpeaking, processingTurn: isProcessing } = stateRef.current;
+        if (isStarted && !isSpeaking && !isProcessing) {
           try { recognitionRef.current.start(); } catch(e) {}
         }
       };
@@ -265,58 +324,6 @@ export default function InterviewSessionPage() {
     router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
   };
 
-  const completeTurn = async (forcedStuck: boolean = false) => {
-    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
-    if (isProcessing) return;
-    
-    setProcessingTurn(true);
-    setListening(false);
-    if (recognitionRef.current) try { recognitionRef.current.stop(); } catch(e) {}
-
-    const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Visual Submission: ${code}]` : "");
-    
-    try {
-      const feedback = await instantTextualAnswerFeedback({
-        interviewQuestion: question,
-        userAnswer: fullAnswer || "Silence.",
-        jobRole: sessionStorage.getItem('demo_role') || "Candidate",
-        experienceLevel: sessionStorage.getItem('demo_exp') || "mid",
-        currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
-        jobDescriptionText: sessionStorage.getItem('demo_jd') || "",
-        resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current,
-        isStuck: forcedStuck || isStuck
-      });
-      
-      setCurrentEmotion(feedback.detectedEmotion);
-      setTurnFeedback(feedback.feedback);
-      setShowFeedback(true);
-      
-      if (!feedback.isInterviewComplete && currentTurn < 6) {
-        historyRef.current = [...historyRef.current, feedback.nextQuestion];
-        
-        setTurnCount(currentTurn + 1);
-        setCurrentQuestion(feedback.nextQuestion);
-        
-        setTranscript("");
-        setInterimTranscript("");
-        transcriptAccumulatorRef.current = "";
-        
-        const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
-        setTimeout(() => {
-          triggerSpeech(finalPrompt);
-        }, 1500);
-      } else {
-        terminateSession();
-      }
-    } catch (err) {
-      terminateSession();
-    } finally {
-      setProcessingTurn(false);
-      setIsStuck(false);
-    }
-  };
-
   const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000";
 
   if (initializing) {
@@ -365,7 +372,7 @@ export default function InterviewSessionPage() {
             {turnCount + 1} / 7
           </Badge>
           <span className="text-[9px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] hidden sm:block">
-            {roleCategory}
+            {roleCategory} Turn
           </span>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
@@ -407,8 +414,9 @@ export default function InterviewSessionPage() {
           <div className="absolute top-4 left-4 md:top-10 md:left-10 z-20 flex flex-col gap-2 md:gap-4">
              {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Aria Reasoning...</Badge>}
              {speaking && !fetchingAudio && <Badge className="glass bg-primary/20 text-primary animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Volume2 className="w-3 h-3 md:w-4 md:h-4" /> Aria Speaking</Badge>}
-             {listening && <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Mic className="w-3 h-3 md:w-4 md:h-4" /> Listening...</Badge>}
-             {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Lightbulb className="w-3 h-3 md:w-4 md:h-4" /> Detecting Hesitation...</Badge>}
+             {listening && <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Waves className="w-3 h-3 md:w-4 md:h-4" /> Natural Sync Active</Badge>}
+             {processingTurn && <Badge className="glass bg-purple-500/20 text-purple-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Sparkles className="w-3 h-3 md:w-4 md:h-4" /> Analyzing NLP Context...</Badge>}
+             {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Lightbulb className="w-3 h-3 md:w-4 md:h-4" /> Awaiting Input...</Badge>}
           </div>
 
           <div className="absolute bottom-4 inset-x-4 md:bottom-16 md:inset-x-16 z-20 animate-fade-in">
@@ -424,11 +432,11 @@ export default function InterviewSessionPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-green-400 uppercase tracking-widest">Strength</p>
+                        <p className="text-[7px] md:text-[9px] font-black text-green-400 uppercase tracking-widest">Linguistic Strength</p>
                         <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.strengths[0]}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-amber-400 uppercase tracking-widest">Weakness</p>
+                        <p className="text-[7px] md:text-[9px] font-black text-amber-400 uppercase tracking-widest">NLP Audit Note</p>
                         <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.weaknesses[0]}</p>
                       </div>
                     </div>
@@ -436,7 +444,7 @@ export default function InterviewSessionPage() {
                 </div>
               )}
               <h3 className="text-lg md:text-4xl font-headline font-black leading-tight text-white tracking-tight">
-                {currentQuestion || "Calibrating industry logic..."}
+                {currentQuestion || "Initializing industry conversation..."}
               </h3>
             </div>
           </div>
@@ -457,7 +465,7 @@ export default function InterviewSessionPage() {
                 className="flex-1 bg-black/40 border-white/5 rounded-[1rem] md:rounded-[2rem] p-6 md:p-10 font-code text-green-400 resize-none focus:ring-1 focus:ring-primary/30 text-sm md:text-base"
                 placeholder="Write your code or architectural explanation here..."
               />
-              <p className="text-[9px] text-slate-500 italic">This content will be submitted along with your verbal response.</p>
+              <p className="text-[9px] text-slate-500 italic">This content will be submitted along with your verbal response automatically.</p>
             </div>
           </div>
         )}
@@ -488,7 +496,7 @@ export default function InterviewSessionPage() {
             <div className="space-y-4 md:space-y-6">
               <span className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] flex items-center gap-2 md:gap-3">
                 <Mic className={cn("w-3 h-3 md:w-4 md:h-4", listening ? "text-green-500 animate-pulse" : "text-slate-800")} />
-                Live Transcription
+                Conversational Sync
               </span>
               <div className="glass bg-black/40 border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 h-32 md:h-64 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative group transition-all">
                 {(transcript || interimTranscript) ? (
@@ -498,8 +506,8 @@ export default function InterviewSessionPage() {
                   </p>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-800">
-                    <Mic className="w-6 h-6 md:w-10 md:h-10 opacity-20" />
-                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-black">Awaiting Response</p>
+                    <Waves className="w-6 h-6 md:w-10 md:h-10 opacity-20" />
+                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-black">Aria is Listening</p>
                   </div>
                 )}
               </div>
@@ -507,17 +515,23 @@ export default function InterviewSessionPage() {
           </div>
 
           <div className="p-6 md:p-10 glass-dark border-t border-white/5 bg-slate-900/30 shrink-0">
-            {listening ? (
-              <Button className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] bg-primary hover:bg-primary/90 font-black text-base md:text-xl shadow-2xl transition-transform active:scale-95" onClick={() => completeTurn(false)}>
-                SUBMIT ANSWER
-                <CheckCircle2 className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6" />
-              </Button>
+            {processingTurn ? (
+              <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-primary/10 flex items-center justify-center text-primary font-black gap-2 md:gap-4 border border-primary/20">
+                <Loader2 className="animate-spin h-5 w-5 md:h-6 md:w-6 text-primary" />
+                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Aria is Reasoning...</span>
+              </div>
+            ) : listening ? (
+              <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-green-500/10 flex items-center justify-center text-green-400 font-black gap-2 md:gap-4 border border-green-500/20">
+                <Waves className="animate-pulse h-5 w-5 md:h-6 md:w-6" />
+                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Natural Listening On</span>
+              </div>
             ) : (
               <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-slate-800/40 flex items-center justify-center text-slate-400 font-black gap-2 md:gap-4 border border-white/5">
                 <Loader2 className="animate-spin h-5 w-5 md:h-6 md:w-6 text-primary" />
-                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Processing...</span>
+                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Aria Syncing...</span>
               </div>
             )}
+            <p className="text-center text-[8px] md:text-[9px] text-slate-600 mt-3 md:mt-4 uppercase tracking-[0.2em] font-black">Conversation flows automatically after silence.</p>
           </div>
         </div>
       </div>
