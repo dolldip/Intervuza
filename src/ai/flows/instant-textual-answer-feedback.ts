@@ -3,6 +3,7 @@
 /**
  * @fileOverview Sarah's adaptive intelligence engine.
  * Handles role-specific feedback and strict non-repetition.
+ * Revised: Enforces strict evaluation and unique follow-ups.
  */
 
 import {ai} from '@/ai/genkit';
@@ -18,7 +19,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate professional reaction. Points out grammar or clarity issues if any.'),
+  verbalReaction: z.string().describe('Immediate professional reaction. MUST acknowledge the answer and point out grammar or focus issues.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST be unique and progressively harder.'),
   isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
@@ -36,13 +37,14 @@ Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
 STRICT RULES:
-1. CRITICAL FEEDBACK: If the answer was weak, had poor grammar, or lacked technical depth, you MUST politely point it out in your reaction.
-2. NO REPETITION: Do NOT ask any of these previous questions:
+1. ACKNOWLEDGE: Always start your reaction by acknowledging the content of their answer.
+2. CRITICAL EVALUATION: If the answer was weak, had poor grammar, or lacked technical depth, you MUST politely point it out in your reaction. Do not just be positive.
+3. NO REPETITION: Do NOT ask any of these previous questions or topics:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-3. ADAPTIVE: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base knowledge.
-4. CODING: If technical round for engineering, turn 4 or 5 MUST be a specific coding/logic challenge.
-5. TURN LIMIT: Conclude after turn 6.`
+4. ADAPTIVE: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base knowledge.
+5. TECHNICAL/CODING: If technical round for engineering, turn 4 or 5 MUST be a specific architectural or coding logic challenge.
+6. TURN LIMIT: Conclude after turn 6.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -51,9 +53,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I see. Let's dig a bit deeper into your specific approach.",
+      verbalReaction: "I see your point regarding that approach. Let's dig a bit deeper into your specific methodology.",
       detectedEmotion: "Neutral",
-      nextQuestion: "Can you walk me through a complex problem you solved recently?",
+      nextQuestion: "Can you walk me through a complex technical problem you solved recently and how you structured the solution?",
       isInterviewComplete: false
     };
   }

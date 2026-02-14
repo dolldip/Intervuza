@@ -1,35 +1,66 @@
 
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { 
   Trophy, 
   TrendingUp, 
   Calendar, 
   Video, 
-  ArrowRight,
   Flame,
-  Star,
   CheckCircle2,
   UserPen,
   Loader2,
   Target,
   BrainCircuit,
-  Zap
+  Zap,
+  History
 } from "lucide-react"
 import Link from "next/link"
-import { useAuth, useFirestore, useDoc, useUser } from "@/firebase"
-import { doc } from "firebase/firestore"
-import { MOCK_INTERVIEW_HISTORY } from "@/lib/mock-data"
+import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, collection, query, orderBy, limit } from "firebase/firestore"
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
-  const userDocRef = user ? doc(db!, "users", user.uid) : null
-  const { data: profile, isLoading: profileLoading } = useDoc(userDocRef)
+  
+  const userDocRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user])
+  const { data: profile } = useDoc(userDocRef)
+
+  const sessionsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "interviewSessions"),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    )
+  }, [db, user])
+  const { data: sessions, isLoading: sessionsLoading } = useCollection(sessionsQuery)
+
+  const streaksQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return collection(db, "users", user.uid, "userStreaks")
+  }, [db, user])
+  const { data: streaks } = useCollection(streaksQuery)
+
+  const stats = useMemo(() => {
+    const total = sessions?.length || 0
+    const completed = sessions?.filter(s => s.status === "completed") || []
+    const avgScore = completed.length > 0 
+      ? Math.round(completed.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / completed.length) 
+      : 0
+    const currentStreak = streaks?.[0]?.currentStreak || 0
+
+    return {
+      total,
+      completed: completed.length,
+      avgScore,
+      currentStreak
+    }
+  }, [sessions, streaks])
 
   if (isUserLoading) {
     return (
@@ -67,10 +98,10 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Daily Streak", value: `5 Days`, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
-          { label: "Average Score", value: `84%`, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50" },
-          { label: "Interviews Done", value: 12, icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
-          { label: "Total Badges", value: 3, icon: Trophy, color: "text-yellow-600", bg: "bg-yellow-50" },
+          { label: "Daily Streak", value: `${stats.currentStreak} Days`, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
+          { label: "Average Score", value: `${stats.avgScore}%`, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50" },
+          { label: "Interviews Done", value: stats.completed, icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
+          { label: "History Count", value: stats.total, icon: Trophy, color: "text-yellow-600", bg: "bg-yellow-50" },
         ].map((stat, i) => (
           <Card key={i} className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white">
             <CardContent className="p-6 flex items-center justify-between">
@@ -87,7 +118,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column */}
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-sm rounded-[2.5rem] overflow-hidden border-none bg-white">
             <CardHeader className="flex flex-row items-center justify-between bg-muted/20 p-8">
@@ -109,9 +139,9 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-4">
                   <BrainCircuit className="w-6 h-6 text-primary shrink-0 mt-1" />
                   <div className="space-y-2">
-                    <p className="font-bold text-sm">Background Analysis</p>
+                    <p className="font-bold text-sm">Sarah's Analysis</p>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {profile?.education ? `Your education at ${profile.education} provides a strong foundation. Sarah will focus on technical concepts and architectural patterns during your next Engineering session.` : "Please update your profile education and target role. This helps Sarah generate more challenging, role-specific questions for your sessions."}
+                      {profile?.education ? `Your education background at ${profile.education} is being used to calibrate your technical depth. Sarah will adapt questions to match your ${profile.experienceLevel} level expertise.` : "Please update your profile education. This helps Sarah calibrate her logic and propose role-specific coding challenges for your sessions."}
                     </p>
                   </div>
                 </div>
@@ -123,30 +153,41 @@ export default function DashboardPage() {
             <CardHeader className="p-8">
               <CardTitle className="font-headline text-2xl flex items-center gap-3">
                 <History className="w-6 h-6 text-primary" />
-                Recent Sessions
+                Session History
               </CardTitle>
-              <CardDescription>Track your performance and read Sarah's critical feedback.</CardDescription>
+              <CardDescription>Track your growth and review Sarah's critical audits.</CardDescription>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-4">
-              {MOCK_INTERVIEW_HISTORY.map((item) => (
-                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] border hover:bg-muted/10 transition-all group">
-                  <div className="flex items-center gap-6">
-                    <div className={`w-16 h-16 rounded-[1.5rem] flex flex-col items-center justify-center font-black text-xl shadow-inner ${item.score >= 80 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {item.score}
-                      <span className="text-[8px] uppercase tracking-widest opacity-60">Score</span>
+              {sessionsLoading ? (
+                <div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary" /></div>
+              ) : sessions?.length ? (
+                sessions.map((item) => (
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] border hover:bg-muted/10 transition-all group">
+                    <div className="flex items-center gap-6">
+                      <div className={`w-16 h-16 rounded-[1.5rem] flex flex-col items-center justify-center font-black text-xl shadow-inner ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {item.overallScore || "--"}
+                        <span className="text-[8px] uppercase tracking-widest opacity-60">{item.status === 'completed' ? 'Score' : 'Active'}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-lg">{item.jobRole}</h4>
+                        <p className="text-xs text-muted-foreground font-medium flex items-center gap-2 capitalize">
+                          <Calendar className="w-3 h-3" /> {new Date(item.createdAt).toLocaleDateString()} • {item.status}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-lg">{item.role}</h4>
-                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-2">
-                        <Calendar className="w-3 h-3" /> {item.date}
-                      </p>
-                    </div>
+                    <Button variant="outline" className="rounded-xl px-6 font-bold group-hover:bg-primary group-hover:text-white transition-colors" asChild>
+                      <Link href={item.status === 'completed' ? `/results/${item.id}` : `/interviews/session/${item.id}`}>
+                        {item.status === 'completed' ? 'View Audit' : 'Resume Session'}
+                      </Link>
+                    </Button>
                   </div>
-                  <Button variant="outline" className="rounded-xl px-6 font-bold group-hover:bg-primary group-hover:text-white transition-colors" asChild>
-                    <Link href={`/results/${item.id}`}>Audit Report</Link>
-                  </Button>
+                ))
+              ) : (
+                <div className="text-center py-12 space-y-4">
+                  <p className="text-muted-foreground">No sessions found. Start your first assessment with Sarah.</p>
+                  <Button asChild className="rounded-xl"><Link href="/interviews/new">Start Now</Link></Button>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </div>
@@ -157,13 +198,13 @@ export default function DashboardPage() {
             <CardHeader className="p-8">
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Live Coaching</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Strategy</span>
               </div>
-              <CardTitle className="font-headline text-2xl">Sarah's Daily Tip</CardTitle>
+              <CardTitle className="font-headline text-2xl">Sarah's Insight</CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-6">
               <p className="text-base text-slate-300 leading-relaxed italic">
-                "We noticed you often use fillers like 'um' when discussing technical architecture. Try pausing for two seconds before answering to structure your thoughts."
+                "Technical roles often fail not on logic, but on communication structure. Practice using the STAR method even for architectural questions."
               </p>
               <Button className="w-full h-14 rounded-2xl font-black bg-primary text-lg shadow-lg shadow-primary/30 hover:scale-105 transition-transform" asChild>
                 <Link href="/interviews/new">Practice Now</Link>
@@ -174,18 +215,18 @@ export default function DashboardPage() {
 
           <Card className="shadow-sm rounded-[2.5rem] border-none bg-white p-8">
             <CardHeader className="p-0 mb-8">
-              <CardTitle className="font-headline text-xl">Preparation Goals</CardTitle>
+              <CardTitle className="font-headline text-xl">Preparation Gaps</CardTitle>
             </CardHeader>
             <CardContent className="p-0 space-y-8">
               {[
-                { label: "Mock Interviews", progress: 100, count: "1/1" },
-                { label: "Technical Drills", progress: 45, count: "3/7" },
-                { label: "Voice Tone Clarity", progress: 10, count: "1/10" },
+                { label: "Technical Fluency", progress: 65 },
+                { label: "Behavioral Consistency", progress: 40 },
+                { label: "Linguistic Clarity", progress: 15 },
               ].map((goal, i) => (
                 <div key={i} className="space-y-3">
                   <div className="flex justify-between items-end">
                     <span className="text-sm font-bold text-slate-600">{goal.label}</span>
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">{goal.count}</span>
+                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">{goal.progress}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div 

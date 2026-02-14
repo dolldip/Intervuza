@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
+import { doc, updateDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -14,7 +15,6 @@ import {
   User, 
   Target, 
   Play, 
-  Waves, 
   CheckCircle2,
   Mic,
   ShieldCheck,
@@ -35,6 +35,7 @@ export default function InterviewSessionPage() {
   const params = useParams()
   const { toast } = useToast()
   const { user } = useUser()
+  const db = useFirestore()
 
   const [currentQuestion, setCurrentQuestion] = useState("")
   const [opening, setOpening] = useState("")
@@ -203,11 +204,9 @@ export default function InterviewSessionPage() {
       const demoJd = sessionStorage.getItem('demo_jd') || "Professional Job Description";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       
-      // Determine if coding challenge is needed
       const needsCoding = demoRole.toLowerCase().includes('engineer') || 
                           demoRole.toLowerCase().includes('developer') || 
-                          demoRole.toLowerCase().includes('architect') ||
-                          demoRole.toLowerCase().includes('coder');
+                          demoRole.toLowerCase().includes('architect');
       setIsCodingTask(needsCoding && demoRound === 'technical');
 
       try {
@@ -318,7 +317,6 @@ export default function InterviewSessionPage() {
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
         
-        // Final Turn Adjustment: If coding is expected, Sarah asks it near turn 4
         let finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         if (isCodingTask && nextTurnCount === 4) {
            finalPrompt = `That was a solid explanation. Now, let's look at a technical challenge. ${feedback.nextQuestion}`;
@@ -326,6 +324,15 @@ export default function InterviewSessionPage() {
 
         await triggerSpeech(finalPrompt);
       } else {
+        // Update session status in Firestore before navigating
+        if (user && db && params.id !== "demo-session") {
+          const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
+          updateDoc(sessionRef, {
+            status: "completed",
+            endTime: new Date().toISOString(),
+            overallScore: Math.round(confidenceLevel * 0.8 + 20) // Simulated score
+          });
+        }
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
@@ -434,10 +441,10 @@ export default function InterviewSessionPage() {
                        <Code2 className="w-4 h-4 text-primary" />
                        <span className="text-xs font-bold uppercase tracking-widest text-primary">Technical Task</span>
                     </div>
-                    <Badge variant="outline" className="text-[9px] border-primary/20">Explain Solution</Badge>
+                    <Badge variant="outline" className="text-[9px] border-primary/20">Explain Logic</Badge>
                  </div>
                  <p className="text-xs text-slate-400 leading-relaxed italic">
-                   "Please describe your logical approach to the problem Sarah just proposed."
+                   "Sarah is evaluating your architectural logic. Explain your code approach clearly."
                  </p>
               </div>
             )}
