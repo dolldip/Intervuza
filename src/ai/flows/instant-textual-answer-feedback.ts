@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
- * Updated: ABSOLUTE ZERO REPETITION CORE + EXPERIENCE AWARENESS (0-Exp Support).
+ * Updated: IRONCLAD ZERO REPETITION CORE + EXPERIENCE AWARENESS (0-Exp Support).
  */
 
 import {ai} from '@/ai/genkit';
@@ -35,29 +35,30 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, an elite interviewer. 
+  prompt: `You are Aria, an elite professional interviewer. 
 The candidate answered: "{{{userAnswer}}}" to your question: "{{{interviewQuestion}}}"
 
 STRICT INTERVIEWER RULES (IRONCLAD):
 1. ZERO REPETITION: 
    - Check the "previousQuestions" list: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
    - If your intended next question is LOGICALLY SIMILAR or covers the SAME SUB-TOPIC as ANY of these, you MUST PIVOT to a completely different dimension of the candidate's role.
-   - DO NOT repeat words or phrasing from previous questions.
+   - DO NOT repeat words or phrasing from previous questions. 
+   - DO NOT ask about "critical feedback to a peer" if already asked or if it is conceptually similar to a leadership turn.
 
-2. EXPERIENCE AWARENESS (CRITICAL):
-   - If experienceLevel is "junior" or they have 0-2 years: DO NOT ask about "delivering feedback to peers" or "leading teams." 
-   - Instead, ask about: Academic projects, theoretical hurdles, internship learning, or "What would you do" hypothetical scenarios.
-   - If experienceLevel is "mid" or "senior": Ask about high-stakes leadership, trade-offs, and legacy management.
+2. EXPERIENCE AWARENESS (0-EXP SUPPORT):
+   - If experienceLevel is "junior" or 0-2 years: DO NOT ask about "leading teams," "hiring," or "delivering critical feedback to peers." 
+   - Instead, ask about: Theoretical hurdles, academic projects, "What would you do" hypothetical scenarios, or subject-depth logic.
+   - For mid/senior: Ask about high-stakes leadership, architecture trade-offs, and legacy management.
 
-3. ROLE-SENSITIVE TECHNICALITY (NO PROJECTS FOR NON-TECH):
-   - If Teacher: Ask about Pedagogy, Classroom management, Student engagement, or Subject depth.
-   - If Doctor: Ask about Diagnosis, Ethics, Case scenarios, or Patient relations.
-   - If BTech Technical: Ask about Architecture, System trade-offs, or Code logic.
-   - NEVER ask a Teacher about "Projects" unless they are a research academic.
+3. ROLE-SENSITIVE TECHNICALITY:
+   - For Teachers: Focus on Pedagogy, Inclusion, Classroom Conflict, or Student engagement.
+   - For Doctors: Focus on Diagnosis, Ethics, Case scenarios, or Patient relations.
+   - For Engineers: Focus on Architecture, Performance, or System Design.
+   - NEVER ask a Teacher about "Projects" unless they are in research.
 
 4. CONVERSATIONAL PROGRESSION:
    - Acknowledge their answer naturally ("I see your point...", "Interesting perspective...").
-   - The next question must be a SHARP PIVOT to ensure variety.
+   - The next question must be a SHARP PIVOT to ensure variety and depth.
 
 5. VOICE: Use contractions. Be empathetic but strictly honest.
 
@@ -70,7 +71,7 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     if (!output) throw new Error("Aria failed to respond.");
     return output;
   } catch (error) {
-    // RANDOMIZED ROLE-AWARE FALLBACKS to prevent user seeing the same question if AI fails
+    // DYNAMIC ROLE-AWARE FALLBACKS
     const fallbacks: Record<string, string[]> = {
       'Teacher': [
         "How do you handle a student who is consistently disengaged despite various teaching strategies?",
@@ -80,17 +81,17 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       'Doctor': [
         "In a high-pressure diagnostic scenario, how do you prioritize patient safety over speed?",
         "How do you handle a situation where a patient's family disagrees with your proposed treatment plan?",
-        "What steps do you take to stay current with the rapidly evolving medical literature in your specialty?"
+        "What steps do you take to stay current with the rapidly evolving medical literature?"
       ],
       'BTech Technical': [
         "Can you explain the trade-offs between vertical and horizontal scaling in a distributed system?",
-        "How do you ensure data integrity in a system with high concurrency and frequent updates?",
+        "How do you ensure data integrity in a system with high concurrency?",
         "Walk me through your process for debugging a complex performance bottleneck in production."
       ],
       'default': [
         "Given the current shifts in your industry, what's one legacy practice you think we should abandon?",
         "How do you balance the need for immediate results with the long-term sustainability of your work?",
-        "What's one area of your professional toolkit you're currently trying to improve, and why?"
+        "What's one area of your professional toolkit you're currently trying to improve?"
       ]
     };
 
@@ -99,8 +100,8 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
                     input.jobRole?.includes('BTech') ? 'BTech Technical' : 'default';
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
-    // Filter out previous questions if possible
-    const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[0];
+    // Filter out previous questions
+    const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[Math.floor(Math.random() * roleFallbacks.length)];
 
     return {
       verbalReaction: "I see. Let's move to a different aspect of your background.",

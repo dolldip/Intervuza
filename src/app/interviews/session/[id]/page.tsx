@@ -191,6 +191,7 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
+        // INITIAL LOGGING: Ensure first question is in history instantly
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
@@ -294,7 +295,7 @@ export default function InterviewSessionPage() {
         setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
         
-        // COMMIT NEXT QUESTION TO HISTORY IMMEDIATELY BEFORE PROMPT
+        // IRONCLAD MEMORY COMMIT: Add the newly generated question to history BEFORE it's even spoken
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
