@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Sarah's adaptive intelligence engine.
- * Fixed: Explicitly handles coding questions, grammar, and strict non-repetition.
+ * Handles role-specific feedback and strict non-repetition.
  */
 
 import {ai} from '@/ai/genkit';
@@ -18,17 +18,17 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate professional reaction. MUST point out grammar or focus errors if they occurred.'),
+  verbalReaction: z.string().describe('Immediate professional reaction. Points out grammar or clarity issues if any.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. MUST be more difficult and role-specific.'),
-  isInterviewComplete: z.boolean().describe('True after ~6 quality turns.'),
+  nextQuestion: z.string().describe('The single next question. MUST be unique and progressively harder.'),
+  isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
 });
 
 const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Sarah, a professional, human-like AI interviewer. 
+  prompt: `You are Sarah, a professional AI interviewer at an elite firm.
 The candidate said: "{{{userAnswer}}}"
 In response to: "{{{interviewQuestion}}}"
 
@@ -36,14 +36,13 @@ Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
 STRICT RULES:
-1. CRITICAL BRAIN: If the answer was weak, lacked technical depth, had poor grammar, or included many fillers (um, like), you MUST politely point it out in your reaction.
-2. NO REPETITION: Do NOT ask these previous questions or acknowledgements:
+1. CRITICAL FEEDBACK: If the answer was weak, had poor grammar, or lacked technical depth, you MUST politely point it out in your reaction.
+2. NO REPETITION: Do NOT ask any of these previous questions:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-3. CODING/TECH: If this is a technical round for a developer/engineer, at least one question (usually turn 4 or 5) MUST be a coding logic challenge where you ask them to explain an algorithm or architecture solution.
-4. ADAPTIVE: If they answered well, ask a much harder follow-up. If they said "I don't know", support them and pivot to a core fundamental.
-5. ONE QUESTION: Ask exactly ONE next question.
-6. HUMAN TONE: Speak like a real lead interviewer at a top company, not a chatbot.`
+3. ADAPTIVE: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base knowledge.
+4. CODING: If technical round for engineering, turn 4 or 5 MUST be a specific coding/logic challenge.
+5. TURN LIMIT: Conclude after turn 6.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -52,9 +51,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I see. Let's try to be a bit more specific with your technical examples.",
+      verbalReaction: "I see. Let's dig a bit deeper into your specific approach.",
       detectedEmotion: "Neutral",
-      nextQuestion: "Moving forward, how do you approach solving high-complexity tasks under tight deadlines?",
+      nextQuestion: "Can you walk me through a complex problem you solved recently?",
       isInterviewComplete: false
     };
   }

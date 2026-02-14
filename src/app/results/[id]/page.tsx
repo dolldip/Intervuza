@@ -10,19 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Trophy, 
   MessageSquare, 
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  BrainCircuit,
-  Loader2,
-  Sparkles,
-  ShieldCheck,
-  Zap,
-  Activity,
-  Target,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle
+  BrainCircuit, 
+  Loader2, 
+  Sparkles, 
+  ShieldCheck, 
+  Zap, 
+  Activity, 
+  Target, 
+  ArrowLeft, 
+  CheckCircle2, 
+  AlertCircle 
 } from "lucide-react"
 import Link from "next/link"
 import { comprehensiveInterviewFeedbackReport, ComprehensiveInterviewFeedbackReportOutput } from "@/ai/flows/comprehensive-interview-feedback-report"
@@ -65,7 +62,7 @@ export default function ResultsPage() {
         <h2 className="text-2xl font-headline font-bold text-center">Neural Performance Audit</h2>
         <div className="mt-8 flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest">
            <Loader2 className="w-4 h-4 animate-spin" />
-           Sarah is generating your critical report...
+           Sarah is generating your critical audit...
         </div>
       </div>
     )

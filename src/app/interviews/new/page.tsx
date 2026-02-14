@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,25 +12,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
-  FileText, 
-  ChevronRight, 
   ShieldCheck, 
-  AlertCircle,
   UploadCloud,
-  Loader2,
-  Info,
-  BrainCircuit,
-  UserCheck
+  Loader2
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function NewInterviewPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useUser()
-  const auth = useAuth()
   const db = useFirestore()
   
   const [loading, setLoading] = useState(false)
@@ -45,21 +37,19 @@ export default function NewInterviewPage() {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please fill in all fields before starting."
+        description: "Please provide a job role and description to begin."
       })
       return
     }
 
     setLoading(true)
     
-    // Save choices for AI context
     sessionStorage.setItem('demo_role', role);
     sessionStorage.setItem('demo_exp', experience);
     sessionStorage.setItem('demo_round', roundType);
     sessionStorage.setItem('demo_jd', jd);
     
-    // Fallback to demo session if no user is signed in
-    if (!user) {
+    if (!user || !db) {
       setTimeout(() => {
         router.push(`/interviews/session/demo-session`)
       }, 1000)
@@ -99,7 +89,7 @@ export default function NewInterviewPage() {
     <div className="container max-w-4xl py-12 px-4 animate-fade-in">
       <div className="mb-10 text-center">
         <h1 className="text-4xl font-headline font-bold mb-2 text-foreground">Prepare for Your Next Big Move</h1>
-        <p className="text-muted-foreground text-lg">Sarah will conduct a role-specific adaptive interview.</p>
+        <p className="text-muted-foreground text-lg">Sarah will conduct a role-specific adaptive interview targeting top companies.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -107,7 +97,7 @@ export default function NewInterviewPage() {
           <Card className="shadow-lg border-primary/10">
             <CardHeader>
               <CardTitle className="font-headline text-xl">Interview Parameters</CardTitle>
-              <CardDescription>Target role and round focus</CardDescription>
+              <CardDescription>Sarah adapts to your specific role and round focus.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -168,7 +158,7 @@ export default function NewInterviewPage() {
           <Card className="shadow-lg border-primary/10 h-full flex flex-col">
             <CardHeader>
               <CardTitle className="font-headline text-xl">Resume</CardTitle>
-              <CardDescription>Used for tailored questioning</CardDescription>
+              <CardDescription>Tailors questions based on your history.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 space-y-4">
               <div className="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center bg-muted/30 group cursor-pointer hover:bg-muted/50 transition-colors">
@@ -178,7 +168,7 @@ export default function NewInterviewPage() {
 
               <div className="p-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[10px] flex gap-2">
                 <ShieldCheck className="w-3 h-3 shrink-0" />
-                <span>Sarah will use AI to find common gaps in your resume compared to the JD.</span>
+                <span>AI will identify gaps in your profile compared to the role requirements.</span>
               </div>
             </CardContent>
             <CardFooter>
@@ -187,7 +177,7 @@ export default function NewInterviewPage() {
                 disabled={!role || !experience || !jd || loading}
                 onClick={handleStart}
               >
-                {loading ? <Loader2 className="animate-spin" /> : "Start Interview"}
+                {loading ? <Loader2 className="animate-spin" /> : "Start Assessment"}
               </Button>
             </CardFooter>
           </Card>
