@@ -1,6 +1,6 @@
-# PrepWise | Advanced AI Interview Preparation
+# Intervuza | Advanced AI Interview Preparation
 
-PrepWise is a high-stakes mock interview platform powered by AI to help candidates master their professional presence.
+Intervuza is a high-stakes mock interview platform powered by AI to help candidates master their professional presence.
 
 ## Tech Stack & Languages
 

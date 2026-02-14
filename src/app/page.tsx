@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  GraduationCap, 
+  BrainCircuit, 
   ChevronRight, 
   Zap,
   Video,
-  BrainCircuit,
   BarChart3,
   Globe,
   Sparkles
@@ -38,10 +37,10 @@ export default function Home() {
       <header className="px-6 h-20 flex items-center glass-dark sticky top-0 z-50">
         <Link className="flex items-center justify-center space-x-2" href="/">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <GraduationCap className="text-white w-6 h-6" />
+            <BrainCircuit className="text-white w-6 h-6" />
           </div>
           <span className="font-headline font-bold text-2xl tracking-tighter">
-            <AnimatedTitle text="PrepWise" />
+            <AnimatedTitle text="Intervuza" />
           </span>
         </Link>
         <nav className="ml-auto flex gap-8 items-center">
@@ -69,11 +68,11 @@ export default function Home() {
                   <Sparkles className="w-3 h-3 mr-2" /> Neural Coaching Engine
                 </Badge>
                 <h1 className="text-6xl font-headline font-black tracking-tighter sm:text-7xl lg:text-9xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1]">
-                  <AnimatedTitle text="PrepWise" /> <br /> 
+                  <AnimatedTitle text="Intervuza" /> <br /> 
                   <span className="text-primary"><AnimatedTitle text="Interviews" /></span>
                 </h1>
                 <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:800ms]">
-                  Master high-stakes interviews with PrepWise. The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
+                  Master high-stakes interviews with Intervuza. The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mt-12 animate-entrance [animation-delay:1000ms]">
@@ -127,7 +126,7 @@ export default function Home() {
                 {
                   title: "Resume Sync",
                   description: "Upload your background and get hyper-personalized questioning targeting elite firms.",
-                  icon: GraduationCap,
+                  icon: BrainCircuit,
                   color: "bg-indigo-500/10 text-indigo-400"
                 },
                 {
@@ -158,7 +157,7 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-10 text-center">
               <h2 className="text-4xl font-headline font-black tracking-tighter sm:text-7xl text-white animate-sudden">Elevate Your Presence.</h2>
               <p className="max-w-[700px] text-white/80 text-xl md:text-2xl font-medium animate-sudden [animation-delay:200ms]">
-                Join 50k+ candidates who have transformed their interview performance with PrepWise.
+                Join 50k+ candidates who have transformed their interview performance with Intervuza.
               </p>
               <Button size="lg" variant="secondary" className="h-18 px-12 text-2xl rounded-2xl font-black bg-white text-primary hover:scale-105 transition-transform shadow-2xl animate-sudden [animation-delay:400ms]" asChild>
                 <Link href="/register">Get Started Now</Link>
@@ -173,11 +172,11 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             <Link className="flex items-center space-x-2" href="/">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <GraduationCap className="text-white w-5 h-5" />
+                <BrainCircuit className="text-white w-5 h-5" />
               </div>
-              <span className="font-headline font-bold text-xl tracking-tight">PrepWise</span>
+              <span className="font-headline font-bold text-xl tracking-tight">Intervuza</span>
             </Link>
-            <p className="text-sm text-slate-500 font-medium">© 2024 PrepWise Inc. Engineered for the 1%.</p>
+            <p className="text-sm text-slate-500 font-medium">© 2024 Intervuza Inc. Engineered for the 1%.</p>
           </div>
           <div className="flex gap-10">
             <Link className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors" href="#">Terms</Link>

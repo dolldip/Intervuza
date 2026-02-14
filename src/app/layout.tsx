@@ -1,16 +1,17 @@
+
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'PrepWise | Advanced Interview Preparation',
+  title: 'Intervuza | Advanced Interview Preparation',
   description: 'Master your next interview with AI-powered mock interviews and real-time feedback.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PrepWise',
+    title: 'Intervuza',
   },
   formatDetection: {
     telephone: false,

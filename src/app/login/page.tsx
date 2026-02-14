@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GraduationCap, Mail, Lock, Loader2 } from 'lucide-react';
+import { BrainCircuit, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -88,10 +89,10 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <Link className="inline-flex items-center space-x-3 group" href="/">
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 transition-transform group-hover:scale-110">
-              <GraduationCap className="text-white w-7 h-7" />
+              <BrainCircuit className="text-white w-7 h-7" />
             </div>
             <span className="font-headline font-black text-4xl tracking-tighter">
-              <AnimatedTitle text="PrepWise" />
+              <AnimatedTitle text="Intervuza" />
             </span>
           </Link>
           <div className="space-y-1">
@@ -103,7 +104,7 @@ export default function LoginPage() {
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
             <CardTitle className="font-headline text-3xl font-black">Sign In</CardTitle>
-            <CardDescription className="text-lg">Access your PrepWise professional audit.</CardDescription>
+            <CardDescription className="text-lg">Access your Intervuza professional audit.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
             <Button 
@@ -131,7 +132,7 @@ export default function LoginPage() {
                 <Label htmlFor="email" className="font-black text-xs uppercase tracking-widest text-slate-500">Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                  <Input id="email" type="email" placeholder="alex@prepwise.com" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <Input id="email" type="email" placeholder="alex@intervuza.com" className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
               </div>
               <div className="space-y-3">

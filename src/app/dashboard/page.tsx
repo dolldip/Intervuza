@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo } from "react"
@@ -161,7 +162,7 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-6">
                   <BrainCircuit className="w-8 h-8 text-primary shrink-0 mt-1" />
                   <div className="space-y-3">
-                    <p className="font-black text-xs uppercase tracking-[0.2em] text-primary">PrepWise Strategic Insight</p>
+                    <p className="font-black text-xs uppercase tracking-[0.2em] text-primary">Intervuza Strategic Insight</p>
                     <p className="text-lg leading-relaxed text-slate-300 font-medium italic">
                       {profile?.education ? `Your background from ${profile.education} is being used to calibrate the technical depth of your next session.` : "Update your education details so Aria can tailor the complexity of her questioning."}
                     </p>
@@ -226,7 +227,7 @@ export default function DashboardPage() {
             <CardHeader className="p-10 pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">PrepWise Strategy</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intervuza Strategy</span>
               </div>
               <CardTitle className="font-headline text-4xl font-black leading-tight">Elite <br /> Preparation</CardTitle>
             </CardHeader>
