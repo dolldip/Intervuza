@@ -1,8 +1,8 @@
-
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for industry-aware follow-ups and real-time feedback.
  * Updated: IRONCLAD ZERO REPETITION CORE + DIMENSIONAL PIVOTING.
+ * Added: Deep Empathy Protocol - Reference specific answer details.
  */
 
 import {ai} from '@/ai/genkit';
@@ -20,7 +20,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction to the SPECIFIC answer content.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction referencing specific details from the candidate answer.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC.'),
   feedback: z.object({
@@ -41,7 +41,7 @@ To your previous question: "{{{interviewQuestion}}}"
 
 STRICT INTERVIEWER PROTOCOL (IRONCLAD):
 
-1. HEAR THE ANSWER: Your "verbalReaction" MUST reference specific details from the candidate's answer. Do not say "Good answer." Say "I appreciate how you prioritized [Detail] in that scenario."
+1. HEAR THE ANSWER: Your "verbalReaction" MUST reference specific details from the candidate's answer. Do not say "Good answer." or "I see." Use natural phrases like "I appreciate how you prioritized [Detail] in that scenario" or "That's an interesting approach to [Detail], it shows a focus on [Logic]."
 
 2. ZERO REPETITION (DIMENSIONAL PIVOTING):
    - You MUST NOT ask anything similar to these previous turns: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
@@ -50,17 +50,16 @@ STRICT INTERVIEWER PROTOCOL (IRONCLAD):
 
 3. EXPERIENCE LEVEL ADAPTATION (0-EXP SUPPORT):
    - If experienceLevel is "junior" or 0-2 years: 
-     - FORBIDDEN: Do NOT ask about "leading teams", "past workplace conflicts", or "hiring".
-     - REQUIRED: Ask about Academic Theory, "What-If" Industry scenarios, Logic Hurdles, or Learning Agility.
-   - For Mid/Senior: Focus on Architecture, Strategic Trade-offs, and high-stakes Risk Management.
+     - FORBIDDEN: Do NOT ask about "leading teams", "past workplace conflicts", "hiring", or "critical feedback to peers".
+     - REQUIRED: Ask about Academic Theory, "What-If" Industry scenarios, Logic Hurdles, or Learning Agility. Focus on potential, not history.
 
 4. SECTOR SPECIFICITY:
-   - Teachers: Focus on Pedagogy, Inclusive Design, Student Crisis, or Subject Depth.
-   - Doctors: Focus on Clinical Logic, Ethical Dilemmas, or Diagnostic Pressure.
-   - Engineers: Focus on System Architecture, Edge Cases, or Logic trade-offs.
-   - HR: Focus on Policy, Conflict Mediation, or Talent Lifecycle.
+   - Teachers: Dimensions: [Subject Pedagogy, Classroom Conflict, Inclusive Design, Student Crisis, Subject Depth]. NO "PROJECTS".
+   - Doctors: Dimensions: [Clinical Logic, Ethical Dilemmas, Patient Empathy, Diagnostic Pressure, Research Trends].
+   - Engineers: Dimensions: [System Architecture, Edge Cases, Security Trade-offs, Logic Hurdles].
+   - HR: Dimensions: [Policy Logic, Conflict Mediation, Talent Lifecycle, Legal Compliance].
 
-5. VOICE: Be empathetic but strictly professional. Use contractions.
+5. VOICE: Be empathetic but strictly professional. Use contractions. Act like a human who is listening and thinking.
 
 Random Seed: ${new Date().getTime()}`
 });
@@ -77,36 +76,37 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
 
     const fallbacks: Record<string, string[]> = {
       'Teacher': [
-        "How do you approach designing a lesson plan for a classroom with highly varied learning speeds?",
-        "Tell me about your philosophy on using positive reinforcement versus disciplinary measures.",
-        "How do you handle a situation where a parent strongly disagrees with your assessment of their child?",
-        "In your view, what is the most critical factor in maintaining student engagement during remote learning?"
+        "In your view, how should a curriculum adapt to ensure students with varied learning speeds aren't left behind?",
+        "If a student consistently challenges your authority in front of the class, what is your immediate pedagogical strategy?",
+        "How do you maintain subject depth while ensuring complex topics remain accessible to younger learners?",
+        "Walk me through your philosophy on using positive reinforcement versus traditional disciplinary measures."
       ],
       'Doctor': [
-        "How do you maintain clinical objectivity when treating a patient with a complex emotional background?",
-        "Walk me through your systematic approach to a patient presenting with vague, non-specific symptoms.",
-        "What is your protocol for staying updated with the latest research in your specific medical specialty?",
-        "How do you approach the ethical challenge of resource allocation in a high-pressure clinical environment?"
+        "When faced with a diagnostic discrepancy under pressure, how do you systematically re-evaluate your primary hypothesis?",
+        "How do you maintain clinical objectivity while treating a patient with a complex emotional or ethical background?",
+        "What is your protocol for staying current with rapidly shifting research in your medical specialty?",
+        "How do you approach the challenge of communicating terminal news with both empathy and clinical clarity?"
       ],
       'BTech Technical': [
-        "If you were optimizing a system for 100x traffic, which component would you re-architect first and why?",
-        "What are the most significant security implications of using a third-party API in a core production service?",
-        "How do you ensure data consistency across multiple microservices in a distributed environment?",
-        "Walk me through a time you had to choose between a 'perfect' technical solution and a 'fast' one."
+        "If you had to optimize a system for a 100x traffic surge tonight, which core component would you harden first?",
+        "How do you ensure data integrity across multiple microservices in an eventually consistent environment?",
+        "What are the most critical security trade-offs when integrating a third-party payment gateway?",
+        "Explain a time you chose a 'good enough' technical solution over a perfect one to meet a strategic deadline."
       ],
       'default': [
-        "Given the current shifts in your industry, what is one standard practice you believe will be obsolete in 5 years?",
-        "How do you balance short-term deliverables with the long-term strategic health of your projects?",
-        "What is one area of your professional knowledge where you feel you've made the most growth recently?",
-        "How do you handle ambiguity when project requirements change midway through execution?"
+        "Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete?",
+        "How do you balance short-term operational wins with the long-term strategic health of your projects?",
+        "What is one area of professional knowledge where you feel you've made the most significant growth recently?",
+        "How do you navigate ambiguity when project requirements shift midway through execution?"
       ]
     };
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
+    // Filter history to avoid repeating even in fallback mode
     const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[Math.floor(Math.random() * roleFallbacks.length)];
 
     return {
-      verbalReaction: "I see your perspective on that. Let's explore a different dimension of your background.",
+      verbalReaction: "I see your perspective on that logic. Let's explore a different dimension of your background.",
       detectedEmotion: "Neutral",
       nextQuestion: freshFallback,
       feedback: {

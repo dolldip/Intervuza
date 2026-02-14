@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -259,7 +258,6 @@ export default function InterviewSessionPage() {
         overallScore: Math.round(confidenceLevel * 0.7 + 25),
       });
     }
-    // Redirect immediately to results to "show feedback dont show progress"
     router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
   };
 
@@ -274,7 +272,6 @@ export default function InterviewSessionPage() {
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim() + (showCodePad ? ` [Visual Submission: ${code}]` : "");
     
     try {
-      // Pass the high-fidelity history ref to ensure AI doesn't repeat.
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
         userAnswer: fullAnswer || "Silence.",
