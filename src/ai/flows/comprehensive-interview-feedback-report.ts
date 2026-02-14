@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Generates a detailed audit of the interview session.
- * Revised: Strictly honest and critical evaluation based on performance.
+ * Revised: Added retry logic for 429 errors.
  */
 
 import {ai} from '@/ai/genkit';
@@ -53,25 +53,39 @@ STRICT RULES FOR HONESTY (BE CRITICAL):
 });
 
 export async function comprehensiveInterviewFeedbackReport(input: any): Promise<ComprehensiveInterviewFeedbackReportOutput> {
-  try {
-    const {output} = await prompt(input);
-    if (!output) throw new Error("Empty AI response");
-    return output;
-  } catch (error) {
-    return {
-      scores: {
-        roleSpecificKnowledge: 4,
-        answerClarity: 5,
-        confidence: 6,
-        communication: 5,
-        logicalThinking: 4
-      },
-      overallScore: 48,
-      verdict: "Needs Improvement",
-      strengths: ["Willingness to engage"],
-      weaknesses: ["Technical depth was insufficient for the role", "Communication lacked structure"],
-      improvementPlan: "Focus on deepening role-specific technical knowledge and practicing the STAR method.",
-      bodyLanguageReport: "Sensors indicated inconsistent focus during complex questioning."
-    };
+  const maxRetries = 2;
+  let attempt = 0;
+
+  while (attempt <= maxRetries) {
+    try {
+      const {output} = await prompt(input);
+      if (!output) throw new Error("Empty AI response");
+      return output;
+    } catch (error: any) {
+      const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
+      if (isRateLimit && attempt < maxRetries) {
+        attempt++;
+        await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
+        continue;
+      }
+
+      return {
+        scores: {
+          roleSpecificKnowledge: 4,
+          answerClarity: 5,
+          confidence: 6,
+          communication: 5,
+          logicalThinking: 4
+        },
+        overallScore: 48,
+        verdict: "Needs Improvement",
+        strengths: ["Willingness to engage"],
+        weaknesses: ["Technical depth was insufficient for the role", "Communication lacked structure"],
+        improvementPlan: "Focus on deepening role-specific technical knowledge and practicing the STAR method.",
+        bodyLanguageReport: "Sensors indicated inconsistent focus during complex questioning."
+      };
+    }
   }
+  // This line should technically never be reached due to final return in catch
+  throw new Error("Final fallback failed");
 }

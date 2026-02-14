@@ -65,22 +65,34 @@ Random Seed: ${new Date().getTime()}`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
-  try {
-    const {output} = await prompt(input);
-    if (!output) throw new Error("Aria failed to respond.");
-    return output;
-  } catch (error) {
-    return {
-      verbalReaction: "I see your point on that. Let's shift focus to another requirement of this role.",
-      detectedEmotion: "Neutral",
-      nextQuestion: `Looking at the requirements for a ${input.jobRole}, how do you handle complex cross-functional alignment when stakeholders have conflicting technical priorities?`,
-      feedback: {
-        analysis: "Your answer provided a basic overview but lacked the depth required for this seniority level. Focus on providing specific examples and metrics to demonstrate completeness and confidence.",
-        strengths: ["Clear communication"],
-        weaknesses: ["Lacked technical depth", "No specific framework used"],
-        tips: "Try using the STAR method to structure your next response more effectively."
-      },
-      isInterviewComplete: false
-    };
+  const maxRetries = 2;
+  let attempt = 0;
+
+  while (attempt <= maxRetries) {
+    try {
+      const {output} = await prompt(input);
+      if (!output) throw new Error("Aria failed to respond.");
+      return output;
+    } catch (error: any) {
+      const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
+      if (isRateLimit && attempt < maxRetries) {
+        attempt++;
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        continue;
+      }
+
+      return {
+        verbalReaction: "I see your point on that. Let's shift focus to another requirement of this role.",
+        detectedEmotion: "Neutral",
+        nextQuestion: `Looking at the requirements for a ${input.jobRole}, how do you handle complex cross-functional alignment when stakeholders have conflicting technical priorities?`,
+        feedback: {
+          analysis: "Your answer provided a basic overview but lacked the depth required for this seniority level. Focus on providing specific examples and metrics to demonstrate completeness and confidence.",
+          strengths: ["Clear communication"],
+          weaknesses: ["Lacked technical depth", "No specific framework used"],
+          tips: "Try using the STAR method to structure your next response more effectively."
+        },
+        isInterviewComplete: false
+      };
+    }
   }
 }

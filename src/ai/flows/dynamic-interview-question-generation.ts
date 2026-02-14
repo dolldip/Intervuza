@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Updated: Human-like professional greeting and strict JD alignment.
+ * Enhanced: Added retry logic for 429 errors and strict JD alignment.
  */
 
 import { ai } from '@/ai/genkit';
@@ -52,15 +52,27 @@ Random Seed: ${new Date().getTime()}`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
-  try {
-    const { output } = await prompt(input);
-    if (!output) throw new Error("Aria generation failed");
-    return output;
-  } catch (error) {
-    return {
-      openingStatement: "Hi, I'm Aria. I've analyzed the role requirements and your background. Let's begin the audit.",
-      firstQuestion: `Given your interest in the ${input.jobRole} position, how would you approach a situation where a critical requirement mentioned in the job description is suddenly compromised by external constraints?`,
-      roleCategory: 'Other'
-    };
+  const maxRetries = 2;
+  let attempt = 0;
+
+  while (attempt <= maxRetries) {
+    try {
+      const { output } = await prompt(input);
+      if (!output) throw new Error("Aria generation failed");
+      return output;
+    } catch (error: any) {
+      const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
+      if (isRateLimit && attempt < maxRetries) {
+        attempt++;
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        continue;
+      }
+      
+      return {
+        openingStatement: "Hi, I'm Aria. I've analyzed the role requirements and your background. Let's begin the audit.",
+        firstQuestion: `Given your interest in the ${input.jobRole} position, how would you approach a situation where a critical requirement mentioned in the job description is suddenly compromised by external constraints?`,
+        roleCategory: 'Other'
+      };
+    }
   }
 }
