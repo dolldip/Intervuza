@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -35,7 +36,7 @@ export default function ResultsPage() {
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level"
       const answers = JSON.parse(sessionStorage.getItem('session_answers') || '[]')
       
-      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Final answer record: ${JSON.stringify(answers)}`
+      const interviewSummary = `Candidate interviewed for ${demoRole} (${demoExp}). Progress Log: ${JSON.stringify(answers)}`
 
       try {
         const result = await comprehensiveInterviewFeedbackReport({
@@ -56,107 +57,110 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
-        <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-8" />
-        <h2 className="text-2xl font-headline font-bold text-center">Neural Performance Audit</h2>
-        <div className="mt-8 flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
+        <BrainCircuit className="w-24 h-24 text-primary animate-pulse mb-10" />
+        <h2 className="text-3xl font-headline font-black uppercase tracking-[0.4em] text-center">Neural Performance Audit</h2>
+        <div className="mt-10 flex items-center gap-3 text-primary font-black text-xs uppercase tracking-widest glass px-8 py-3 rounded-full">
            <Loader2 className="w-4 h-4 animate-spin" />
-           Aria is generating your critical audit...
+           Aria is generating your strategic feedback...
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container py-12 px-4 max-w-6xl animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+    <div className="container py-16 px-6 max-w-7xl animate-fade-in mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-16">
         <div>
-          <Badge className="mb-2 bg-primary/10 text-primary border-primary/20 px-4 py-1 font-bold uppercase tracking-widest text-[10px]">
-            Final Assessment Complete
+          <Badge className="mb-4 glass bg-primary/10 text-primary border-primary/20 px-6 py-2 font-black uppercase tracking-[0.2em] text-[10px] rounded-full">
+            <Sparkles className="w-3 h-3 mr-2" /> Assessment Cycle Complete
           </Badge>
-          <h1 className="text-4xl font-headline font-bold">Interview Audit</h1>
+          <h1 className="text-6xl font-headline font-black tracking-tighter leading-tight">Professional Performance Audit</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" asChild className="rounded-xl px-6 font-bold h-11">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" asChild className="rounded-2xl px-8 glass font-black h-14">
             <Link href="/dashboard">
-              <ArrowLeft className="mr-2 w-4 h-4" />
-              Dashboard
+              <ArrowLeft className="mr-3 w-5 h-5" />
+              BACK TO PORTAL
             </Link>
           </Button>
-          <Button asChild className="rounded-xl px-8 font-bold shadow-lg shadow-primary/20 h-11">
-            <Link href="/interviews/new">Restart Assessment</Link>
+          <Button asChild className="rounded-2xl px-10 font-black shadow-2xl shadow-primary/40 h-14 transition-all hover:scale-105">
+            <Link href="/interviews/new">NEW SESSION</Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-         <Card className="lg:col-span-2 rounded-[2.5rem] bg-slate-950 text-white p-10 relative overflow-hidden border-none shadow-2xl">
-            <div className="relative z-10 space-y-8">
-               <div className="flex items-center justify-between border-b border-white/10 pb-6">
-                  <h3 className="text-2xl font-headline font-bold">Metric Summary</h3>
-                  <Badge className={`text-sm px-6 py-1.5 rounded-full font-black border-none shadow-lg ${
-                    report?.verdict === 'Ready' ? 'bg-green-500' : 
-                    report?.verdict === 'Needs Improvement' ? 'bg-amber-500' : 'bg-red-500'
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-16">
+         <Card className="lg:col-span-2 glass-card p-12 relative overflow-hidden group">
+            <div className="relative z-10 space-y-12">
+               <div className="flex items-center justify-between border-b border-white/5 pb-8">
+                  <h3 className="text-3xl font-headline font-black tracking-tight">Neural Metric Matrix</h3>
+                  <Badge className={`text-sm px-8 py-2.5 rounded-full font-black border-none shadow-2xl ${
+                    report?.verdict === 'Ready' ? 'bg-green-500 shadow-green-500/30' : 
+                    report?.verdict === 'Needs Improvement' ? 'bg-amber-500 shadow-amber-500/30' : 'bg-red-500 shadow-red-500/30'
                   }`}>
-                    {report?.verdict || "Analysis Result"}
+                    VERDICT: {report?.verdict?.toUpperCase() || "PENDING"}
                   </Badge>
                </div>
-               <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
+               <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
                   {[
-                    { label: "Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
-                    { label: "Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
-                    { label: "Neural Confidence", val: report?.scores?.confidence, icon: Activity },
-                    { label: "Communication", val: report?.scores?.communication, icon: MessageSquare },
-                    { label: "Logical Flow", val: report?.scores?.logicalThinking, icon: Zap },
+                    { label: "Role Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit, color: "text-blue-400" },
+                    { label: "Answer Clarity", val: report?.scores?.answerClarity, icon: Sparkles, color: "text-purple-400" },
+                    { label: "Neural Confidence", val: report?.scores?.confidence, icon: Activity, color: "text-primary" },
+                    { label: "Communication", val: report?.scores?.communication, icon: MessageSquare, color: "text-amber-400" },
+                    { label: "Logical Thinking", val: report?.scores?.logicalThinking, icon: Zap, color: "text-cyan-400" },
                   ].map((s, i) => (
-                    <div key={i} className="space-y-1">
-                       <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-widest">
-                          <s.icon className="w-3 h-3 text-primary" /> {s.label}
+                    <div key={i} className="space-y-2 group/stat">
+                       <p className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-[0.2em] group-hover/stat:text-primary transition-colors">
+                          <s.icon className={`w-4 h-4 ${s.color}`} /> {s.label}
                        </p>
-                       <p className="text-3xl font-black">{s.val ?? "--"}/10</p>
+                       <p className="text-4xl font-black">{s.val ?? "--"}/10</p>
                     </div>
                   ))}
                </div>
             </div>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
          </Card>
-         <Card className="rounded-[2.5rem] bg-primary text-white p-10 flex flex-col justify-center items-center text-center border-none shadow-2xl relative overflow-hidden">
-            <Trophy className="w-16 h-16 mb-4 text-white/40" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80">Readiness score</p>
-            <h2 className="text-7xl font-black tabular-nums">{report?.overallScore ?? 0}%</h2>
+         <Card className="glass-card bg-primary text-white p-12 flex flex-col justify-center items-center text-center border-none shadow-2xl relative overflow-hidden group">
+            <Trophy className="w-20 h-20 mb-6 text-white/30 group-hover:scale-110 transition-transform duration-700" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-80">Aggregate Performance</p>
+            <h2 className="text-8xl font-black tabular-nums tracking-tighter">{report?.overallScore ?? 0}%</h2>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+            <div className="absolute bottom-4 inset-x-0 text-[9px] font-black uppercase tracking-[0.4em] opacity-40">Aria Logic Verified</div>
          </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-10">
-        <TabsList className="bg-muted/50 p-1 rounded-2xl h-14 w-full max-w-lg mx-auto shadow-inner border border-white/10">
-          <TabsTrigger value="overview" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Insights</TabsTrigger>
-          <TabsTrigger value="biometrics" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Sensor Feed</TabsTrigger>
-          <TabsTrigger value="plan" className="flex-1 rounded-xl font-bold h-12 data-[state=active]:shadow-lg">Improvement Plan</TabsTrigger>
+      <Tabs defaultValue="overview" className="space-y-12">
+        <TabsList className="glass bg-white/5 p-2 rounded-[1.5rem] h-18 w-full max-w-2xl mx-auto shadow-2xl border-white/5">
+          <TabsTrigger value="overview" className="flex-1 rounded-xl font-black uppercase tracking-widest text-xs h-14 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl transition-all">Strategic Insights</TabsTrigger>
+          <TabsTrigger value="biometrics" className="flex-1 rounded-xl font-black uppercase tracking-widest text-xs h-14 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl transition-all">Neural Audit</TabsTrigger>
+          <TabsTrigger value="plan" className="flex-1 rounded-xl font-black uppercase tracking-widest text-xs h-14 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl transition-all">Growth Strategy</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-8 outline-none animate-fade-in">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="rounded-[2rem] border-green-100 bg-green-50/20 p-8 shadow-sm">
-              <h3 className="flex items-center gap-3 text-xl font-bold mb-6">
-                <CheckCircle2 className="text-green-600 w-6 h-6" /> Key Strengths
+        <TabsContent value="overview" className="space-y-10 outline-none animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <Card className="glass border-green-500/20 bg-green-500/5 p-10 shadow-2xl rounded-[3rem]">
+              <h3 className="flex items-center gap-4 text-2xl font-black mb-8">
+                <CheckCircle2 className="text-green-500 w-8 h-8" /> Identified Strengths
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {(report?.strengths || ["Analyzing strengths..."]).map((s, i) => (
-                  <li key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white border border-green-100 shadow-sm text-sm font-medium">
+                  <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
+                    <span className="text-green-500 mt-1.5">•</span>
                     {s}
                   </li>
                 ))}
               </ul>
             </Card>
 
-            <Card className="rounded-[2rem] border-amber-100 bg-amber-50/20 p-8 shadow-sm">
-              <h3 className="flex items-center gap-3 text-xl font-bold mb-6">
-                <AlertCircle className="text-amber-600 w-6 h-6" /> Growth Areas
+            <Card className="glass border-amber-500/20 bg-amber-500/5 p-10 shadow-2xl rounded-[3rem]">
+              <h3 className="flex items-center gap-4 text-2xl font-black mb-8">
+                <AlertCircle className="text-amber-500 w-8 h-8" /> Optimization Required
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {(report?.weaknesses || ["Analyzing weaknesses..."]).map((w, i) => (
-                  <li key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white border border-amber-100 shadow-sm text-sm font-medium">
+                  <li key={i} className="flex items-start gap-4 p-6 rounded-2xl glass-dark bg-white/5 border-white/10 text-lg font-medium shadow-inner leading-relaxed">
+                    <span className="text-amber-500 mt-1.5">•</span>
                     {w}
                   </li>
                 ))}
@@ -166,32 +170,33 @@ export default function ResultsPage() {
         </TabsContent>
 
         <TabsContent value="biometrics" className="outline-none animate-fade-in">
-          <Card className="rounded-[2.5rem] p-10 bg-slate-50 border-none shadow-sm">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="aspect-video bg-slate-200 rounded-[2.5rem] relative overflow-hidden border-4 border-white shadow-xl">
-                 <img src={`https://picsum.photos/seed/audit-sensors/800/600`} className="object-cover w-full h-full grayscale opacity-40" alt="Heatmap" />
+          <Card className="glass-card p-12 bg-slate-900 border-none rounded-[3.5rem]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+              <div className="aspect-video glass bg-slate-950 rounded-[3rem] relative overflow-hidden border-white/10 shadow-2xl group">
+                 <img src={`https://picsum.photos/seed/audit-sensors/1200/800`} className="object-cover w-full h-full grayscale opacity-30 group-hover:scale-105 transition-transform duration-[3000ms]" alt="Heatmap Feed" />
                  <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
-                 <div className="absolute top-4 right-4"><Badge variant="secondary">Neural Stream Audit</Badge></div>
+                 <div className="absolute top-6 right-6"><Badge variant="secondary" className="glass uppercase tracking-[0.2em] font-black text-[9px] px-6 py-2">NEURAL STREAM AUDIT</Badge></div>
+                 <div className="absolute inset-x-0 h-[2px] bg-primary/40 animate-[scan_6s_linear_infinite]" />
               </div>
-              <div className="flex flex-col justify-center space-y-6">
-                 <div className="p-6 bg-white rounded-3xl border shadow-sm">
-                    <h4 className="font-bold mb-2 flex items-center gap-2 text-primary">
-                       <ShieldCheck className="w-4 h-4" /> Visual Presence Audit
+              <div className="flex flex-col justify-center space-y-8">
+                 <div className="p-10 glass bg-white/5 rounded-[2.5rem] border-white/10 shadow-inner">
+                    <h4 className="font-black mb-4 flex items-center gap-3 text-primary uppercase tracking-widest text-xs">
+                       <ShieldCheck className="w-5 h-5" /> Visual Presence Analytics
                     </h4>
-                    <p className="text-sm text-slate-600 leading-relaxed italic">
-                       "{report?.bodyLanguageReport || "Presence analyzed for role alignment. Focus maintained during critical technical questioning."}"
+                    <p className="text-xl text-slate-300 leading-relaxed italic font-medium">
+                       "{report?.bodyLanguageReport || "Focus and presence remained stable during technical logic turns. Neural sensors indicated consistent role-alignment."}"
                     </p>
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 rounded-2xl bg-white border shadow-sm text-center">
-                       <Target className="w-5 h-5 text-primary mx-auto mb-2" />
-                       <span className="text-[9px] font-black uppercase text-slate-400 block">Eye focus</span>
-                       <span className="text-lg font-bold">Audited</span>
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="p-8 rounded-3xl glass-dark bg-white/5 border-white/10 text-center shadow-inner group transition-all hover:bg-white/10">
+                       <Target className="w-7 h-7 text-primary mx-auto mb-3" />
+                       <span className="text-[10px] font-black uppercase text-slate-500 block tracking-widest">EYE FOCUS</span>
+                       <span className="text-xl font-black mt-2 block">VERIFIED</span>
                     </div>
-                    <div className="p-6 rounded-2xl bg-white border shadow-sm text-center">
-                       <Activity className="w-5 h-5 text-primary mx-auto mb-2" />
-                       <span className="text-[9px] font-black uppercase text-slate-400 block">Neural Logic</span>
-                       <span className="text-lg font-bold">Stable</span>
+                    <div className="p-8 rounded-3xl glass-dark bg-white/5 border-white/10 text-center shadow-inner group transition-all hover:bg-white/10">
+                       <Activity className="w-7 h-7 text-primary mx-auto mb-3" />
+                       <span className="text-[10px] font-black uppercase text-slate-500 block tracking-widest">NEURAL LOGIC</span>
+                       <span className="text-xl font-black mt-2 block">CONSISTENT</span>
                     </div>
                  </div>
               </div>
@@ -200,23 +205,39 @@ export default function ResultsPage() {
         </TabsContent>
 
         <TabsContent value="plan" className="outline-none animate-fade-in">
-          <Card className="bg-slate-950 rounded-[3rem] text-white p-12 relative overflow-hidden border-none shadow-2xl">
-            <div className="relative z-10 space-y-8 max-w-3xl">
-              <div className="flex items-center gap-4">
-                <Zap className="w-10 h-10 text-primary" />
-                <h2 className="text-3xl font-headline font-bold">Improvement Strategy</h2>
+          <Card className="glass bg-slate-950 rounded-[4rem] text-white p-16 relative overflow-hidden border-none shadow-2xl group">
+            <div className="relative z-10 space-y-12 max-w-4xl">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                  <Zap className="w-8 h-8" />
+                </div>
+                <h2 className="text-5xl font-headline font-black tracking-tighter uppercase">Strategic Road Map</h2>
               </div>
-              <p className="text-lg leading-relaxed text-slate-300 font-medium">
-                 {report?.improvementPlan || "Focus on articulating technical architecture using more structured STAR examples."}
+              <p className="text-2xl leading-relaxed text-slate-300 font-medium italic">
+                 {report?.improvementPlan || "Focus on deep architectural explanations and technical STAR method structure for behavioral turns."}
               </p>
-              <Button className="h-16 rounded-[1.5rem] bg-primary text-xl font-black px-12 shadow-lg shadow-primary/30" asChild>
-                <Link href="/dashboard">Return to Dashboard</Link>
-              </Button>
+              <div className="flex gap-6">
+                <Button className="h-20 rounded-[1.5rem] bg-primary text-2xl font-black px-12 shadow-2xl shadow-primary/40 transition-all hover:scale-[1.03]" asChild>
+                  <Link href="/dashboard">RETURN TO PORTAL</Link>
+                </Button>
+                <Button variant="outline" className="h-20 rounded-[1.5rem] glass text-2xl font-black px-12 transition-all hover:bg-white/10" asChild>
+                  <Link href="/interviews/new">RE-CALIBRATE</Link>
+                </Button>
+              </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/10 blur-[100px] rounded-full translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[150px] rounded-full translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-primary/20 transition-all duration-700" />
           </Card>
         </TabsContent>
       </Tabs>
+
+      <style jsx global>{`
+        @keyframes scan {
+          0% { transform: translateY(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(300px); opacity: 0; }
+        }
+      `}</style>
     </div>
   )
 }

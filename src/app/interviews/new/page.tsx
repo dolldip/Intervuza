@@ -18,7 +18,8 @@ import {
   Loader2,
   Sparkles,
   FileText,
-  X
+  X,
+  Zap
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -50,12 +51,10 @@ export default function NewInterviewPage() {
     setLoading(true)
     
     try {
-      // For the prototype, we handle text files directly or simulate extraction for binaries
       if (file.type === "text/plain" || file.name.endsWith(".txt")) {
         const text = await file.text()
         setResumeText(text)
       } else {
-        // Simulation for PDF/DOCX content to provide Aria context
         const mockText = `This is the resume of ${user?.displayName || "a candidate"}. They are a professional ${role || "Specialist"} with a focus on ${roundType} excellence. They have significant experience in their field and are targeting top-tier firms.`
         setResumeText(mockText)
       }
@@ -67,7 +66,7 @@ export default function NewInterviewPage() {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Upload Failed",
+        title: "Analysis Failed",
         description: "Could not read this file format."
       })
     } finally {
@@ -85,15 +84,14 @@ export default function NewInterviewPage() {
     if (!role || !experience || !jd) {
       toast({
         variant: "destructive",
-        title: "Missing Context",
-        description: "Aria needs role details to start the assessment."
+        title: "Context Missing",
+        description: "Aria needs specific role details to begin the professional audit."
       })
       return
     }
 
     setLoading(true)
     
-    // Store in session for the real-time AI session
     sessionStorage.setItem('demo_role', role);
     sessionStorage.setItem('demo_exp', experience);
     sessionStorage.setItem('demo_round', roundType);
@@ -101,7 +99,7 @@ export default function NewInterviewPage() {
     sessionStorage.setItem('demo_resume', resumeText || "Standard professional background.");
     
     try {
-      let matchingSkills = ["Problem Solving", "Professionalism", "Domain Knowledge"];
+      let matchingSkills = ["Strategic Logic", "Communication", "Domain Depth"];
       
       if (resumeText) {
         try {
@@ -111,7 +109,7 @@ export default function NewInterviewPage() {
           })
           matchingSkills = analysisResult.matchingSkills
         } catch (aiError) {
-          console.warn("Analysis failed, using default skill logic.")
+          console.warn("AI analysis failed, proceeding with default calibration.")
         }
       }
       
@@ -133,7 +131,7 @@ export default function NewInterviewPage() {
         router.push(`/interviews/session/demo-session`)
       }
     } catch (error: any) {
-      console.error("Session failed:", error)
+      console.error("Initialization failed:", error)
       router.push(`/interviews/session/demo-session`)
     } finally {
       setLoading(false)
@@ -141,41 +139,41 @@ export default function NewInterviewPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-12 px-4 animate-fade-in">
-      <div className="mb-10 text-center space-y-4">
-        <Badge variant="secondary" className="px-4 py-1.5 rounded-full font-bold text-primary gap-2">
-          <Sparkles className="w-3 h-3" /> Aria Intelligence Engine
+    <div className="container max-w-5xl py-16 px-6 animate-fade-in mx-auto">
+      <div className="mb-16 text-center space-y-6">
+        <Badge variant="secondary" className="glass px-6 py-2 rounded-full font-black text-primary gap-2 uppercase tracking-[0.2em] text-[10px]">
+          <Sparkles className="w-4 h-4" /> Neural Coaching Engine
         </Badge>
-        <h1 className="text-5xl font-headline font-bold tracking-tight text-foreground">Prepare for Your Next Big Move</h1>
-        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Aria will conduct a role-specific adaptive interview targeting top-tier firms.</p>
+        <h1 className="text-6xl font-headline font-black tracking-tighter text-foreground leading-tight">Configure Your Session</h1>
+        <p className="text-slate-400 text-xl max-w-3xl mx-auto font-medium">Aria will calibrate her technical depth based on the role and experience you provide below.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <Card className="shadow-lg border-primary/10 rounded-[2.5rem] overflow-hidden">
-            <CardHeader className="bg-muted/30 p-8">
-              <CardTitle className="font-headline text-2xl">Interview Parameters</CardTitle>
-              <CardDescription>Aria adapts her conversational depth based on your role.</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="glass-card overflow-hidden">
+            <CardHeader className="p-10 bg-white/5 border-b border-white/5">
+              <CardTitle className="font-headline text-3xl font-black">Audit Parameters</CardTitle>
+              <CardDescription className="text-lg">Set the high-stakes context for Aria's reasoning.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Job Role</Label>
+            <CardContent className="space-y-8 p-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="role" className="font-black text-xs uppercase tracking-widest text-slate-500">Target Job Role</Label>
                   <Input 
                     id="role" 
-                    placeholder="e.g. Senior Software Engineer" 
+                    placeholder="e.g. Lead System Architect" 
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-14 rounded-2xl glass bg-white/5 border-white/10 px-6 font-bold"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="level">Experience Level</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="level" className="font-black text-xs uppercase tracking-widest text-slate-500">Experience Tier</Label>
                   <Select value={experience} onValueChange={setExperience}>
-                    <SelectTrigger id="level" className="h-12 rounded-xl">
+                    <SelectTrigger id="level" className="h-14 rounded-2xl glass bg-white/5 border-white/10 px-6 font-bold">
                       <SelectValue placeholder="Select level" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="glass-dark border-white/10">
                       <SelectItem value="junior">Junior (0-2 years)</SelectItem>
                       <SelectItem value="mid">Mid-Level (3-5 years)</SelectItem>
                       <SelectItem value="senior">Senior (6-10 years)</SelectItem>
@@ -185,26 +183,26 @@ export default function NewInterviewPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="round">Focus Round</Label>
+              <div className="space-y-3">
+                <Label htmlFor="round" className="font-black text-xs uppercase tracking-widest text-slate-500">Focus Sector</Label>
                 <Select value={roundType} onValueChange={setRoundType}>
-                  <SelectTrigger id="round" className="h-12 rounded-xl">
-                    <SelectValue placeholder="Select round" />
+                  <SelectTrigger id="round" className="h-14 rounded-2xl glass bg-white/5 border-white/10 px-6 font-bold">
+                    <SelectValue placeholder="Select round focus" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Technical / Skills Round</SelectItem>
-                    <SelectItem value="hr">Behavioral / HR Round</SelectItem>
-                    <SelectItem value="both">Comprehensive (Both)</SelectItem>
+                  <SelectContent className="glass-dark border-white/10">
+                    <SelectItem value="technical">Technical / Logic Mastery</SelectItem>
+                    <SelectItem value="hr">Behavioral / Leadership Depth</SelectItem>
+                    <SelectItem value="both">Comprehensive Performance Audit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="jd">Job Description</Label>
+              <div className="space-y-3">
+                <Label htmlFor="jd" className="font-black text-xs uppercase tracking-widest text-slate-500">Role Requirements (Job Description)</Label>
                 <Textarea 
                   id="jd" 
-                  placeholder="Paste the job description here for hyper-targeted questions..." 
-                  className="min-h-[180px] resize-none rounded-2xl p-4"
+                  placeholder="Paste the target role description here to calibrate Aria's intelligence..." 
+                  className="min-h-[200px] resize-none rounded-[2rem] glass bg-white/5 border-white/10 p-8 font-medium leading-relaxed"
                   value={jd}
                   onChange={(e) => setJd(e.target.value)}
                 />
@@ -213,13 +211,13 @@ export default function NewInterviewPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="shadow-lg border-primary/10 rounded-[2.5rem] flex flex-col overflow-hidden h-full">
-            <CardHeader className="bg-muted/30 p-8">
-              <CardTitle className="font-headline text-2xl">Profile Context</CardTitle>
-              <CardDescription>Aria tailors her logic based on your background.</CardDescription>
+        <div className="space-y-8">
+          <Card className="glass-card flex flex-col overflow-hidden h-full">
+            <CardHeader className="p-10 bg-white/5 border-b border-white/5">
+              <CardTitle className="font-headline text-3xl font-black">Linguistic Sync</CardTitle>
+              <CardDescription className="text-lg">Aria will analyze your background for personalization.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 space-y-6 p-8">
+            <CardContent className="flex-1 space-y-8 p-10">
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -231,44 +229,44 @@ export default function NewInterviewPage() {
               {!resumeFileName ? (
                 <div 
                   onClick={handleFileUploadClick}
-                  className="border-2 border-dashed rounded-[2rem] p-10 flex flex-col items-center justify-center text-center bg-muted/20 group cursor-pointer hover:bg-muted/40 transition-all border-primary/20"
+                  className="border-2 border-dashed rounded-[2.5rem] p-12 flex flex-col items-center justify-center text-center glass bg-white/5 border-white/10 group cursor-pointer hover:bg-white/10 transition-all"
                 >
-                  <UploadCloud className="w-10 h-10 text-primary mb-4 group-hover:scale-110 transition-transform" />
-                  <p className="text-sm font-bold">Upload Resume</p>
-                  <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-widest">PDF, DOCX, TXT</p>
+                  <UploadCloud className="w-14 h-14 text-primary mb-6 group-hover:scale-110 transition-transform" />
+                  <p className="text-lg font-black tracking-tight">Sync Resume</p>
+                  <p className="text-[10px] text-slate-500 mt-3 uppercase tracking-[0.2em] font-black">PDF, DOCX, TXT</p>
                 </div>
               ) : (
-                <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/20 relative group animate-fade-in">
+                <div className="p-8 rounded-[2.5rem] glass bg-primary/10 border border-primary/30 relative group animate-fade-in shadow-inner">
                   <button 
                     onClick={clearResume}
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-white shadow-md rounded-full flex items-center justify-center hover:bg-red-50 text-red-500 transition-colors z-20"
+                    className="absolute -top-3 -right-3 w-10 h-10 glass-dark bg-slate-900 border-white/20 rounded-full flex items-center justify-center hover:bg-red-500/20 text-red-500 transition-colors z-20 shadow-xl"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </button>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
-                      <FileText className="w-6 h-6" />
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 glass bg-white/10 rounded-2xl flex items-center justify-center text-primary shadow-sm">
+                      <FileText className="w-7 h-7" />
                     </div>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-bold truncate">{resumeFileName}</p>
-                      <p className="text-[10px] uppercase tracking-widest text-primary font-black">Aria is Analyzing</p>
+                      <p className="text-lg font-black truncate">{resumeFileName}</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-primary font-black mt-1">Aria Analyzing...</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100 text-xs flex gap-3 shadow-sm italic leading-relaxed">
-                <ShieldCheck className="w-5 h-5 shrink-0" />
-                <span>Aria is now reviewing your experience against the role requirements.</span>
+              <div className="p-6 glass bg-blue-500/10 text-blue-400 rounded-3xl border border-blue-500/20 text-sm flex gap-4 shadow-inner italic font-medium leading-relaxed">
+                <Zap className="w-6 h-6 shrink-0 mt-1" />
+                <span>Aria is now reviewing your background to craft personalized logic challenges.</span>
               </div>
             </CardContent>
-            <CardFooter className="p-8 bg-muted/10">
+            <CardFooter className="p-10 bg-white/5">
               <Button 
-                className="w-full h-16 text-xl font-black shadow-xl rounded-2xl hover:scale-[1.02] transition-transform" 
+                className="w-full h-20 text-2xl font-black shadow-2xl rounded-[1.5rem] transition-all hover:scale-[1.02] active:scale-95" 
                 disabled={!role || !experience || !jd || loading}
                 onClick={handleStart}
               >
-                {loading ? <Loader2 className="animate-spin" /> : "START ASSESSMENT"}
+                {loading ? <Loader2 className="animate-spin w-8 h-8" /> : "START ASSESSMENT"}
               </Button>
             </CardFooter>
           </Card>

@@ -1,10 +1,10 @@
+
 "use client"
 
 import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
-  Trophy, 
   TrendingUp, 
   Calendar, 
   Video, 
@@ -16,7 +16,8 @@ import {
   BrainCircuit,
   Zap,
   History,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from "lucide-react"
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
@@ -34,7 +35,7 @@ export default function DashboardPage() {
     return query(
       collection(db, "users", user.uid, "interviewSessions"),
       orderBy("createdAt", "desc"),
-      limit(10)
+      limit(5)
     )
   }, [db, user])
   const { data: sessions, isLoading: sessionsLoading } = useCollection(sessionsQuery)
@@ -70,76 +71,80 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-8 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div>
-          <h1 className="text-4xl font-headline font-bold tracking-tight">
-            Welcome back, {profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate"}
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
+          </div>
+          <h1 className="text-5xl font-headline font-black tracking-tight leading-tight">
+            Welcome back, <br /> <span className="text-primary">{profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate"}</span>
           </h1>
-          <p className="text-muted-foreground text-lg">Ready for a critical high-stakes session today?</p>
+          <p className="text-slate-400 text-xl mt-2 font-medium">Ready for your professional audit today?</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" asChild className="hidden sm:flex h-11 rounded-xl px-6 font-bold">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" asChild className="hidden sm:flex h-14 rounded-2xl px-8 glass font-bold">
             <Link href="/profile">
-              <UserPen className="mr-2 w-4 h-4" />
+              <UserPen className="mr-2 w-5 h-5" />
               AI Profile
             </Link>
           </Button>
-          <Button asChild className="h-11 rounded-xl px-6 font-bold shadow-lg shadow-primary/20">
+          <Button asChild className="h-14 rounded-2xl px-8 font-black shadow-2xl shadow-primary/40 transition-all hover:scale-105">
             <Link href="/interviews/new">
-              <Video className="mr-2 w-4 h-4" />
-              New Mock Interview
+              <Video className="mr-2 w-5 h-5" />
+              NEW ASSESSMENT
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: "Daily Streak", value: `${stats.currentStreak} Days`, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
-          { label: "Average Score", value: `${stats.avgScore}%`, icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50" },
-          { label: "Interviews Done", value: stats.completed, icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
-          { label: "History Count", value: stats.total, icon: Trophy, color: "text-yellow-600", bg: "bg-yellow-50" },
+          { label: "Daily Streak", value: `${stats.currentStreak} Days`, icon: Flame, color: "text-orange-400", bg: "bg-orange-500/10" },
+          { label: "Audit Score", value: `${stats.avgScore}%`, icon: TrendingUp, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: "Completed", value: stats.completed, icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/10" },
+          { label: "Total Turns", value: stats.total, icon: BrainCircuit, color: "text-purple-400", bg: "bg-purple-500/10" },
         ].map((stat, i) => (
-          <Card key={i} className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white">
-            <CardContent className="p-6 flex items-center justify-between">
+          <Card key={i} className="glass-card overflow-hidden group hover:border-primary/40 transition-all duration-500">
+            <CardContent className="p-8 flex items-center justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{stat.label}</p>
-                <h3 className="text-3xl font-black mt-1">{stat.value}</h3>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{stat.label}</p>
+                <h3 className="text-4xl font-black">{stat.value}</h3>
               </div>
-              <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center shadow-inner`}>
-                <stat.icon className="w-7 h-7" />
+              <div className={`w-16 h-16 rounded-[1.5rem] ${stat.bg} ${stat.color} flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}>
+                <stat.icon className="w-8 h-8" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="shadow-sm rounded-[2.5rem] overflow-hidden border-none bg-white">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 p-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white">
-                  <Target className="w-6 h-6" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2 space-y-10">
+          <Card className="glass-card overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between p-10 bg-white/5">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+                  <Target className="w-8 h-8" />
                 </div>
                 <div>
-                  <CardTitle className="font-headline text-2xl">Target: {profile?.targetRole || "Set your role"}</CardTitle>
-                  <CardDescription className="text-base">Experience Level: <span className="capitalize font-bold text-primary">{profile?.experienceLevel || "Not set"}</span></CardDescription>
+                  <CardTitle className="font-headline text-3xl font-black">Target: {profile?.targetRole || "Set Target Role"}</CardTitle>
+                  <CardDescription className="text-lg font-medium">Level: <span className="capitalize text-primary font-bold">{profile?.experienceLevel || "Not set"}</span></CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold">
-                <Link href="/profile">Update</Link>
+              <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-black uppercase tracking-widest text-xs">
+                <Link href="/profile">Edit Context</Link>
               </Button>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="p-6 rounded-[2rem] bg-slate-50 border border-dashed border-primary/10">
-                <div className="flex items-start gap-4">
-                  <BrainCircuit className="w-6 h-6 text-primary shrink-0 mt-1" />
-                  <div className="space-y-2">
-                    <p className="font-bold text-sm">Aria's Analysis</p>
-                    <p className="text-sm leading-relaxed text-muted-foreground italic">
-                      {profile?.education ? `Your background at ${profile.education} helps Aria calibrate your technical depth.` : "Update your profile education to help Aria calibrate her logic."}
+            <CardContent className="p-10">
+              <div className="p-8 rounded-[2rem] glass bg-primary/5 border border-primary/10">
+                <div className="flex items-start gap-6">
+                  <BrainCircuit className="w-8 h-8 text-primary shrink-0 mt-1" />
+                  <div className="space-y-3">
+                    <p className="font-black text-xs uppercase tracking-[0.2em] text-primary">Aria's Strategic Insight</p>
+                    <p className="text-lg leading-relaxed text-slate-300 font-medium italic">
+                      {profile?.education ? `Your background from ${profile.education} is being used to calibrate the technical depth of your next session.` : "Update your education details so Aria can tailor the complexity of her questioning."}
                     </p>
                   </div>
                 </div>
@@ -147,67 +152,77 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm rounded-[2.5rem] border-none bg-white overflow-hidden">
-            <CardHeader className="p-8">
-              <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                <History className="w-6 h-6 text-primary" />
-                Session History
-              </CardTitle>
-              <CardDescription>Track your growth and review Aria's critical audits.</CardDescription>
+          <Card className="glass-card overflow-hidden">
+            <CardHeader className="p-10 border-b border-white/5 bg-white/5">
+              <div className="flex items-center justify-between">
+                <CardTitle className="font-headline text-3xl font-black flex items-center gap-4">
+                  <History className="w-8 h-8 text-primary" />
+                  Recent Audits
+                </CardTitle>
+                <Link href="/dashboard" className="text-xs font-black uppercase tracking-widest text-primary hover:underline">View Full History</Link>
+              </div>
             </CardHeader>
-            <CardContent className="px-8 pb-8 space-y-4">
+            <CardContent className="p-0">
               {sessionsLoading ? (
-                <div className="flex justify-center p-10"><Loader2 className="animate-spin text-primary" /></div>
+                <div className="flex justify-center p-20"><Loader2 className="animate-spin text-primary w-10 h-10" /></div>
               ) : sessions?.length ? (
-                sessions.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] border hover:bg-muted/10 transition-all group">
-                    <div className="flex items-center gap-6">
-                      <div className={`w-16 h-16 rounded-[1.5rem] flex flex-col items-center justify-center font-black text-xl shadow-inner ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {item.status === 'completed' ? (item.overallScore || "--") : <AlertCircle className="w-6 h-6" />}
-                        <span className="text-[8px] uppercase tracking-widest opacity-60">{item.status === 'completed' ? 'Score' : 'Active'}</span>
+                <div className="divide-y divide-white/5">
+                  {sessions.map((item) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 hover:bg-white/5 transition-all group">
+                      <div className="flex items-center gap-8">
+                        <div className={`w-20 h-20 rounded-[2rem] flex flex-col items-center justify-center font-black text-2xl shadow-inner border border-white/10 ${item.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-primary/10 text-primary'}`}>
+                          {item.status === 'completed' ? (item.overallScore || "--") : <AlertCircle className="w-8 h-8" />}
+                          <span className="text-[9px] uppercase tracking-widest opacity-60 mt-1">{item.status === 'completed' ? 'Score' : 'Active'}</span>
+                        </div>
+                        <div>
+                          <h4 className="font-black text-2xl tracking-tight">{item.jobRole}</h4>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 font-bold uppercase tracking-widest">
+                            <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {new Date(item.createdAt).toLocaleDateString()}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                            <span className={item.status === 'completed' ? 'text-green-500/80' : 'text-primary animate-pulse'}>{item.status}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-lg">{item.jobRole}</h4>
-                        <p className="text-xs text-muted-foreground font-medium flex items-center gap-2 capitalize">
-                          <Calendar className="w-3 h-3" /> {new Date(item.createdAt).toLocaleDateString()} • <span className={item.status === 'completed' ? 'text-green-600 font-bold' : 'text-blue-600 font-bold animate-pulse'}>{item.status}</span>
-                        </p>
-                      </div>
+                      <Button variant="outline" className="rounded-2xl h-14 px-8 font-black glass hover:bg-primary hover:text-white hover:border-transparent transition-all" asChild>
+                        <Link href={item.status === 'completed' ? `/results/${item.id}` : `/interviews/session/${item.id}`}>
+                          {item.status === 'completed' ? 'VIEW FEEDBACK' : 'RESUME TURN'}
+                        </Link>
+                      </Button>
                     </div>
-                    <Button variant="outline" className="rounded-xl px-6 font-bold group-hover:bg-primary group-hover:text-white transition-colors" asChild>
-                      <Link href={item.status === 'completed' ? `/results/${item.id}` : `/interviews/session/${item.id}`}>
-                        {item.status === 'completed' ? 'View Audit' : 'Resume Session'}
-                      </Link>
-                    </Button>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-12 space-y-4">
-                  <p className="text-muted-foreground">No sessions found. Start your first assessment with Aria.</p>
-                  <Button asChild className="rounded-xl shadow-lg"><Link href="/interviews/new">Start Now</Link></Button>
+                <div className="text-center py-24 space-y-6">
+                  <History className="w-20 h-20 text-slate-800 mx-auto" />
+                  <p className="text-slate-500 text-lg font-medium">No previous sessions found. Start your journey with Aria.</p>
+                  <Button asChild className="rounded-2xl h-16 px-12 font-black shadow-2xl transition-all hover:scale-105"><Link href="/interviews/new">START NOW</Link></Button>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-8">
-          <Card className="shadow-sm bg-slate-950 text-white border-none rounded-[2.5rem] overflow-hidden relative group">
-            <CardHeader className="p-8">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Strategy</span>
+        <div className="space-y-10">
+          <Card className="glass bg-slate-900 border-none rounded-[3rem] overflow-hidden relative group">
+            <CardHeader className="p-10 pb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <Zap className="w-5 h-5 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Aria Strategy</span>
               </div>
-              <CardTitle className="font-headline text-2xl">Aria's Insight</CardTitle>
+              <CardTitle className="font-headline text-4xl font-black leading-tight">Elite <br /> Preparation</CardTitle>
             </CardHeader>
-            <CardContent className="px-8 pb-8 space-y-6">
-              <p className="text-base text-slate-300 leading-relaxed italic">
-                "Technical roles often fail not on logic, but on communication structure. Practice using the STAR method even for architectural questions."
+            <CardContent className="p-10 pt-0 space-y-10">
+              <p className="text-xl text-slate-400 leading-relaxed italic font-medium">
+                "Technical logic alone isn't enough. Your focus and structural clarity are being monitored by my neural sensors. Practice using the STAR method for every behavioral answer."
               </p>
-              <Button className="w-full h-14 rounded-2xl font-black bg-primary text-lg shadow-lg shadow-primary/30 hover:scale-105 transition-transform" asChild>
-                <Link href="/interviews/new">Practice Now</Link>
-              </Button>
+              <div className="space-y-4">
+                <Button className="w-full h-18 rounded-[1.5rem] font-black bg-primary text-xl shadow-2xl transition-all hover:scale-[1.03]" asChild>
+                  <Link href="/interviews/new">NEW SESSION</Link>
+                </Button>
+                <p className="text-[10px] text-center text-slate-600 font-black uppercase tracking-widest">Aria is ready when you are.</p>
+              </div>
             </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
           </Card>
         </div>
       </div>

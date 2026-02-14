@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, User, Mail, Lock, Loader2, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, User, Mail, Lock, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -37,11 +38,10 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: name });
       
-      // Send verification email
       try {
         await sendEmailVerification(user);
       } catch (emailError) {
-        console.warn("Could not send verification email immediately.", emailError);
+        console.warn("Linguistic recovery link failure.", emailError);
       }
       
       await setDoc(doc(db, "users", user.uid), {
@@ -56,23 +56,23 @@ export default function RegisterPage() {
 
       setVerificationSent(true);
       toast({
-        title: "Account Created",
-        description: "Verification link sent to your Gmail. Please check your inbox and Spam folder.",
+        title: "Security Profile Created",
+        description: "Linguistic verification link transmitted to your inbox.",
       });
     } catch (error: any) {
-      console.error("Registration Error:", error);
-      let message = "Something went wrong during registration.";
+      console.error("Enrollment Error:", error);
+      let message = "Neural enrollment failed. System error.";
       if (error.code === 'auth/email-already-in-use') {
-        message = "This email is already registered. Please log in instead.";
+        message = "Identity already exists. Log in to your existing sector.";
       } else if (error.code === 'auth/weak-password') {
-        message = "Password should be at least 6 characters.";
+        message = "Credential strength insufficient (minimum 6 characters).";
       } else if (error.code === 'auth/invalid-email') {
-        message = "Please enter a valid email address.";
+        message = "Linguistic format error in email address.";
       }
       
       toast({
         variant: "destructive",
-        title: "Registration Failed",
+        title: "Enrollment Denied",
         description: message,
       });
     } finally {
@@ -82,100 +82,106 @@ export default function RegisterPage() {
 
   if (verificationSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md text-center space-y-10 animate-fade-in">
-          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+      <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
+        <div className="w-full max-w-md text-center space-y-12 animate-fade-in relative z-10">
+          <div className="w-24 h-24 bg-green-500/10 text-green-400 rounded-[2.5rem] glass flex items-center justify-center mx-auto shadow-2xl">
             <CheckCircle2 className="w-12 h-12" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-4xl font-headline font-bold uppercase tracking-tight">Verify Your Email</h1>
-            <p className="text-muted-foreground text-lg">We've sent a verification link to <b>{email}</b>. If you don't see it, check your <b>Spam folder</b>.</p>
+            <h1 className="text-5xl font-headline font-black uppercase tracking-tighter">Identity Audit</h1>
+            <p className="text-slate-400 text-lg font-medium leading-relaxed">
+              We've transmitted a verification link to <b className="text-white">{email}</b>. Please verify your identity to proceed.
+            </p>
           </div>
-          <Button asChild className="w-full h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
-            <Link href="/login">RETURN TO LOGIN</Link>
+          <Button asChild className="w-full h-18 rounded-[1.5rem] font-black text-xl shadow-2xl transition-all hover:scale-[1.02]">
+            <Link href="/login">RETURN TO GATEWAY</Link>
           </Button>
         </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-green-500/5 blur-[120px] rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-8 animate-fade-in">
-        <div className="text-center space-y-2">
-          <Link className="inline-flex items-center space-x-2" href="/">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <ShieldCheck className="text-white w-6 h-6" />
+    <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
+      <div className="w-full max-w-md space-y-12 animate-fade-in relative z-10">
+        <div className="text-center space-y-4">
+          <Link className="inline-flex items-center space-x-3 group" href="/">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl transition-all group-hover:scale-110">
+              <ShieldCheck className="text-white w-7 h-7" />
             </div>
-            <span className="font-headline font-bold text-3xl tracking-tight">AssessAI</span>
+            <span className="font-headline font-black text-4xl tracking-tighter">AssessAI</span>
           </Link>
-          <h2 className="text-2xl font-headline font-bold mt-4">Security Enrollment</h2>
-          <p className="text-muted-foreground">Join 50k+ candidates prepping smarter</p>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Security Enrollment</h2>
+            <p className="text-slate-500 font-medium">Join 50k+ elite candidates on the neural grid.</p>
+          </div>
         </div>
 
-        <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-8">
-            <CardTitle className="font-headline">Sign Up</CardTitle>
-            <CardDescription>Start your AI-powered performance audit</CardDescription>
+        <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
+          <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
+            <CardTitle className="font-headline text-3xl font-black">Join Platform</CardTitle>
+            <CardDescription className="text-lg">Initialize your professional audit profile.</CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+          <CardContent className="pt-10">
+            <form onSubmit={handleRegister} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="name" className="font-black text-xs uppercase tracking-widest text-slate-500">Legal Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                   <Input 
                     id="name" 
                     placeholder="Alex Rivera" 
-                    className="pl-10 h-12 rounded-xl" 
+                    className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+              <div className="space-y-3">
+                <Label htmlFor="email" className="font-black text-xs uppercase tracking-widest text-slate-500">Secure Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="alex@example.com" 
-                    className="pl-10 h-12 rounded-xl" 
+                    placeholder="alex@intelligence.com" 
+                    className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-3">
+                <Label htmlFor="password" title="Password must be at least 6 characters" className="font-black text-xs uppercase tracking-widest text-slate-500">Access Credential</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="pl-10 h-12 rounded-xl" 
+                    className="pl-12 h-14 rounded-2xl glass bg-white/5 border-white/10 font-bold" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <Button className="w-full h-14 rounded-2xl font-black text-lg shadow-lg shadow-primary/20" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : "CREATE ACCOUNT"}
+              <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95" type="submit" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "INITIALIZE PROFILE"}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="justify-center border-t py-6 bg-muted/10">
-            <p className="text-sm text-muted-foreground">
-              Already have an account? <Link href="/login" className="text-primary font-black hover:underline">SIGN IN</Link>
+          <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
+            <p className="text-sm text-slate-500 font-medium">
+              Identity already exists? <Link href="/login" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Secure Access</Link>
             </p>
           </CardFooter>
         </Card>
       </div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
     </div>
   );
 }
