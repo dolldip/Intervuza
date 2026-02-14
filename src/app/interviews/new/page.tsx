@@ -1,10 +1,9 @@
-
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, useFirestore, useUser } from "@/firebase"
-import { collection, addDoc } from "firebase/firestore"
+import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, addDoc, query, orderBy, limit } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +18,8 @@ import {
   Sparkles,
   FileText,
   X,
-  Zap
+  Zap,
+  BrainCircuit
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -38,6 +38,19 @@ export default function NewInterviewPage() {
   const [jd, setJd] = useState("")
   const [resumeText, setResumeText] = useState("")
   const [resumeFileName, setResumeFileName] = useState("")
+
+  // "Learning Brain" - Fetch past performance
+  const plansQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "improvementPlans"),
+      orderBy("generatedAt", "desc"),
+      limit(1)
+    )
+  }, [db, user])
+  const { data: pastPlans } = useCollection(plansQuery)
+
+  const pastPerformanceSummary = pastPlans?.[0]?.planSummary || ""
 
   const handleFileUploadClick = () => {
     fileInputRef.current?.click()
@@ -97,6 +110,7 @@ export default function NewInterviewPage() {
     sessionStorage.setItem('demo_round', roundType);
     sessionStorage.setItem('demo_jd', jd);
     sessionStorage.setItem('demo_resume', resumeText || "Standard professional background.");
+    sessionStorage.setItem('past_performance', pastPerformanceSummary);
     
     try {
       let matchingSkills = ["Strategic Logic", "Communication", "Domain Depth"];
@@ -124,7 +138,8 @@ export default function NewInterviewPage() {
           startTime: new Date().toISOString(),
           status: "in-progress",
           createdAt: new Date().toISOString(),
-          resumeText: resumeText
+          resumeText: resumeText,
+          pastPerformanceUsed: !!pastPerformanceSummary
         });
         router.push(`/interviews/session/${sessionRef.id}`)
       } else {
@@ -145,7 +160,17 @@ export default function NewInterviewPage() {
           <Sparkles className="w-4 h-4" /> Neural Coaching Engine
         </Badge>
         <h1 className="text-6xl font-headline font-black tracking-tighter text-foreground leading-tight">Configure Your Session</h1>
-        <p className="text-slate-400 text-xl max-w-3xl mx-auto font-medium">Aria will calibrate her technical depth based on the role and experience you provide below.</p>
+        <p className="text-slate-400 text-xl max-w-3xl mx-auto font-medium">Aria will calibrate her technical depth based on your resume and past performance.</p>
+        
+        {pastPerformanceSummary && (
+          <div className="max-w-xl mx-auto p-4 glass bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-4 text-left animate-pulse">
+            <BrainCircuit className="w-8 h-8 text-primary shrink-0" />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Aria's Memory Active</p>
+              <p className="text-xs text-slate-400">I've retrieved your last growth plan and will tailor today's logic challenges accordingly.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">

@@ -211,6 +211,7 @@ export default function InterviewSessionPage() {
       const demoJd = sessionStorage.getItem('demo_jd') || "Professional assessment session.";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       const demoResume = sessionStorage.getItem('demo_resume') || "";
+      const pastPerformance = sessionStorage.getItem('past_performance') || "";
       const analysisSkills = JSON.parse(sessionStorage.getItem('analysis_skills') || '["Logic", "Communication", "Technical Depth"]');
 
       try {
@@ -220,7 +221,8 @@ export default function InterviewSessionPage() {
           skills: analysisSkills,
           jobDescriptionText: demoJd,
           resumeText: demoResume,
-          roundType: demoRound
+          roundType: demoRound,
+          pastPerformanceSummary: pastPerformance
         })
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
@@ -332,7 +334,6 @@ export default function InterviewSessionPage() {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
         
-        // Update history strictly to avoid repetition
         const updatedHistory = [...history, feedback.nextQuestion];
         setAskedQuestions(updatedHistory);
         
@@ -405,7 +406,6 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-body select-none">
-      {/* Top Navigation Bar */}
       <div className="h-20 glass-dark px-10 flex items-center justify-between z-50 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-6">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -432,7 +432,6 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative bg-black overflow-hidden">
-        {/* Main AI Interaction Sector */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0 transition-all duration-1000">
              <img 
@@ -445,7 +444,6 @@ export default function InterviewSessionPage() {
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
           
-          {/* Status Indicators */}
           <div className="absolute top-10 left-10 z-20 flex flex-col gap-4">
              {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-6 py-2.5 rounded-full shadow-2xl text-[10px] font-black uppercase tracking-[0.2em]">Neural Processing...</Badge>}
              {speaking && !fetchingAudio && <Badge className="glass bg-primary/20 text-primary animate-pulse px-6 py-2.5 rounded-full flex gap-3 shadow-2xl text-[10px] font-black uppercase tracking-[0.2em]"><Volume2 className="w-4 h-4" /> Aria Speaking</Badge>}
@@ -453,7 +451,6 @@ export default function InterviewSessionPage() {
              {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 animate-pulse px-6 py-2.5 rounded-full flex gap-3 shadow-2xl text-[10px] font-black uppercase tracking-[0.2em]"><HelpCircle className="w-4 h-4" /> Detector: Stuck</Badge>}
           </div>
 
-          {/* Floating Glass Question Card */}
           <div className="absolute bottom-16 inset-x-8 sm:inset-x-16 z-20 animate-fade-in">
             <div className="max-w-5xl mx-auto glass-dark border-white/10 p-10 sm:p-14 rounded-[3.5rem] shadow-[0_0_80px_rgba(0,0,0,0.5)]">
               <h3 className="text-2xl md:text-4xl font-headline font-black leading-tight text-white tracking-tight text-center sm:text-left">
@@ -463,11 +460,8 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* High-Tech Biometric Sidebar */}
         <div className="hidden lg:flex w-[480px] glass-dark border-l border-white/5 flex-col z-30 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
-            
-            {/* User Video Feed Overlay */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Stream</span>
@@ -483,12 +477,10 @@ export default function InterviewSessionPage() {
                     <p className="text-[10px] uppercase font-black text-slate-800 tracking-widest">Stream Offline</p>
                   </div>
                 )}
-                {/* Simulated Scanning Line */}
                 <div className="absolute inset-x-0 h-[3px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
               </div>
             </div>
 
-            {/* Neural Scores */}
             <div className="grid grid-cols-2 gap-6">
               <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
                 <Activity className="w-5 h-5 text-primary mb-3 mx-auto" />
@@ -504,7 +496,6 @@ export default function InterviewSessionPage() {
               </div>
             </div>
 
-            {/* Real-time Transcription Feed */}
             <div className="space-y-6">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
                 <Terminal className={`w-4 h-4 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-800'}`} />
@@ -526,7 +517,6 @@ export default function InterviewSessionPage() {
             </div>
           </div>
 
-          {/* Interaction Trigger Area */}
           <div className="p-10 glass-dark border-t border-white/5 bg-slate-900/30 shrink-0">
             {listening ? (
               <Button className="w-full h-20 rounded-[2rem] bg-primary hover:bg-primary/90 font-black text-xl shadow-[0_0_40px_rgba(var(--primary),0.3)] hover:scale-[1.02] transition-transform" onClick={() => completeTurn(false)}>
