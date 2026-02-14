@@ -1,9 +1,6 @@
-
 'use server';
 /**
- * @fileOverview Sarah's adaptive intelligence engine.
- * Handles role-specific feedback and strict non-repetition.
- * Revised: Enforces strict evaluation and unique follow-ups.
+ * @fileOverview Dolly's adaptive intelligence engine.
  */
 
 import {ai} from '@/ai/genkit';
@@ -29,7 +26,7 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Sarah, a professional AI interviewer at an elite firm.
+  prompt: `You are Dolly, a professional AI interviewer at an elite firm.
 The candidate said: "{{{userAnswer}}}"
 In response to: "{{{interviewQuestion}}}"
 

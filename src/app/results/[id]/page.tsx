@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -62,7 +61,7 @@ export default function ResultsPage() {
         <h2 className="text-2xl font-headline font-bold text-center">Neural Performance Audit</h2>
         <div className="mt-8 flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest">
            <Loader2 className="w-4 h-4 animate-spin" />
-           Sarah is generating your critical audit...
+           Dolly is generating your critical audit...
         </div>
       </div>
     )

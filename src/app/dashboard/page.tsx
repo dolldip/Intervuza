@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -138,9 +137,9 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-4">
                   <BrainCircuit className="w-6 h-6 text-primary shrink-0 mt-1" />
                   <div className="space-y-2">
-                    <p className="font-bold text-sm">Sarah's Analysis</p>
+                    <p className="font-bold text-sm">Dolly's Analysis</p>
                     <p className="text-sm leading-relaxed text-muted-foreground italic">
-                      {profile?.education ? `Your background at ${profile.education} helps Sarah calibrate your technical depth.` : "Update your profile education to help Sarah calibrate her logic."}
+                      {profile?.education ? `Your background at ${profile.education} helps Dolly calibrate your technical depth.` : "Update your profile education to help Dolly calibrate her logic."}
                     </p>
                   </div>
                 </div>
@@ -154,7 +153,7 @@ export default function DashboardPage() {
                 <History className="w-6 h-6 text-primary" />
                 Session History
               </CardTitle>
-              <CardDescription>Track your growth and review Sarah's critical audits.</CardDescription>
+              <CardDescription>Track your growth and review Dolly's critical audits.</CardDescription>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-4">
               {sessionsLoading ? (
@@ -183,7 +182,7 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <div className="text-center py-12 space-y-4">
-                  <p className="text-muted-foreground">No sessions found. Start your first assessment with Sarah.</p>
+                  <p className="text-muted-foreground">No sessions found. Start your first assessment with Dolly.</p>
                   <Button asChild className="rounded-xl shadow-lg"><Link href="/interviews/new">Start Now</Link></Button>
                 </div>
               )}
@@ -198,7 +197,7 @@ export default function DashboardPage() {
                 <Zap className="w-4 h-4 text-primary" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">AI Strategy</span>
               </div>
-              <CardTitle className="font-headline text-2xl">Sarah's Insight</CardTitle>
+              <CardTitle className="font-headline text-2xl">Dolly's Insight</CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 space-y-6">
               <p className="text-base text-slate-300 leading-relaxed italic">

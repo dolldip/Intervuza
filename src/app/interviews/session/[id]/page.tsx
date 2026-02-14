@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -54,7 +53,6 @@ export default function InterviewSessionPage() {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   
-  // High-Sensitivity Biometrics (Sensitive and punitive)
   const [confidenceLevel, setConfidenceLevel] = useState(65)
   const [eyeFocus, setEyeFocus] = useState(70)
   const [isCodingTask, setIsCodingTask] = useState(false)
@@ -87,33 +85,22 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted])
 
-  // Realistic Biometric Loop: Punitive for silence and distraction
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
-      const { listening: isListening, speaking: isSpeaking } = stateRef.current;
+      const { listening: isListening } = stateRef.current;
       const currentText = transcriptAccumulatorRef.current;
       
       setConfidenceLevel(prev => {
         let change = (Math.random() * 4) - 2.5; 
-        
-        // Heavy penalty for silence when user is supposed to be speaking
         if (isListening && currentText.length < 5) change -= 12;
-        // Bonus for steady, meaningful speaking
         if (isListening && currentText.length > 40) change += 6;
-        // Penalty for excessive rambling
-        if (isListening && currentText.length > 800) change -= 5;
-        
         return Math.min(99, Math.max(5, prev + change));
       });
 
       setEyeFocus(prev => {
         let change = (Math.random() * 8) - 4.5;
-        // Simulate distraction events
         if (Math.random() > 0.95) change = -40;
-        // Focus improves during active exchanges
-        if (isSpeaking) change += 5;
-        
         return Math.min(100, Math.max(0, prev + change));
       });
     }, 1000);
@@ -134,7 +121,7 @@ export default function InterviewSessionPage() {
         toast({
           variant: "destructive",
           title: "Hardware Permission Denied",
-          description: "Sarah needs camera and microphone access to conduct the assessment."
+          description: "Dolly needs camera and microphone access to conduct the assessment."
         })
       }
     }
@@ -222,7 +209,7 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        setOpening("Hello, I'm Sarah. I'll be conducting your high-stakes assessment today.")
+        setOpening("Hello, I'm Dolly. I'll be conducting your high-stakes assessment today.")
         const fb = "To start off, could you walk me through your technical background and how it prepares you for this specific challenge?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
@@ -324,7 +311,6 @@ export default function InterviewSessionPage() {
 
         await triggerSpeech(finalPrompt);
       } else {
-        // Finalize session in Firestore
         if (user && db && params.id !== "demo-session") {
           const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
           await updateDoc(sessionRef, {
@@ -366,7 +352,7 @@ export default function InterviewSessionPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold uppercase tracking-tighter">Professional Assessment</h1>
-            <p className="text-slate-400">Sarah evaluates grammar, technical depth, and focus in real-time. Ensure your environment is quiet and well-lit.</p>
+            <p className="text-slate-400">Dolly evaluates grammar, technical depth, and focus in real-time. Ensure your environment is quiet and well-lit.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-lg hover:scale-105 transition-all shadow-primary/20" onClick={startSession}>
             BEGIN SESSION
@@ -405,8 +391,8 @@ export default function InterviewSessionPage() {
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <div className="absolute inset-0">
              <img 
-               src={`https://picsum.photos/seed/sarah-professional/1200/1200`} 
-               alt="Sarah AI" 
+               src={`https://picsum.photos/seed/dolly-professional/1200/1200`} 
+               alt="Dolly AI" 
                className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-150' : 'opacity-60 brightness-75 blur-[2px]'}`}
              />
              {speaking && <div className="absolute inset-0 animate-pulse bg-primary/10 mix-blend-overlay" />}
@@ -415,7 +401,7 @@ export default function InterviewSessionPage() {
           
           <div className="absolute top-8 left-8 z-20 flex flex-col gap-3">
              {fetchingAudio && <Badge className="bg-blue-600 animate-pulse px-4 py-1.5 rounded-full shadow-lg">SYNTHESIZING...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Volume2 className="w-4 h-4" /> SARAH SPEAKING</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Volume2 className="w-4 h-4" /> DOLLY SPEAKING</Badge>}
              {listening && <Badge className="bg-green-600 animate-bounce px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Mic className="w-4 h-4" /> LISTENING</Badge>}
              {processingTurn && <Badge className="bg-amber-600 animate-pulse px-4 py-1.5 rounded-full text-white uppercase text-[10px] font-bold shadow-lg">Analyzing Logic...</Badge>}
           </div>
@@ -446,7 +432,7 @@ export default function InterviewSessionPage() {
                     <Badge variant="outline" className="text-[9px] border-primary/20">Critical Logic</Badge>
                  </div>
                  <p className="text-xs text-slate-400 leading-relaxed italic">
-                   "Explain your architectural reasoning. Sarah is evaluating technical precision."
+                   "Explain your architectural reasoning. Dolly is evaluating technical precision."
                  </p>
               </div>
             )}

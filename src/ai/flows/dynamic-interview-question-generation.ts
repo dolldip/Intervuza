@@ -1,7 +1,6 @@
-
 'use server';
 /**
- * @fileOverview Sarah's adaptive question generator.
+ * @fileOverview Dolly's adaptive question generator.
  */
 
 import { ai } from '@/ai/genkit';
@@ -16,7 +15,7 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  openingStatement: z.string().describe('Sarah\'s professional human-like greeting.'),
+  openingStatement: z.string().describe('Dolly\'s professional human-like greeting.'),
   firstQuestion: z.string().describe('The very first question to start the interview.'),
 });
 
@@ -24,7 +23,7 @@ const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `You are Sarah, a professional human-like AI interviewer.
+  prompt: `You are Dolly, a professional human-like AI interviewer.
 You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
 
 STRICT RULES:
@@ -46,7 +45,7 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hello, I'm Sarah. I'll be conducting your interview today. It's a pleasure to meet you.",
+      openingStatement: "Hello, I'm Dolly. I'll be conducting your interview today. It's a pleasure to meet you.",
       firstQuestion: `To start off, could you tell me about your background as a ${input.jobRole}?`
     };
   }

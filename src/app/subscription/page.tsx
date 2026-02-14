@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState } from "react"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { collection, query, where, addDoc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,8 +14,7 @@ import {
   Crown, 
   Star, 
   CreditCard,
-  Lock,
-  ArrowRight
+  Lock
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -25,7 +23,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog"
 
 export default function SubscriptionPage() {
@@ -56,8 +53,8 @@ export default function SubscriptionPage() {
   const currentPlan = activeSubs?.[0]
 
   const defaultPlans = [
-    { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "SARAH Lite Logic"], icon: Star },
-    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 29, features: ["Unlimited Interviews", "High-Stakes Biometrics", "SARAH Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
+    { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "Dolly Lite Logic"], icon: Star },
+    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 29, features: ["Unlimited Interviews", "High-Stakes Biometrics", "Dolly Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
     { id: "enterprise", name: "Enterprise", description: "Custom logic for high-tier recruitment.", price: 99, features: ["Custom Roles", "Recruiter Dashboard", "Team Analytics", "Priority AI"], icon: ShieldCheck },
   ]
 
@@ -79,7 +76,6 @@ export default function SubscriptionPage() {
     
     setProcessing(true);
     try {
-      // 1. Record Transaction
       await addDoc(collection(db, "users", user.uid, "paymentTransactions"), {
         userId: user.uid,
         amount: selectedPlan.price || selectedPlan.priceMonthly,
@@ -91,8 +87,6 @@ export default function SubscriptionPage() {
         createdAt: new Date().toISOString()
       });
 
-      // 2. Update Subscription
-      // We use setDoc on a known ID or addDoc. For simplicity, let's create a new active subscription.
       await addDoc(collection(db, "users", user.uid, "userSubscriptions"), {
         userId: user.uid,
         planId: selectedPlan.id,
@@ -106,7 +100,7 @@ export default function SubscriptionPage() {
 
       toast({
         title: "Upgrade Successful",
-        description: `Welcome to the ${selectedPlan.name} tier! Sarah's logic has been upgraded.`,
+        description: `Welcome to the ${selectedPlan.name} tier! Dolly's logic has been upgraded.`,
       });
       setIsCheckoutOpen(false);
     } catch (error: any) {
@@ -136,7 +130,7 @@ export default function SubscriptionPage() {
           <Zap className="mr-2 w-3 h-3" /> Billing & Tiers
         </Badge>
         <h1 className="text-5xl font-headline font-bold tracking-tight">Manage Your Intelligence Plan</h1>
-        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Select the tier that matches your career ambitions. Sarah's logic scales with your choice.</p>
+        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Select the tier that matches your career ambitions. Dolly's logic scales with your choice.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
