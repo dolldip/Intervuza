@@ -1,8 +1,7 @@
-
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for human-like reactions and mentoring support.
- * Updated to handle "stuck" candidates with professional hints.
+ * Updated: Strictly unique questions, project deep-dives, and coding task requests.
  */
 
 import {ai} from '@/ai/genkit';
@@ -14,6 +13,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
   jobRole: z.string(),
   experienceLevel: z.string(),
   currentRound: z.enum(['technical', 'hr']),
+  resumeText: z.string().optional(),
   previousQuestions: z.array(z.string()).optional(),
   isStuck: z.boolean().optional().describe('True if the user seems to be struggling or silent for too long.'),
 });
@@ -24,6 +24,7 @@ const InstantTextualAnswerFeedbackOutputSchema = z.object({
   nextQuestion: z.string().describe('The single next question. MUST BE DIFFERENT from any in previousQuestions.'),
   isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
   isOfferingHint: z.boolean().describe('True if Aria is helping the user through a difficult spot.'),
+  requestCodingTask: z.boolean().optional().describe('True if Aria wants the user to write code in the Logic Pad.'),
 });
 
 const prompt = ai.definePrompt({
@@ -36,16 +37,18 @@ Your previous question was: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
+Resume Context: {{{resumeText}}}
 Turn History:
 {{#each previousQuestions}}- {{{this}}}
 {{/each}}
 
-STRICT MENTORING RULES:
-1. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer. Say something like "Hmm, okay... think about it from a scalability perspective" or "No worries, if we look at it through the lens of [Concept], does that help?".
-2. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see"). 
-3. ELITE FOLLOW-UPS: If they answer well, drill deeper. Ask "Why?", "What was the impact?", or "What was the alternative?".
-4. UNIQUE QUESTIONS: Every question must be a logical next step. DO NOT REPEAT previous topics.
-5. CONVERSATION FLOW: Acknowledge what they said specifically before asking the next question.`
+STRICT ELITE INTERVIEWER RULES:
+1. NO REPETITION: Every question must explore a NEW dimension of the candidate's skills. DO NOT ASK ABOUT TOPICS ALREADY COVERED.
+2. PROJECT DEEP DIVE: Reference specific technical details or projects found in the resume. If they mention a skill, ask "How did you apply that in [Project Name from Resume]?".
+3. CODING CHALLENGE: If this is a Technical round and they've handled theory well, set requestCodingTask to true and ask them to implement a specific logic/algorithm in the "Logic Pad".
+4. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer.
+5. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see", "Hmm..."). 
+6. ELITE FOLLOW-UPS: Drill deeper into "Why?". What were the trade-offs?`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -58,7 +61,8 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       detectedEmotion: "Neutral",
       nextQuestion: "Can you walk me through the scalability trade-offs of that approach specifically?",
       isInterviewComplete: false,
-      isOfferingHint: true
+      isOfferingHint: true,
+      requestCodingTask: false
     };
   }
 }

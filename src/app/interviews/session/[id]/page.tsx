@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -7,6 +6,7 @@ import { useAuth, useFirestore, useUser } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   StopCircle, 
   Volume2, 
@@ -24,7 +24,10 @@ import {
   Terminal,
   AlertCircle,
   HelpCircle,
-  VideoOff
+  VideoOff,
+  Code2,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -32,6 +35,7 @@ import { instantTextualAnswerFeedback } from "@/ai/flows/instant-textual-answer-
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { PlaceHolderImages } from "@/lib/placeholder-images"
+import { cn } from "@/lib/utils"
 
 export default function InterviewSessionPage() {
   const router = useRouter()
@@ -58,6 +62,10 @@ export default function InterviewSessionPage() {
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
+  
+  // Coding State
+  const [showCodingPad, setShowCodingPad] = useState(false)
+  const [code, setCode] = useState("// Aria is waiting for your logic here...\n\nfunction solution() {\n  \n}")
   
   const [confidenceLevel, setConfidenceLevel] = useState(85)
   const [eyeFocus, setEyeFocus] = useState(90)
@@ -93,7 +101,7 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
-  // FIX: Ensure video stream is attached to the ref whenever it exists
+  // FIX: Stable Video stream attachment
   useEffect(() => {
     if (userVideoRef.current && stream) {
       userVideoRef.current.srcObject = stream;
@@ -178,10 +186,10 @@ export default function InterviewSessionPage() {
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 25) {
+          if (combinedText.length > 30) {
              completeTurn(false);
           }
-        }, 10000); 
+        }, 12000); 
 
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
@@ -190,7 +198,7 @@ export default function InterviewSessionPage() {
             setIsStuck(true);
             completeTurn(true);
           }
-        }, 15000); 
+        }, 18000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -234,8 +242,8 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        setOpening("Hi, I'm Aria. It's a pleasure to meet you.")
-        const fb = "To get us started, could you walk me through a technical project from your resume and your specific role in it?";
+        setOpening("Hi, I'm Aria. I've been reviewing your background and I'm interested to dive into your experience.")
+        const fb = "To get us started, could you walk me through a technical project from your resume and the biggest challenge you faced there?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
         sessionStorage.setItem('session_answers', '[]');
@@ -302,7 +310,8 @@ export default function InterviewSessionPage() {
       await updateDoc(sessionRef, {
         status: "completed",
         endTime: new Date().toISOString(),
-        overallScore: Math.round(confidenceLevel * 0.7 + 25)
+        overallScore: Math.round(confidenceLevel * 0.7 + 25),
+        finalCode: code
       });
     }
     router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
@@ -318,7 +327,11 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || (forcedStuck ? "Struggling to articulate" : "No verbal response") });
+    currentAnswers.push({ 
+      question, 
+      answer: fullAnswer || (forcedStuck ? "Struggling to articulate logic" : "No verbal response"),
+      codeSnippet: code
+    });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
@@ -328,6 +341,7 @@ export default function InterviewSessionPage() {
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
+        resumeText: sessionStorage.getItem('demo_resume') || "",
         previousQuestions: history,
         isStuck: forcedStuck || (fullAnswer.length < 15 && !forcedStuck)
       });
@@ -335,6 +349,10 @@ export default function InterviewSessionPage() {
       setCurrentEmotion(feedback.detectedEmotion);
       const nextTurnCount = feedback.isOfferingHint ? currentTurn : currentTurn + 1;
       
+      if (feedback.requestCodingTask) {
+        setShowCodingPad(true);
+      }
+
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
@@ -350,7 +368,7 @@ export default function InterviewSessionPage() {
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         setTimeout(() => {
           triggerSpeech(finalPrompt);
-        }, 800);
+        }, 1000);
       } else {
         terminateSession();
       }
@@ -390,7 +408,7 @@ export default function InterviewSessionPage() {
               <Sparkles className="w-3 h-3" /> Professional Audit Sector
             </Badge>
             <h1 className="text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Calibration Mode</h1>
-            <p className="text-slate-500 text-lg">Aria will monitor your biometrics and project logic during this turn.</p>
+            <p className="text-slate-500 text-lg">Aria will monitor your biometrics and project logic during this session.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all shadow-primary/30" onClick={startSession}>
             BEGIN ASSESSMENT
@@ -424,26 +442,37 @@ export default function InterviewSessionPage() {
             {sessionStorage.getItem('demo_role')} AUDIT IN PROGRESS
           </span>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-slate-500 hover:text-red-500 font-black h-12 px-6 rounded-2xl glass-button" 
-          onClick={terminateSession}
-          disabled={terminating}
-        >
-          {terminating ? <Loader2 className="animate-spin w-5 h-5 mr-3" /> : <StopCircle className="w-5 h-5 mr-3" />} 
-          TERMINATE & AUDIT
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn("font-black h-12 px-6 rounded-2xl glass-button", showCodingPad ? "text-primary border-primary/50 bg-primary/10" : "text-slate-500")}
+            onClick={() => setShowCodingPad(!showCodingPad)}
+          >
+            <Code2 className="w-5 h-5 mr-3" />
+            {showCodingPad ? 'HIDE LOGIC PAD' : 'OPEN LOGIC PAD'}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-slate-500 hover:text-red-500 font-black h-12 px-6 rounded-2xl glass-button" 
+            onClick={terminateSession}
+            disabled={terminating}
+          >
+            {terminating ? <Loader2 className="animate-spin w-5 h-5 mr-3" /> : <StopCircle className="w-5 h-5 mr-3" />} 
+            TERMINATE & AUDIT
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 flex relative bg-black overflow-hidden">
+        {/* Main AI Feed */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0 transition-all duration-1000">
              <img 
                src={ariaImage} 
                alt="Aria" 
                className={`w-full h-full object-cover transition-all duration-[2000ms] ${speaking ? 'opacity-100 scale-105 brightness-110' : 'opacity-40 grayscale-[40%] scale-100'}`}
-               data-ai-hint="professional female recruiter portrait"
              />
              {speaking && <div className="absolute inset-0 bg-primary/10 animate-pulse-slow pointer-events-none" />}
           </div>
@@ -465,61 +494,93 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        <div className="hidden lg:flex w-[480px] glass-dark border-l border-white/5 flex-col z-30 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden">
+        {/* Sidebar for Biometrics or Code */}
+        <div className={cn("transition-all duration-500 glass-dark border-l border-white/5 flex flex-col z-30 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden", showCodingPad ? "w-[600px]" : "w-[480px]")}>
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Stream</span>
-                <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Live Feed
-                </span>
-              </div>
-              <div className="aspect-video glass bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 relative group shadow-inner">
-                <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
-                {!hasCameraPermission && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 gap-4">
-                    <VideoOff className="w-10 h-10 text-slate-700" />
-                    <p className="text-[10px] uppercase font-black text-slate-800 tracking-widest">Stream Offline</p>
+            
+            {showCodingPad ? (
+              <div className="space-y-8 animate-fade-in flex flex-col h-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                    <Terminal className="w-4 h-4" /> Logic Pad v2.0
+                  </span>
+                  <Badge variant="outline" className="glass border-white/10 text-slate-500 text-[9px] uppercase tracking-widest px-4 py-1">Technical Audit Active</Badge>
+                </div>
+                <div className="flex-1 glass bg-slate-900/50 rounded-[2.5rem] border border-white/10 overflow-hidden relative shadow-inner flex flex-col">
+                  <div className="h-8 bg-black/40 border-b border-white/5 flex items-center px-6 gap-2 shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
                   </div>
-                )}
-                <div className="absolute inset-x-0 h-[3px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
+                  <Textarea 
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="flex-1 bg-transparent border-none resize-none font-mono text-sm p-8 focus-visible:ring-0 scrollbar-hide text-green-400/80 leading-relaxed"
+                  />
+                </div>
+                <div className="p-6 glass bg-blue-500/10 text-blue-400 rounded-3xl border border-blue-500/20 text-xs flex gap-4 shadow-inner italic font-medium leading-relaxed">
+                  <Sparkles className="w-5 h-5 shrink-0 mt-0.5" />
+                  <span>Aria is monitoring your algorithmic logic. Explain your code as you write.</span>
+                </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
-                <Activity className="w-5 h-5 text-primary mb-3 mx-auto" />
-                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
-                <p className="text-3xl font-black mt-2">{Math.round(confidenceLevel)}%</p>
-                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${confidenceLevel}%` }} />
-              </div>
-              <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
-                <Target className="w-5 h-5 text-primary mb-3 mx-auto" />
-                <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Eye Focus</p>
-                <p className="text-3xl font-black mt-2">{Math.round(eyeFocus)}%</p>
-                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${eyeFocus}%` }} />
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
-                <Terminal className={`w-4 h-4 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-800'}`} />
-                Neural Transcription
-              </span>
-              <div className="glass bg-black/40 border-white/5 rounded-[2.5rem] p-10 h-64 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative group transition-all hover:bg-black/60">
-                {(transcript || interimTranscript) ? (
-                  <p className="text-lg text-slate-300 italic leading-relaxed font-medium">
-                    {transcript}
-                    <span className="text-primary font-black animate-pulse">{interimTranscript}</span>
-                  </p>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
-                    <Mic className="w-10 h-10 opacity-20" />
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-black">Waiting for Vocal Response</p>
+            ) : (
+              <div className="space-y-10 animate-fade-in">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Stream</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Live Feed
+                    </span>
                   </div>
-                )}
+                  <div className="aspect-video glass bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 relative group shadow-inner">
+                    <video ref={userVideoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
+                    {!hasCameraPermission && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 gap-4">
+                        <VideoOff className="w-10 h-10 text-slate-700" />
+                        <p className="text-[10px] uppercase font-black text-slate-800 tracking-widest">Stream Offline</p>
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 h-[3px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
+                    <Activity className="w-5 h-5 text-primary mb-3 mx-auto" />
+                    <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
+                    <p className="text-3xl font-black mt-2">{Math.round(confidenceLevel)}%</p>
+                    <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${confidenceLevel}%` }} />
+                  </div>
+                  <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
+                    <Target className="w-5 h-5 text-primary mb-3 mx-auto" />
+                    <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Eye Focus</p>
+                    <p className="text-3xl font-black mt-2">{Math.round(eyeFocus)}%</p>
+                    <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${eyeFocus}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
+                    <Terminal className={`w-4 h-4 ${listening ? 'text-green-500 animate-pulse' : 'text-slate-800'}`} />
+                    Neural Transcription
+                  </span>
+                  <div className="glass bg-black/40 border-white/5 rounded-[2.5rem] p-10 h-64 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative group transition-all hover:bg-black/60">
+                    {(transcript || interimTranscript) ? (
+                      <p className="text-lg text-slate-300 italic leading-relaxed font-medium">
+                        {transcript}
+                        <span className="text-primary font-black animate-pulse">{interimTranscript}</span>
+                      </p>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
+                        <Mic className="w-10 h-10 opacity-20" />
+                        <p className="text-[10px] uppercase tracking-[0.3em] font-black">Waiting for Vocal Response</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
           </div>
 
           <div className="p-10 glass-dark border-t border-white/5 bg-slate-900/30 shrink-0">
