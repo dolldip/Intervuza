@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
-import { Loader2, ShieldAlert } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser()
@@ -26,9 +26,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!user) {
       router.push("/login")
     } else if (!isEmailVerified) {
-      // In a real app, you might show a "verify email" prompt instead of blocking
+      // Non-verified users stay in dashboard
       router.push("/dashboard")
     } else if (!isGlobalAdmin && !hasAdminRole) {
+      // Unauthorized users go to security page
       router.push("/not-authorized")
     } else {
       setIsAuthorizing(false)
@@ -37,15 +38,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isUserLoading || adminLoading || isAuthorizing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <h2 className="text-xl font-headline font-bold uppercase tracking-widest text-muted-foreground">Authenticating Admin...</h2>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-6" />
+        <h2 className="text-sm font-headline font-black uppercase tracking-[0.3em] text-primary">Security Clearance Active</h2>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 bg-muted/20 min-h-screen">
+    <div className="flex-1 min-h-screen bg-black">
       {children}
     </div>
   )
