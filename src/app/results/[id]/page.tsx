@@ -60,10 +60,10 @@ export default function ResultsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-8" />
-        <h2 className="text-2xl font-headline font-bold text-center">Synthesizing Final Verdict</h2>
+        <h2 className="text-2xl font-headline font-bold text-center">Finalizing Performance Analysis</h2>
         <div className="mt-8 flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest">
            <Loader2 className="w-4 h-4 animate-spin" />
-           Sarah is analyzing your verbal logic...
+           Sarah is generating your critical verdict...
         </div>
       </div>
     )
@@ -74,7 +74,7 @@ export default function ResultsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
         <div>
           <Badge className="mb-2 bg-primary/10 text-primary border-primary/20 px-4 py-1 font-bold uppercase tracking-widest text-[10px]">
-            Linguistic Analysis Complete
+            Linguistic & Behavioral Analysis Complete
           </Badge>
           <h1 className="text-4xl font-headline font-bold">Interview Verdict</h1>
         </div>
@@ -100,16 +100,16 @@ export default function ResultsPage() {
                     report?.verdict === 'Ready' ? 'bg-green-500' : 
                     report?.verdict === 'Needs Improvement' ? 'bg-amber-500' : 'bg-red-500'
                   }`}>
-                    {report?.verdict || "Assessment Pending"}
+                    {report?.verdict || "Analysis Pending"}
                   </Badge>
                </div>
                <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
                   {[
-                    { label: "Role Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
-                    { label: "Answer Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
+                    { label: "Knowledge", val: report?.scores?.roleSpecificKnowledge, icon: BrainCircuit },
+                    { label: "Clarity", val: report?.scores?.answerClarity, icon: Sparkles },
                     { label: "Confidence", val: report?.scores?.confidence, icon: Activity },
                     { label: "Communication", val: report?.scores?.communication, icon: MessageSquare },
-                    { label: "Linguistic Logic", val: report?.scores?.logicalThinking, icon: Zap },
+                    { label: "Logic", val: report?.scores?.logicalThinking, icon: Zap },
                   ].map((s, i) => (
                     <div key={i} className="space-y-1">
                        <p className="text-[9px] font-black text-slate-500 uppercase flex items-center gap-2 tracking-widest">
@@ -181,7 +181,7 @@ export default function ResultsPage() {
                        <ShieldCheck className="w-4 h-4" /> Visual Presence Verdict
                     </h4>
                     <p className="text-sm text-slate-600 leading-relaxed italic">
-                       "{report?.bodyLanguageReport || "Presence was appropriate for a professional setting. Engagement levels remained consistent throughout the Turns."}"
+                       "{report?.bodyLanguageReport || "Presence was analyzed for professional alignment. Focus levels fluctuated based on question difficulty."}"
                     </p>
                  </div>
                  <div className="grid grid-cols-2 gap-4">
@@ -192,7 +192,7 @@ export default function ResultsPage() {
                     </div>
                     <div className="p-6 rounded-2xl bg-white border shadow-sm text-center">
                        <Activity className="w-5 h-5 text-primary mx-auto mb-2" />
-                       <span className="text-[9px] font-black uppercase text-slate-400 block">Stress Levels</span>
+                       <span className="text-[9px] font-black uppercase text-slate-400 block">Neural Stability</span>
                        <span className="text-lg font-bold">Monitored</span>
                     </div>
                  </div>
@@ -206,13 +206,13 @@ export default function ResultsPage() {
             <div className="relative z-10 space-y-8 max-w-3xl">
               <div className="flex items-center gap-4">
                 <Zap className="w-10 h-10 text-primary" />
-                <h2 className="text-3xl font-headline font-bold">Tailored Improvement Strategy</h2>
+                <h2 className="text-3xl font-headline font-bold">Critical Improvement Strategy</h2>
               </div>
               <p className="text-lg leading-relaxed text-slate-300 font-medium">
                  {report?.improvementPlan || "Focus on quantifying your impact using the STAR method. We recommend specific technical drills to improve linguistic logic."}
               </p>
               <Button className="h-16 rounded-[1.5rem] bg-primary text-xl font-black px-12 shadow-lg shadow-primary/30" asChild>
-                <Link href="/dashboard">Complete Assessment</Link>
+                <Link href="/dashboard">Return to Dashboard</Link>
               </Button>
             </div>
             <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/10 blur-[100px] rounded-full translate-y-1/2 translate-x-1/2" />

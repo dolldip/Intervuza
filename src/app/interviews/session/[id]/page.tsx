@@ -19,7 +19,8 @@ import {
   Mic,
   ShieldCheck,
   BrainCircuit,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -49,9 +50,9 @@ export default function InterviewSessionPage() {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [askedQuestions, setAskedQuestions] = useState<string[]>([])
   
-  // Biometrics - realistic starting points
-  const [confidenceLevel, setConfidenceLevel] = useState(65)
-  const [eyeFocus, setEyeFocus] = useState(70)
+  // High-Sensitivity Biometrics
+  const [confidenceLevel, setConfidenceLevel] = useState(70)
+  const [eyeFocus, setEyeFocus] = useState(75)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -81,27 +82,37 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted])
 
-  // Enhanced Biometric Simulation - No longer 100% all the time
+  // Advanced Biometric "Neural Feed" Simulation
+  // Drops scores if the user is silent, rambling, or if random "Neural Drift" is detected.
   useEffect(() => {
     if (!sessionStarted) return;
     const interval = setInterval(() => {
       const { listening: isListening, speaking: isSpeaking } = stateRef.current;
+      const currentText = transcriptAccumulatorRef.current;
       
       setConfidenceLevel(prev => {
-        // Drop confidence if silent for too long or if rambing detected
-        let change = (Math.random() * 4) - 2; // Random wobble
-        if (isListening && transcriptAccumulatorRef.current.length > 200) change -= 3; // Penalty for rambling
-        if (!isListening && !isSpeaking) change -= 1; // Penalty for inactivity
-        return Math.min(98, Math.max(15, prev + change));
+        let change = (Math.random() * 4) - 2.5; // Natural drift down
+        
+        // Penalty for silence while listening
+        if (isListening && currentText.length < 5) change -= 5;
+        // Penalty for rambling (too many words)
+        if (isListening && currentText.length > 300) change -= 4;
+        // Bonus for active response
+        if (isListening && currentText.length > 50 && currentText.length < 250) change += 6;
+        
+        return Math.min(99, Math.max(5, prev + change));
       });
 
       setEyeFocus(prev => {
-        // Simulate eye drift
-        let change = (Math.random() * 6) - 3;
-        if (Math.random() > 0.95) change = -15; // Random "distraction"
-        return Math.min(99, Math.max(10, prev + change));
+        let change = (Math.random() * 6) - 3.5;
+        // High penalty for inactivity
+        if (!isListening && !isSpeaking) change -= 8;
+        // Random "distraction" detection
+        if (Math.random() > 0.92) change = -25; 
+        
+        return Math.min(100, Math.max(0, prev + change));
       });
-    }, 1500);
+    }, 1000);
     return () => clearInterval(interval);
   }, [sessionStarted]);
 
@@ -119,7 +130,7 @@ export default function InterviewSessionPage() {
         toast({
           variant: "destructive",
           title: "Hardware Access Required",
-          description: "Sarah needs your camera and microphone for a professional assessment."
+          description: "Sarah needs full access to your sensors for a professional assessment."
         })
       }
     }
@@ -158,7 +169,7 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 5) {
              completeTurn();
           }
-        }, 4000); 
+        }, 3500); // More aggressive silence detection
       };
 
       recognitionRef.current.onend = () => {
@@ -186,13 +197,13 @@ export default function InterviewSessionPage() {
     async function init() {
       const demoRole = sessionStorage.getItem('demo_role') || "Professional";
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
-      const demoJd = sessionStorage.getItem('demo_jd') || "Standard Job Description";
+      const demoJd = sessionStorage.getItem('demo_jd') || "Professional Job Description";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: ["Communication", "Domain Knowledge"],
+          skills: ["Domain Knowledge", "Communication", "Critical Thinking"],
           jobDescriptionText: demoJd,
           roundType: demoRound
         })
@@ -201,8 +212,8 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        const fallbackQ = "Could you start by telling me about your background and why you're interested in this role?";
-        setOpening("Hello, I'm Sarah. I'll be your AI interviewer today.")
+        const fallbackQ = "Could you walk me through your background and how it aligns with the specific requirements of this role?";
+        setOpening("Hello, I'm Sarah. I'll be your lead interviewer today.")
         setCurrentQuestion(fallbackQ)
         setAskedQuestions([fallbackQ])
         sessionStorage.setItem('session_answers', '[]');
@@ -272,7 +283,7 @@ export default function InterviewSessionPage() {
 
     const fullAnswer = (transcriptAccumulatorRef.current + interimTranscript).trim();
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
-    currentAnswers.push({ question, answer: fullAnswer || "No spoken answer." });
+    currentAnswers.push({ question, answer: fullAnswer || "Silence or unintelligible audio." });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
     try {
@@ -281,7 +292,7 @@ export default function InterviewSessionPage() {
         userAnswer: fullAnswer || "...",
         jobRole: sessionStorage.getItem('demo_role') || "Professional",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
-        currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : (currentTurn < 3 ? 'technical' : 'hr'),
+        currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         previousQuestions: history
       });
       
@@ -289,14 +300,14 @@ export default function InterviewSessionPage() {
       const nextTurnCount = currentTurn + 1;
       setTurnCount(nextTurnCount);
 
-      if (!feedback.isInterviewComplete && nextTurnCount < 8) {
+      if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setCurrentQuestion(feedback.nextQuestion);
         setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
         
-        // Critical verbal acknowledgment + New Question
+        // Sarah acknowledges then asks a DIFFERENT role-specific question
         await triggerSpeech(`${feedback.verbalReaction}. ${feedback.nextQuestion}`);
       } else {
         router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`)
@@ -312,7 +323,7 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
         <BrainCircuit className="w-20 h-20 text-primary animate-pulse mb-8" />
-        <h2 className="text-2xl font-headline font-bold uppercase tracking-widest text-primary">Synchronizing Neural Core</h2>
+        <h2 className="text-2xl font-headline font-bold uppercase tracking-widest text-primary">Calibrating Assessment Engine</h2>
       </div>
     )
   }
@@ -329,8 +340,8 @@ export default function InterviewSessionPage() {
             )}
           </div>
           <div className="space-y-4">
-            <h1 className="text-4xl font-headline font-bold">One-on-One Session</h1>
-            <p className="text-slate-400">Sarah is ready to evaluate your clarity, logic, and professional presence. Speak naturally; turn detection is automatic.</p>
+            <h1 className="text-4xl font-headline font-bold uppercase">One-on-One Session</h1>
+            <p className="text-slate-400">Sarah will evaluate your clarity, logic, and professional presence. Speak naturally; turn detection is automated.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-lg hover:scale-105 transition-all" onClick={startSession}>
             BEGIN ASSESSMENT
@@ -339,7 +350,7 @@ export default function InterviewSessionPage() {
           {!hasCameraPermission && (
             <Alert variant="destructive" className="bg-destructive/10 border-destructive/30 rounded-2xl">
               <ShieldCheck className="h-5 w-5" />
-              <AlertTitle>Hardware Required</AlertTitle>
+              <AlertTitle>Hardware Access Error</AlertTitle>
               <AlertDescription>Please enable camera and microphone access to proceed.</AlertDescription>
             </Alert>
           )}
@@ -352,7 +363,7 @@ export default function InterviewSessionPage() {
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
       <div className="h-14 border-b border-white/5 bg-slate-950 px-8 flex items-center justify-between z-50">
         <div className="flex items-center gap-6">
-          <ShieldCheck className="text-primary w-5 h-5" />
+          <Sparkles className="text-primary w-5 h-5" />
           <Badge variant="outline" className="text-[10px] border-white/10 text-slate-500 py-1 px-3">
             TURN {turnCount + 1}
           </Badge>
@@ -381,7 +392,7 @@ export default function InterviewSessionPage() {
              {fetchingAudio && <Badge className="bg-blue-600 animate-pulse px-4 py-1.5 rounded-full">SYNTHESIZING...</Badge>}
              {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2"><Volume2 className="w-4 h-4" /> SARAH SPEAKING</Badge>}
              {listening && <Badge className="bg-green-600 animate-bounce px-4 py-1.5 rounded-full flex gap-2"><Mic className="w-4 h-4" /> LISTENING</Badge>}
-             {processingTurn && <Badge className="bg-amber-600 animate-pulse px-4 py-1.5 rounded-full text-white">ANALYZING RESPONSE...</Badge>}
+             {processingTurn && <Badge className="bg-amber-600 animate-pulse px-4 py-1.5 rounded-full text-white">ANALYZING LOGIC...</Badge>}
           </div>
 
           <div className="absolute bottom-10 inset-x-10 z-20">
@@ -450,7 +461,7 @@ export default function InterviewSessionPage() {
             ) : (
               <div className="w-full h-16 rounded-[2rem] bg-slate-800/50 flex items-center justify-center text-slate-500 font-bold gap-3 border border-white/5">
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span className="text-xs uppercase tracking-widest">Processing Intelligence...</span>
+                <span className="text-xs uppercase tracking-widest">Processing Assessment...</span>
               </div>
             )}
           </div>
