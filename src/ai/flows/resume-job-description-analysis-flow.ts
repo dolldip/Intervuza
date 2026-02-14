@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for analyzing a user's resume and a job description.
- * It extracts key skills, experience, and keywords from both, which can be used to tailor interview questions.
+ * It extracts key skills, experience, projects, and keywords from both.
  *
  * - resumeJobDescriptionAnalysis - The main function to trigger the analysis.
  * - ResumeJobDescriptionAnalysisInput - The input type for the analysis.
@@ -29,6 +29,10 @@ const ResumeJobDescriptionAnalysisOutputSchema = z.object({
   resume: z.object({
     extractedSkills: z.array(z.string()).describe('List of key skills extracted from the resume.'),
     extractedExperience: z.array(z.string()).describe('List of key experiences/responsibilities extracted from the resume.'),
+    extractedProjects: z.array(z.object({
+      title: z.string(),
+      description: z.string()
+    })).describe('List of projects mentioned in the resume.'),
     extractedKeywords: z.array(z.string()).describe('List of relevant keywords extracted from the resume.'),
   }),
   jobDescription: z.object({
@@ -53,11 +57,15 @@ const resumeJobDescriptionAnalysisPrompt = ai.definePrompt({
   name: 'resumeJobDescriptionAnalysisPrompt',
   input: { schema: ResumeJobDescriptionAnalysisInputSchema },
   output: { schema: ResumeJobDescriptionAnalysisOutputSchema },
-  prompt: `You are an expert HR analyst. Your task is to carefully analyze a job seeker's resume and a specific job description.
+  prompt: `You are an expert HR analyst and Technical Recruiter. Your task is to carefully analyze a job seeker's resume and a specific job description.
 
-First, extract key information from the provided resume. Then, extract key requirements from the job description. Finally, compare the two to identify matching and missing skills.
+Extract the following:
+1. Core skills.
+2. Experience history.
+3. SPECIFIC PROJECTS: Look for any mentioned projects, apps, or initiatives.
+4. Required skills from the JD.
 
-Make sure your extractions are comprehensive and accurate. Ensure the output is strictly in JSON format as per the output schema provided.
+Compare them to find gaps. Ensure the output is strictly in JSON format.
 
 --- Resume Text ---
 {{{resumeText}}}

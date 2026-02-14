@@ -176,7 +176,7 @@ export default function InterviewSessionPage() {
           if (combinedText.length > 20) {
              completeTurn(false);
           }
-        }, 5000); 
+        }, 8000); 
 
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
@@ -317,7 +317,7 @@ export default function InterviewSessionPage() {
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
-        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm find this a bit difficult to explain clearly right now." : "Silence."),
+        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm finding this a bit difficult to explain clearly right now." : "Silence."),
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
@@ -332,9 +332,9 @@ export default function InterviewSessionPage() {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
         
-        if (!feedback.isOfferingHint) {
-          setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
-        }
+        // Update history strictly to avoid repetition
+        const updatedHistory = [...history, feedback.nextQuestion];
+        setAskedQuestions(updatedHistory);
         
         setTranscript("");
         setInterimTranscript("");
@@ -494,13 +494,13 @@ export default function InterviewSessionPage() {
                 <Activity className="w-5 h-5 text-primary mb-3 mx-auto" />
                 <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
                 <p className="text-3xl font-black mt-2">{Math.round(confidenceLevel)}%</p>
-                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_10px_rgba(var(--primary),0.5)]" style={{ width: `${confidenceLevel}%` }} />
+                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${confidenceLevel}%` }} />
               </div>
               <div className="p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:bg-white/10">
                 <Target className="w-5 h-5 text-primary mb-3 mx-auto" />
                 <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Eye Focus</p>
                 <p className="text-3xl font-black mt-2">{Math.round(eyeFocus)}%</p>
-                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_10px_rgba(var(--primary),0.5)]" style={{ width: `${eyeFocus}%` }} />
+                <div className="absolute bottom-0 left-0 h-1 bg-primary transition-all duration-1000 shadow-[0_0_100px_rgba(var(--primary),0.5)]" style={{ width: `${eyeFocus}%` }} />
               </div>
             </div>
 
