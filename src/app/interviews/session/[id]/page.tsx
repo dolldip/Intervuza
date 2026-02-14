@@ -98,11 +98,11 @@ export default function InterviewSessionPage() {
         let change = (Math.random() * 4) - 2.5; 
         
         // Heavy penalty for silence when user is supposed to be speaking
-        if (isListening && currentText.length < 5) change -= 6;
+        if (isListening && currentText.length < 5) change -= 8;
         // Bonus for steady, meaningful speaking
-        if (isListening && currentText.length > 40) change += 4;
+        if (isListening && currentText.length > 40) change += 5;
         // Penalty for excessive rambling
-        if (isListening && currentText.length > 600) change -= 3;
+        if (isListening && currentText.length > 600) change -= 4;
         
         return Math.min(99, Math.max(5, prev + change));
       });
@@ -110,9 +110,9 @@ export default function InterviewSessionPage() {
       setEyeFocus(prev => {
         let change = (Math.random() * 8) - 4.5;
         // Simulate distraction events
-        if (Math.random() > 0.95) change = -25;
+        if (Math.random() > 0.95) change = -30;
         // Focus improves during active exchanges
-        if (isSpeaking) change += 3;
+        if (isSpeaking) change += 4;
         
         return Math.min(100, Math.max(0, prev + change));
       });

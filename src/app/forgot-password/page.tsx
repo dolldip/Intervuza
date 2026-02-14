@@ -25,6 +25,7 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
+      // Triggers the password reset email via Firebase Auth
       await sendPasswordResetEmail(auth, email);
       setSent(true);
       toast({
@@ -32,11 +33,16 @@ export default function ForgotPasswordPage() {
         description: "A password reset link has been sent to your inbox.",
       });
     } catch (error: any) {
-      console.error(error);
+      console.error("Reset error:", error);
+      let message = "Could not send reset email. Please check the address and try again.";
+      if (error.code === 'auth/user-not-found') {
+        message = "No account found with this email address.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Reset Failed",
-        description: "Could not send reset email. Please check the address and try again.",
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -69,7 +75,8 @@ export default function ForgotPasswordPage() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <p className="font-medium">Check your email for instructions.</p>
-                <Button variant="outline" className="w-full rounded-xl" asChild>
+                <p className="text-xs text-muted-foreground">Don't forget to check your spam folder!</p>
+                <Button variant="outline" className="w-full rounded-xl mt-4" asChild>
                   <Link href="/login">Return to Login</Link>
                 </Button>
               </div>
