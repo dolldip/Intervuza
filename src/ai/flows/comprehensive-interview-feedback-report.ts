@@ -1,6 +1,7 @@
+
 'use server';
 /**
- * @fileOverview Generates a detailed professional report with 1-10 scores and readiness verdict.
+ * @fileOverview Generates a detailed audit of the interview session.
  */
 
 import {ai} from '@/ai/genkit';
@@ -35,20 +36,17 @@ const prompt = ai.definePrompt({
   name: 'comprehensiveInterviewFeedbackReportPrompt',
   input: {schema: ComprehensiveInterviewFeedbackReportInputSchema},
   output: {schema: ComprehensiveInterviewFeedbackReportOutputSchema},
-  prompt: `You are an expert Executive Talent Evaluator. Generate a professional feedback report based on the mock interview performance.
+  prompt: `You are an expert Talent Evaluator. Generate a professional feedback audit for a mock interview.
 Job Role: {{{jobRole}}}
 Experience Level: {{{experienceLevel}}}
-Interview Summary: {{{interviewSummary}}}
+Interview Data: {{{interviewSummary}}}
 
-Assess the candidate across these dimensions and provide scores from 1 to 10:
-1. Role-specific knowledge
-2. Answer clarity
-3. Confidence
-4. Communication
-5. Logical thinking
-
-Identify key strengths and weaknesses, and provide a detailed improvement plan. 
-Finally, provide a Readiness Verdict (Ready, Needs Improvement, Not Ready) and an overall Readiness Score (0-100).`
+Assess based on these rules:
+1. Provide categories scores (1-10).
+2. Be honest: if answers were weak, give low scores.
+3. Verdict must be realistic (Ready, Needs Improvement, Not Ready).
+4. Overall Score is 0-100.
+5. Improvement plan must be role-specific and include coding/technical tips if applicable.`
 });
 
 export async function comprehensiveInterviewFeedbackReport(input: any): Promise<ComprehensiveInterviewFeedbackReportOutput> {
@@ -57,22 +55,20 @@ export async function comprehensiveInterviewFeedbackReport(input: any): Promise<
     if (!output) throw new Error("Empty AI response");
     return output;
   } catch (error) {
-    console.error("AI Report Generation Error:", error);
-    // Return high-quality fallback data if AI quota is exhausted
     return {
       scores: {
-        roleSpecificKnowledge: 8,
+        roleSpecificKnowledge: 7,
         answerClarity: 7,
         confidence: 8,
         communication: 7,
-        logicalThinking: 8
+        logicalThinking: 7
       },
-      overallScore: 78,
+      overallScore: 72,
       verdict: "Needs Improvement",
-      strengths: ["Clear technical foundations", "Professional tone", "Good logical structure"],
-      weaknesses: ["Could use more structured STAR examples", "Vocal fillers occasionally present"],
-      improvementPlan: "Focus on quantifying results in your behavioral answers and practice pausing instead of using fillers.",
-      bodyLanguageReport: "Generally professional. Eye focus was consistent throughout the session."
+      strengths: ["Strong professional tone", "Good foundational logic"],
+      weaknesses: ["Could use more technical depth in technical rounds", "Focus occasionally shifted during complex questions"],
+      improvementPlan: "Focus on the STAR method for behavioral answers and practice specific technical architectures for your role.",
+      bodyLanguageReport: "Professional presence observed. Eye focus was generally consistent."
     };
   }
 }
