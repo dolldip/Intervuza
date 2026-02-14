@@ -69,7 +69,7 @@ export default function Home() {
                 </Badge>
                 <h1 className="text-6xl font-headline font-black tracking-tighter sm:text-7xl lg:text-9xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1]">
                   <AnimatedTitle text="PrepWise" /> <br /> 
-                  <span className="text-primary"><AnimatedTitle text="with Interviews" /></span>
+                  <span className="text-primary"><AnimatedTitle text="Interviews" /></span>
                 </h1>
                 <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:800ms]">
                   The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
@@ -172,7 +172,7 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             <Link className="flex items-center space-x-2" href="/">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <graduationCap className="text-white w-5 h-5" />
+                <GraduationCap className="text-white w-5 h-5" />
               </div>
               <span className="font-headline font-bold text-xl tracking-tight">PrepWise</span>
             </Link>
