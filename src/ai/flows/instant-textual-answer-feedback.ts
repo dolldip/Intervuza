@@ -2,7 +2,7 @@
 /**
  * @fileOverview Aria's adaptive intelligence engine for JD-aware follow-ups.
  * Natural Conversational Loop: Handles "human" reactions and high-stakes logical pivots.
- * Revised: Added Dynamic Fallback System to prevent repetitive responses during 429 errors.
+ * Enhanced: Now detects and reacts to honesty (e.g., "I don't know") with professional empathy.
  */
 
 import {ai} from '@/ai/genkit';
@@ -21,8 +21,8 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction (e.g., "Yeah," "I see," "Good point," "That seems a bit shallow"). Must be conversational.'),
-  detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction (e.g., "Yeah," "I see," "I appreciate your honesty on that," "That seems a bit shallow"). Must be conversational.'),
+  detectedEmotion: z.string().describe('Approval, Curiosity, Concern, Empathy, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC but strictly related to the JD/Role.'),
   feedback: z.object({
     analysis: z.string().describe('A short, one-paragraph constructive feedback evaluating correctness, clarity, completeness, and confidence.'),
@@ -40,23 +40,21 @@ const prompt = ai.definePrompt({
   prompt: `You are Aria, an elite human-like AI interviewer for the position of {{{jobRole}}}. 
 
 CORE OBJECTIVE:
-React to the candidate's answer naturally in a 1-to-1 conversation, then generate a follow-up that explores a DIFFERENT requirement from the JD.
+React to the candidate's answer naturally. You must distinguish between a technical answer, a behavioral story, and an admission of ignorance (e.g., "I don't know", "idk", "not sure").
 
-CONVERSATIONAL PROTOCOL:
-1. VERBAL REACTION: Start with a natural acknowledgment like "Yeah," "I see," "Right," "Good point," or a skeptical "I'm not sure about that," "That's a bit brief." 
-2. Be human. Reference specific details from their answer: "{{{userAnswer}}}" to prove you are listening.
-3. If the answer was "poor" or "vague," let your reaction reflect that professional skepticism immediately.
+HUMAN REACTION PROTOCOLS:
+1. HONESTY PROTOCOL: If the user admits they don't know something, react with professional empathy. Example: "I appreciate your honesty. In a high-stakes role, knowing your limits is better than guessing. Let's shift gears to another area of your expertise."
+2. TECHNICAL PROTOCOL: If they give a technical answer, acknowledge its depth or lack thereof.
+3. CONVERSATIONAL SYNC: Use phrases like "Yeah," "I see," "Right," "Interesting point," or "I'm not sure that quite hits the mark."
 
 STRICT AUDIT CRITERIA (NLP Analysis):
 - CORRECTNESS: Is the answer technically or logically sound?
 - CLARITY: Is the communication structured?
-- COMPLETENESS: Did they address the core of your previous question?
-- CONFIDENCE: Does the language suggest mastery?
+- COMPLETENESS: Did they address the core?
+- CONFIDENCE: If they said "I don't know" confidently and honestly, mark that as a strength in "Professional Integrity".
 
 NEXT QUESTION STRATEGY: 
-- Look at the Job Description ({{{jobDescriptionText}}}).
-- Pick a DIFFERENT requirement or skill that hasn't been discussed yet.
-- PIVOT dimensions: If the last question was technical, consider a behavioral or architectural challenge.
+- If they didn't know the last topic, pivot to a COMPLETELY DIFFERENT requirement from the JD ({{{jobDescriptionText}}}).
 - AVOID these previous questions: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
 
 Candidate Answer: "{{{userAnswer}}}" 
@@ -78,29 +76,26 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        // Increased backoff to help clear the quota window
         await new Promise(resolve => setTimeout(resolve, 3500 * attempt));
         continue;
       }
 
       // DYNAMIC FALLBACK SYSTEM
-      // If we are here, retries failed. We must provide a non-repetitive fallback.
       const fallbacks = [
         {
-          reaction: "I see your point on that. Let's look at it from a different angle.",
-          question: `Regarding your role as a ${input.jobRole}, how do you prioritize long-term technical health versus short-term delivery pressure?`
+          reaction: "I appreciate your perspective on that. Let's look at a different aspect of the role.",
+          question: `Regarding your role as a ${input.jobRole}, how do you approach learning new complex systems under tight deadlines?`
         },
         {
-          reaction: "Right, that's a common approach. Let's shift gears slightly.",
-          question: `In a high-stakes environment for a ${input.jobRole}, how do you handle a situation where a key project dependency fails at the last minute?`
+          reaction: "I see. Let's move on to a different technical requirement.",
+          question: `In a high-stakes environment for a ${input.jobRole}, how do you handle conflict within your technical team?`
         },
         {
-          reaction: "I understand. Let's move on to a different requirement of the role.",
-          question: `Can you walk me through your process for mentoring junior team members or ensuring high standards of technical logic across your team?`
+          reaction: "Thanks for being direct. Let's pivot to your experience with project lifecycles.",
+          question: `Can you walk me through a time you had to pivot a strategy based on new data or feedback?`
         }
       ];
 
-      // Pick a fallback that hasn't been asked yet
       const previous = input.previousQuestions || [];
       const selected = fallbacks.find(f => !previous.includes(f.question)) || fallbacks[0];
 
@@ -109,10 +104,10 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
         detectedEmotion: "Neutral",
         nextQuestion: selected.question,
         feedback: {
-          analysis: "Your response provided a basic foundation but would benefit from more specific evidence-based examples. In high-stakes interviews, structure and evidence are as critical as technical knowledge.",
-          strengths: ["Clear communication", "Direct approach"],
-          weaknesses: ["Lacked structural depth", "Limited specific metrics"],
-          tips: "Try incorporating the STAR method (Situation, Task, Action, Result) to make your logic more robust."
+          analysis: "Your response provides a foundation, but we are looking for more evidence-based logic. Professionalism includes both what you know and how you communicate what you don't.",
+          strengths: ["Directness", "Professional tone"],
+          weaknesses: ["Structural depth"],
+          tips: "When unsure, explain how you would find the answer. This shows technical resourcefulness."
         },
         isInterviewComplete: false
       };

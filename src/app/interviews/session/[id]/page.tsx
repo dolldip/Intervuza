@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -200,17 +199,14 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
-        // SILENCE DETECTION FOR AUTO-SUBMIT (Natural Conversational Loop)
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         
         const totalTextLen = (transcriptAccumulatorRef.current + interimText).trim().length;
         if (totalTextLen > 5) {
-          // If the user has said something substantial, trigger auto-submit after 2.5s of silence
           silenceTimeoutRef.current = setTimeout(() => {
             completeTurn(false);
           }, 2500); 
         } else if (totalTextLen === 0) {
-          // If they haven't started talking yet, wait longer before flagging as "stuck"
           silenceTimeoutRef.current = setTimeout(() => {
             setIsStuck(true);
           }, 8000);
@@ -432,12 +428,12 @@ export default function InterviewSessionPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-green-400 uppercase tracking-widest">Linguistic Strength</p>
-                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.strengths[0]}</p>
+                        <p className="text-[7px] md:text-[9px] font-black text-green-400 uppercase tracking-widest">Insight</p>
+                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.analysis}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-amber-400 uppercase tracking-widest">NLP Audit Note</p>
-                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.weaknesses[0]}</p>
+                        <p className="text-[7px] md:text-[9px] font-black text-amber-400 uppercase tracking-widest">Aria Tip</p>
+                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.tips}</p>
                       </div>
                     </div>
                   </div>
