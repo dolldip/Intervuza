@@ -312,7 +312,7 @@ export default function InterviewSessionPage() {
     }
   };
 
-  const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://picsum.photos/seed/aria/1280/720";
+  const ariaImage = PlaceHolderImages.find(img => img.id === 'aria-persona')?.imageUrl || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000";
 
   if (initializing) {
     return (
