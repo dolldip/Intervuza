@@ -25,7 +25,8 @@ import {
   RefreshCw,
   Play,
   MicOff,
-  Waveform
+  Waveform,
+  ChevronRight
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -67,7 +68,7 @@ export default function InterviewSessionPage() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const recognitionRef = useRef<any>(null)
 
-  // Camera and Audio Permission Request
+  // Initial Media Permission Request
   useEffect(() => {
     async function setupMedia() {
       try {
@@ -78,13 +79,6 @@ export default function InterviewSessionPage() {
         
         setStream(mediaStream)
         setHasCameraPermission(true)
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch(e => console.error("Video play error:", e));
-          };
-        }
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
@@ -119,10 +113,6 @@ export default function InterviewSessionPage() {
 
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        if (event.error === 'no-speech') {
-          // Restart if it times out
-          if (listening) recognitionRef.current.start();
-        }
       };
     }
 
@@ -135,6 +125,14 @@ export default function InterviewSessionPage() {
       }
     };
   }, []);
+
+  // Ensure Video Stream is attached when UI loads
+  useEffect(() => {
+    if (sessionStarted && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.error("Video play error:", e));
+    }
+  }, [sessionStarted, stream]);
 
   // Neural Analysis Simulation
   useEffect(() => {
@@ -196,7 +194,7 @@ export default function InterviewSessionPage() {
     if (!authLoading) init();
   }, [profile, authLoading])
 
-  // Sarah Speaks and Manages Mic
+  // Sarah Speaks
   const triggerSpeech = async (text: string) => {
     setSpeaking(true)
     setListening(false)
@@ -205,10 +203,7 @@ export default function InterviewSessionPage() {
     try {
       const { media } = await textToSpeech(text)
       setAudioSrc(media)
-      if (audioRef.current) {
-        audioRef.current.load();
-        await audioRef.current.play();
-      }
+      // Playback triggered by useEffect on audioSrc
     } catch (err) {
       console.warn("Speech generation failed:", err)
       setSpeaking(false)
@@ -216,6 +211,14 @@ export default function InterviewSessionPage() {
       if (recognitionRef.current) recognitionRef.current.start();
     }
   }
+
+  // Handle Audio State
+  useEffect(() => {
+    if (audioSrc && audioRef.current) {
+      audioRef.current.load();
+      audioRef.current.play().catch(e => console.error("Audio play error", e));
+    }
+  }, [audioSrc]);
 
   const startSession = () => {
     setSessionStarted(true);
@@ -228,7 +231,7 @@ export default function InterviewSessionPage() {
     if (recognitionRef.current) recognitionRef.current.start();
   };
 
-  // Automating Turn Progression
+  // Turn Progression
   const completeTurn = async () => {
     if (processingTurn) return;
     setProcessingTurn(true);
@@ -245,7 +248,6 @@ export default function InterviewSessionPage() {
     });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
-    // Save turn data to Firebase if not demo
     if (!isMockConfig && db && params.id !== "demo-session") {
       try {
         const interviewRef = doc(db, "interviews", params.id as string);
@@ -260,10 +262,8 @@ export default function InterviewSessionPage() {
       } catch (e) { console.error("Firebase update failed", e); }
     }
 
-    // Reaction & Next Step
     try {
       if (currentIdx < questions.length - 1) {
-        // Get a brief reaction from AI to feel "real"
         const reaction = await instantTextualAnswerFeedback({
           interviewQuestion: questions[currentIdx],
           userAnswer: transcript || "...",
@@ -276,14 +276,12 @@ export default function InterviewSessionPage() {
         setTimeLeft(180);
         setAudioSrc(null);
         
-        // Sarah says something back, then the next question
         const responseText = `I understand. ${reaction.relevanceFeedback.split('.')[0]}. Now, let's move to the next topic. ${questions[nextIdx]}`;
         await triggerSpeech(responseText);
       } else {
         router.push(`/results/${isMockConfig || params.id === "demo-session" ? 'demo-results' : params.id}`)
       }
     } catch (err) {
-      console.error(err);
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1);
         setTranscript("");
@@ -365,7 +363,6 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative overflow-hidden bg-slate-950">
-        {/* LEFT PANEL: SARAH AI & QUESTION */}
         <div className="flex-1 relative flex items-center justify-center border-r border-white/5 bg-black">
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-10" />
           
@@ -377,7 +374,6 @@ export default function InterviewSessionPage() {
               data-ai-hint="professional headshot female"
             />
             
-            {/* HUD Status Elements */}
             <div className="absolute top-12 left-12 z-20 flex flex-col gap-4">
                {speaking && (
                  <div className="flex items-center gap-3 bg-primary/90 text-white px-5 py-2.5 rounded-2xl animate-pulse font-bold text-sm shadow-xl">
@@ -411,11 +407,8 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* RIGHT PANEL: LIVE BIOMETRIC ANALYSIS & TRANSCRIPTION */}
         <div className="w-[540px] bg-slate-950 border-l border-white/10 flex flex-col z-30 relative shadow-2xl">
           <div className="p-8 space-y-10 flex-1 overflow-y-auto">
-            
-            {/* LIVE FEED */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-3">
                 <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
@@ -433,7 +426,6 @@ export default function InterviewSessionPage() {
                   className="w-full h-full object-cover transform scale-x-[-1]"
                 />
                 
-                {/* HUD Scan Overlay */}
                 <div className="absolute inset-0 pointer-events-none z-20">
                   <div className="absolute inset-x-0 h-1 bg-primary/40 shadow-[0_0_30px_rgba(var(--primary),1)] animate-[scan_5s_linear_infinite]" />
                   <div className="absolute bottom-6 left-6 flex items-center gap-2">
@@ -446,7 +438,6 @@ export default function InterviewSessionPage() {
               </div>
             </div>
 
-            {/* NEURAL STATS */}
             <div className="space-y-6">
                <div className="grid grid-cols-2 gap-4">
                  {[
@@ -465,20 +456,12 @@ export default function InterviewSessionPage() {
                  ))}
                </div>
 
-               {/* REAL-TIME TRANSCRIPTION */}
                <div className="space-y-4 pt-4">
                   <div className="flex items-center justify-between px-3">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                       <Mic className={`w-3 h-3 ${listening ? 'text-green-500' : 'text-slate-700'}`} />
                       Live Transcription
                     </label>
-                    {listening && (
-                      <div className="flex items-center gap-1">
-                        <div className="w-1 h-3 bg-primary animate-[bounce_1s_infinite]" />
-                        <div className="w-1 h-5 bg-primary animate-[bounce_0.8s_infinite]" />
-                        <div className="w-1 h-2 bg-primary animate-[bounce_1.2s_infinite]" />
-                      </div>
-                    )}
                   </div>
                   <div className="w-full bg-slate-900/50 border border-white/10 text-white rounded-[2.5rem] p-8 h-48 overflow-y-auto scrollbar-hide">
                     {transcript ? (
@@ -491,7 +474,6 @@ export default function InterviewSessionPage() {
             </div>
           </div>
 
-          {/* ACTION HUB (REPLACED NEXT WITH A FINISH/PROCESS BUTTON FOR FAILSAFE) */}
           <div className="p-10 border-t border-white/10 bg-slate-950/95 backdrop-blur-3xl">
             {listening ? (
               <Button 
@@ -512,7 +494,6 @@ export default function InterviewSessionPage() {
                     <Loader2 className="animate-spin h-4 w-4 text-primary" />
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Awaiting AI Transition...</span>
                  </div>
-                 <Button variant="ghost" size="sm" onClick={completeTurn} className="text-slate-700 hover:text-white">Skip to next (Emergency)</Button>
               </div>
             )}
             <p className="text-center text-[9px] text-slate-700 mt-6 uppercase tracking-[0.3em] font-black">
@@ -524,7 +505,7 @@ export default function InterviewSessionPage() {
 
       <audio 
         ref={audioRef} 
-        src={audioSrc || ""} 
+        src={audioSrc ?? undefined} 
         onEnded={handleAudioEnded} 
         onPlay={() => setSpeaking(true)}
         className="hidden" 
