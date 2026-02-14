@@ -12,6 +12,23 @@ import {
   Globe,
   Sparkles
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+function AnimatedTitle({ text, className }: { text: string; className?: string }) {
+  return (
+    <span className={cn("inline-flex flex-wrap justify-center overflow-hidden", className)}>
+      {text.split("").map((char, i) => (
+        <span
+          key={i}
+          className="inline-block animate-letter-reveal opacity-0"
+          style={{ animationDelay: `${i * 30}ms` }}
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function Home() {
   return (
@@ -22,7 +39,9 @@ export default function Home() {
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
             <GraduationCap className="text-white w-6 h-6" />
           </div>
-          <span className="font-headline font-bold text-2xl tracking-tighter">PrepWise</span>
+          <span className="font-headline font-bold text-2xl tracking-tighter">
+            <AnimatedTitle text="PrepWise" />
+          </span>
         </Link>
         <nav className="ml-auto flex gap-8 items-center">
           <Link className="text-sm font-bold text-slate-400 hover:text-white transition-colors hidden md:block" href="#features">
@@ -44,18 +63,19 @@ export default function Home() {
         <section className="w-full py-24 md:py-32 lg:py-48 relative overflow-hidden">
           <div className="container px-4 md:px-6 mx-auto relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
-              <div className="space-y-4 max-w-4xl">
+              <div className="space-y-4 max-w-5xl">
                 <Badge variant="secondary" className="glass px-6 py-2 rounded-full text-primary font-black uppercase tracking-[0.2em] text-[10px] animate-sudden">
                   <Sparkles className="w-3 h-3 mr-2" /> Neural Coaching Engine
                 </Badge>
-                <h1 className="text-5xl font-headline font-black tracking-tighter sm:text-7xl lg:text-8xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1] animate-entrance">
-                  Master High-Stakes <br /> <span className="text-primary">Interviews</span> with Aria
+                <h1 className="text-5xl font-headline font-black tracking-tighter sm:text-7xl lg:text-8xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1]">
+                  <AnimatedTitle text="Master High-Stakes" /> <br /> 
+                  <span className="text-primary"><AnimatedTitle text="Interviews" /></span> <AnimatedTitle text="with Aria" />
                 </h1>
-                <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:200ms]">
+                <p className="mx-auto max-w-[800px] text-slate-400 text-lg md:text-2xl font-body leading-relaxed animate-entrance [animation-delay:800ms]">
                   The only AI platform that analyzes biometrics, technical logic, and communication structure to deliver professional coaching.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-6 mt-12 animate-entrance [animation-delay:400ms]">
+              <div className="flex flex-col sm:flex-row gap-6 mt-12 animate-entrance [animation-delay:1000ms]">
                 <Button size="lg" className="h-16 px-10 text-lg rounded-2xl shadow-2xl shadow-primary/40 group font-black transition-all hover:scale-105" asChild>
                   <Link href="/register">
                     START FREE ASSESSMENT

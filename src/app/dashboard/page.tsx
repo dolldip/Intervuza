@@ -21,6 +21,23 @@ import {
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
 import { doc, collection, query, orderBy, limit } from "firebase/firestore"
+import { cn } from "@/lib/utils"
+
+function AnimatedText({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
+  return (
+    <span className={cn("inline-flex flex-wrap overflow-hidden", className)}>
+      {text.split("").map((char, i) => (
+        <span
+          key={i}
+          className="inline-block animate-letter-reveal opacity-0"
+          style={{ animationDelay: `${delay + i * 25}ms` }}
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser()
@@ -69,20 +86,23 @@ export default function DashboardPage() {
     )
   }
 
+  const welcomeName = profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate";
+
   return (
     <div className="p-8 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="animate-entrance">
-          <div className="flex items-center gap-2 mb-2">
+        <div>
+          <div className="flex items-center gap-2 mb-2 animate-sudden">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
           </div>
           <h1 className="text-5xl font-headline font-black tracking-tight leading-tight">
-            Welcome back, <br /> <span className="text-primary">{profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate"}</span>
+            <AnimatedText text="Welcome back," /> <br /> 
+            <span className="text-primary"><AnimatedText text={welcomeName} delay={400} /></span>
           </h1>
-          <p className="text-slate-400 text-xl mt-2 font-medium">Ready for your professional audit today?</p>
+          <p className="text-slate-400 text-xl mt-2 font-medium animate-entrance [animation-delay:800ms]">Ready for your professional audit today?</p>
         </div>
-        <div className="flex items-center gap-4 animate-sudden [animation-delay:300ms]">
+        <div className="flex items-center gap-4 animate-sudden [animation-delay:1000ms]">
           <Button variant="outline" asChild className="hidden sm:flex h-14 rounded-2xl px-8 glass font-bold">
             <Link href="/profile">
               <UserPen className="mr-2 w-5 h-5" />
@@ -141,7 +161,7 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-6">
                   <BrainCircuit className="w-8 h-8 text-primary shrink-0 mt-1" />
                   <div className="space-y-3">
-                    <p className="font-black text-xs uppercase tracking-[0.2em] text-primary">Aria's Strategic Insight</p>
+                    <p className="font-black text-xs uppercase tracking-[0.2em] text-primary">PrepWise Strategic Insight</p>
                     <p className="text-lg leading-relaxed text-slate-300 font-medium italic">
                       {profile?.education ? `Your background from ${profile.education} is being used to calibrate the technical depth of your next session.` : "Update your education details so Aria can tailor the complexity of her questioning."}
                     </p>
@@ -206,7 +226,7 @@ export default function DashboardPage() {
             <CardHeader className="p-10 pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <Zap className="w-5 h-5 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Aria Strategy</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">PrepWise Strategy</span>
               </div>
               <CardTitle className="font-headline text-4xl font-black leading-tight">Elite <br /> Preparation</CardTitle>
             </CardHeader>

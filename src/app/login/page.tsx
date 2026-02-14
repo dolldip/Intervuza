@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from 'react';
@@ -20,6 +19,23 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+function AnimatedTitle({ text, className }: { text: string; className?: string }) {
+  return (
+    <span className={cn("inline-flex overflow-hidden", className)}>
+      {text.split("").map((char, i) => (
+        <span
+          key={i}
+          className="inline-block animate-letter-reveal opacity-0"
+          style={{ animationDelay: `${i * 30}ms` }}
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -127,11 +143,13 @@ export default function LoginPage() {
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 transition-transform group-hover:scale-110">
               <GraduationCap className="text-white w-7 h-7" />
             </div>
-            <span className="font-headline font-black text-4xl tracking-tighter">PrepWise</span>
+            <span className="font-headline font-black text-4xl tracking-tighter">
+              <AnimatedTitle text="PrepWise" />
+            </span>
           </Link>
           <div className="space-y-1">
-            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Security Portal</h2>
-            <p className="text-slate-500 font-medium">Authentication required for intelligence access.</p>
+            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Security Portal</h2>
+            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Authentication required for intelligence access.</p>
           </div>
         </div>
 
