@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -46,6 +45,7 @@ export default function InterviewSessionPage() {
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
   const [hasCameraPermission, setHasCameraPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [askedQuestions, setAskedQuestions] = useState<string[]>([])
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -54,10 +54,10 @@ export default function InterviewSessionPage() {
   const transcriptAccumulatorRef = useRef("")
   
   // Ref for latest state in callbacks
-  const stateRef = useRef({ speaking, listening, processingTurn, turnCount, currentQuestion })
+  const stateRef = useRef({ speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions })
   useEffect(() => {
-    stateRef.current = { speaking, listening, processingTurn, turnCount, currentQuestion }
-  }, [speaking, listening, processingTurn, turnCount, currentQuestion])
+    stateRef.current = { speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions }
+  }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions])
 
   // Camera and Mic Setup
   useEffect(() => {
@@ -110,18 +110,14 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
-        const currentFull = (transcriptAccumulatorRef.current + interimText).toLowerCase();
-        const finishPhrases = ["i'm done", "that's all", "i am done", "that is all", "finish answer", "no idea", "i don't know"];
-        const detectedFinish = finishPhrases.some(p => currentFull.includes(p));
-
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
-          if (combinedText.length > 5 || detectedFinish) {
+          if (combinedText.length > 5) {
             completeTurn();
           }
-        }, detectedFinish ? 1500 : 4000);
+        }, 4000);
       };
 
       recognitionRef.current.onerror = (event: any) => {
@@ -165,9 +161,12 @@ export default function InterviewSessionPage() {
         })
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
+        setAskedQuestions([result.firstQuestion])
       } catch (err) {
+        const fallbackQ = "To start off, could you tell me a bit about your professional background?";
         setOpening("Hello, I'm Sarah. I'll be conducting your interview today.")
-        setCurrentQuestion("To start off, could you tell me a bit about your professional background?")
+        setCurrentQuestion(fallbackQ)
+        setAskedQuestions([fallbackQ])
       } finally {
         setInitializing(false)
       }
@@ -233,7 +232,7 @@ export default function InterviewSessionPage() {
   };
 
   const completeTurn = async () => {
-    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
+    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question, askedQuestions: history } = stateRef.current;
     if (isProcessing) return;
     
     setProcessingTurn(true);
@@ -253,17 +252,19 @@ export default function InterviewSessionPage() {
         userAnswer: fullAnswer || "...",
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Mid-level",
-        currentRound: currentTurn < 4 ? 'technical' : 'hr'
+        currentRound: currentTurn < 4 ? 'technical' : 'hr',
+        previousQuestions: history
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
       const nextTurnCount = currentTurn + 1;
       setTurnCount(nextTurnCount);
 
-      const shouldFinish = feedback.isInterviewComplete && nextTurnCount >= 6;
+      const shouldFinish = feedback.isInterviewComplete && nextTurnCount >= 5;
 
       if (!shouldFinish && nextTurnCount < 10) {
         setCurrentQuestion(feedback.nextQuestion);
+        setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
@@ -275,12 +276,12 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       console.error("Turn processing error", err);
-      // Fallback behavior to prevent stopping
       const nextTurnCount = currentTurn + 1;
       setTurnCount(nextTurnCount);
       if (nextTurnCount < 6) {
-        const fallbackNext = "I see. Let's move on. Can you describe a challenging project you worked on recently?";
+        const fallbackNext = "I see. Let's move on. Can you describe how you handle complex requirements in your daily work?";
         setCurrentQuestion(fallbackNext);
+        setAskedQuestions(prev => [...prev, fallbackNext]);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
@@ -316,7 +317,7 @@ export default function InterviewSessionPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold">Ready to Start?</h1>
-            <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. The interview will proceed automatically.</p>
+            <p className="text-slate-400 text-lg">Sarah will speak naturally. Just talk to her when she finishes. She will automatically detect when you are done speaking.</p>
           </div>
           <Button className="w-full h-20 rounded-full bg-primary text-xl font-bold shadow-2xl hover:scale-105 transition-transform" onClick={startSession}>
             BEGIN ASSESSMENT
@@ -352,7 +353,6 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative bg-slate-950">
-        {/* Sarah View */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <img 
             src={`https://picsum.photos/seed/sarah-${currentEmotion}/1200/1200`} 
@@ -385,7 +385,6 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* User View & Stats */}
         <div className="w-[420px] bg-slate-950 border-l border-white/10 flex flex-col z-30">
           <div className="p-6 space-y-6 flex-1 overflow-y-auto">
             <div className="space-y-4">
@@ -399,11 +398,6 @@ export default function InterviewSessionPage() {
                   className="w-full h-full object-cover grayscale-[0.4]" 
                 />
                 <div className="absolute inset-x-0 h-[1px] bg-primary/40 shadow-[0_0_15px_#3b82f6] animate-[scan_5s_linear_infinite]" />
-                {!hasCameraPermission && (
-                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-center p-4">
-                     <p className="text-xs text-slate-400">Camera access is required to see your feed.</p>
-                   </div>
-                )}
               </div>
             </div>
 
