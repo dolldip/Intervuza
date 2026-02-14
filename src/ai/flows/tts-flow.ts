@@ -19,7 +19,15 @@ const TTSOutputSchema = z.object({
 });
 
 export async function textToSpeech(text: string): Promise<{ media: string; fallback?: boolean }> {
-  return ttsFlow(text);
+  try {
+    return await ttsFlow(text);
+  } catch (error) {
+    console.warn("TTS Flow error. Returning fallback flag.");
+    return {
+      media: "",
+      fallback: true,
+    };
+  }
 }
 
 const ttsFlow = ai.defineFlow(

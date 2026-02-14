@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating a comprehensive interview feedback report.
@@ -15,13 +16,6 @@ const ComprehensiveInterviewFeedbackReportInputSchema = z.object({
   overallVoiceAnalysisFeedback: z.string().describe('Summary of voice-based analysis.'),
   overallCameraAnalysisFeedback: z.string().describe('Summary of camera-based analysis.'),
   confidenceConsistencyScore: z.number().describe('Confidence score (0-100).'),
-  perQuestionFeedback: z.array(z.object({
-    question: z.string(),
-    originalAnswerSummary: z.string(),
-    strengths: z.array(z.string()),
-    weaknesses: z.array(z.string()),
-    improvedSampleAnswer: z.string(),
-  })).optional()
 });
 
 const ComprehensiveInterviewFeedbackReportOutputSchema = z.object({
@@ -47,16 +41,21 @@ const prompt = ai.definePrompt({
   name: 'comprehensiveInterviewFeedbackReportPrompt',
   input: {schema: ComprehensiveInterviewFeedbackReportInputSchema},
   output: {schema: ComprehensiveInterviewFeedbackReportOutputSchema},
-  prompt: `You are an expert AI Interview Coach. Provide a comprehensive feedback report.
-User Role: {{{jobRole}}} ({{{experienceLevel}}})
-Summary: {{{interviewSummary}}}
-Scores & Feedback provided: Text:{{{overallTextAnalysisFeedback}}}, Voice:{{{overallVoiceAnalysisFeedback}}}, Camera:{{{overallCameraAnalysisFeedback}}}`
+  prompt: `You are an expert AI Interview Coach. Your task is to provide a comprehensive and actionable feedback report for a job seeker.
+
+Job Role: {{{jobRole}}} ({{{experienceLevel}}})
+Interview Summary: {{{interviewSummary}}}
+Scores: Text:{{{overallTextAnalysisFeedback}}}, Voice:{{{overallVoiceAnalysisFeedback}}}, Camera:{{{overallCameraAnalysisFeedback}}}
+Confidence Score: {{{confidenceConsistencyScore}}}
+
+Synthesize this into a structured report focusing on overall scores, strengths, weaknesses, and a detailed improvement plan.`
 });
 
 export async function comprehensiveInterviewFeedbackReport(input: any): Promise<ComprehensiveInterviewFeedbackReportOutput> {
   try {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) throw new Error("No AI output");
+    return output;
   } catch (error) {
     console.warn("AI Quota exceeded or error. Providing simulated report.");
     return {
