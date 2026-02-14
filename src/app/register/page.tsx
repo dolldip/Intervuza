@@ -48,16 +48,23 @@ export default function RegisterPage() {
 
       toast({
         title: "Account Created",
-        description: "Welcome to AssessAI!",
+        description: "Welcome to AssessAI! Your professional profile is ready.",
       });
       
       router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
+      let message = "Something went wrong during registration.";
+      if (error.code === 'auth/email-already-in-use') {
+        message = "This email is already registered. Please log in instead.";
+      } else if (error.code === 'auth/weak-password') {
+        message = "Password should be at least 6 characters.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: error.message || "Something went wrong.",
+        description: message,
       });
     } finally {
       setLoading(false);
