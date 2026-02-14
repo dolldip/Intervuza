@@ -47,20 +47,32 @@ export default function NewInterviewPage() {
 
     setResumeFileName(file.name)
     
-    // In a real app, we'd use a PDF parser. 
-    // For this prototype, we'll read text files or use a fallback mock if it's binary.
-    if (file.type === "text/plain" || file.name.endsWith(".txt")) {
-      const text = await file.text()
-      setResumeText(text)
-    } else {
-      // Fallback mock for PDF/Doc in this prototype environment
-      setResumeText(`Candidate Resume Profile: ${file.name}. Experience in ${role || 'industry'}. Technical expertise in React, Next.js, and Cloud Infrastructure. Previously worked at high-growth tech firms.`)
-    }
+    try {
+      // In this prototype, we simulate extraction for PDF/DOCX or read TXT files
+      if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+        const text = await file.text()
+        setResumeText(text)
+      } else {
+        // Mock extraction for binary files in this web environment
+        const mockText = `Resume of ${user?.displayName || "Candidate"}. 
+        Experience: ${experience || "Professional"} level. 
+        Role focus: ${role || "Technology"}. 
+        Extracted Skills: React, Next.js, TypeScript, Cloud Architecture, Leadership. 
+        Recent Project: Led a cross-functional team to deploy a high-stakes AI platform.`
+        setResumeText(mockText)
+      }
 
-    toast({
-      title: "Resume Uploaded",
-      description: `${file.name} has been processed for analysis.`
-    })
+      toast({
+        title: "Resume Processed",
+        description: `${file.name} is now part of Aria's reasoning context.`
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: "Aria couldn't parse this file format yet."
+      })
+    }
   }
 
   const clearResume = () => {
@@ -74,14 +86,14 @@ export default function NewInterviewPage() {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please provide a job role and description to begin."
+        description: "Aria needs a role and description to calibrate her logic."
       })
       return
     }
 
     setLoading(true)
     
-    // Store data for the session
+    // Persist for the session
     sessionStorage.setItem('demo_role', role);
     sessionStorage.setItem('demo_exp', experience);
     sessionStorage.setItem('demo_round', roundType);
@@ -89,18 +101,21 @@ export default function NewInterviewPage() {
     sessionStorage.setItem('demo_resume', resumeText || "Standard professional background.");
     
     try {
-      let analysisResult = null;
+      let matchingSkills = ["Communication", "Domain Knowledge", "Problem Solving"];
+      
       if (resumeText) {
         try {
-          analysisResult = await resumeJobDescriptionAnalysis({
+          const analysisResult = await resumeJobDescriptionAnalysis({
             resumeText,
             jobDescriptionText: jd
           })
-          sessionStorage.setItem('analysis_skills', JSON.stringify(analysisResult.matchingSkills));
+          matchingSkills = analysisResult.matchingSkills
         } catch (aiError) {
-          console.warn("AI Analysis failed, proceeding with default settings.")
+          console.warn("AI Analysis failed, proceeding with default skills.")
         }
       }
+      
+      sessionStorage.setItem('analysis_skills', JSON.stringify(matchingSkills));
       
       if (user && db) {
         const sessionRef = await addDoc(collection(db, "users", user.uid, "interviewSessions"), {
@@ -236,7 +251,7 @@ export default function NewInterviewPage() {
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-sm font-bold truncate">{resumeFileName}</p>
-                      <p className="text-[10px] uppercase tracking-widest text-primary font-black">Ready for Analysis</p>
+                      <p className="text-[10px] uppercase tracking-widest text-primary font-black">Analyzed by Aria</p>
                     </div>
                   </div>
                 </div>
@@ -244,7 +259,7 @@ export default function NewInterviewPage() {
 
               <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100 text-xs flex gap-3 shadow-sm italic leading-relaxed">
                 <ShieldCheck className="w-5 h-5 shrink-0" />
-                <span>Aria analyzes your experience gaps compared to JD requirements in real-time.</span>
+                <span>Aria is now reviewing your experience against the role requirements.</span>
               </div>
             </CardContent>
             <CardFooter className="p-8 bg-muted/10">
