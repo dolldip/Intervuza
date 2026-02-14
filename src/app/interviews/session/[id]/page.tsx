@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -192,19 +193,32 @@ export default function InterviewSessionPage() {
     }
     
     try {
-      const { media } = await textToSpeech(text)
+      const result = await textToSpeech(text)
       setFetchingAudio(false)
-      setAudioSrc(media)
-      if (audioRef.current) {
-        audioRef.current.load()
-        await audioRef.current.play();
+      
+      if (result.fallback) {
+        // Fallback to browser's built-in speech synthesis
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = handleAudioEnded;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setAudioSrc(result.media)
+        if (audioRef.current) {
+          audioRef.current.load()
+          await audioRef.current.play().catch(() => {
+            // If play fails, use fallback
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onend = handleAudioEnded;
+            window.speechSynthesis.speak(utterance);
+          });
+        }
       }
     } catch (err) {
       console.error("Audio error:", err)
       setFetchingAudio(false)
-      setSpeaking(false)
-      setListening(true)
-      if (recognitionRef.current) recognitionRef.current.start();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = handleAudioEnded;
+      window.speechSynthesis.speak(utterance);
     }
   }
 
@@ -262,11 +276,12 @@ export default function InterviewSessionPage() {
       }
     } catch (err) {
       if (currentIdx < questions.length - 1) {
-        setCurrentIdx(currentIdx + 1);
+        const nextIdx = currentIdx + 1;
+        setCurrentIdx(nextIdx);
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
-        triggerSpeech(questions[currentIdx + 1]);
+        triggerSpeech(`Understood. Next question: ${questions[nextIdx]}`);
       } else {
         router.push(`/results/demo-results`);
       }

@@ -2,6 +2,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for converting text to speech.
+ * Includes a fallback mechanism for quota exhaustion.
  *
  * - textToSpeech - A function that converts a string of text into a WAV audio data URI.
  */
@@ -14,9 +15,10 @@ import wav from 'wav';
 const TTSInputSchema = z.string().describe('The text to convert to speech.');
 const TTSOutputSchema = z.object({
   media: z.string().describe('The base64 encoded WAV audio data URI.'),
+  fallback: z.boolean().optional(),
 });
 
-export async function textToSpeech(text: string): Promise<{ media: string }> {
+export async function textToSpeech(text: string): Promise<{ media: string; fallback?: boolean }> {
   return ttsFlow(text);
 }
 
@@ -27,33 +29,41 @@ const ttsFlow = ai.defineFlow(
     outputSchema: TTSOutputSchema,
   },
   async (text) => {
-    const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+    try {
+      const { media } = await ai.generate({
+        model: googleAI.model('gemini-2.5-flash-preview-tts'),
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: 'Algenib' },
+            },
           },
         },
-      },
-      prompt: text,
-    });
+        prompt: text,
+      });
 
-    if (!media || !media.url) {
-      throw new Error('No audio media returned from Genkit');
+      if (!media || !media.url) {
+        throw new Error('No audio media returned from Genkit');
+      }
+
+      const audioBuffer = Buffer.from(
+        media.url.substring(media.url.indexOf(',') + 1),
+        'base64'
+      );
+
+      const wavData = await toWav(audioBuffer);
+
+      return {
+        media: 'data:audio/wav;base64,' + wavData,
+      };
+    } catch (error: any) {
+      console.warn("TTS Quota exceeded or error. Informing client to use local fallback.");
+      return {
+        media: "",
+        fallback: true,
+      };
     }
-
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-
-    const wavData = await toWav(audioBuffer);
-
-    return {
-      media: 'data:audio/wav;base64,' + wavData,
-    };
   }
 );
 
