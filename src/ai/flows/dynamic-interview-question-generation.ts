@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Refined for hyper-realistic human simulation.
+ * Refined for hyper-realistic human simulation and context awareness.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,12 +12,13 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
   experienceLevel: z.string(),
   skills: z.array(z.string()),
   jobDescriptionText: z.string().optional(),
+  resumeText: z.string().optional(),
   roundType: z.enum(['technical', 'hr', 'both']).default('technical'),
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
   openingStatement: z.string().describe('Aria\'s professional human-like greeting using contractions and natural pauses.'),
-  firstQuestion: z.string().describe('The very first question to start the interview, delivered naturally.'),
+  firstQuestion: z.string().describe('The very first question to start the interview, delivered naturally and contextually based on the resume and job.'),
 });
 
 const prompt = ai.definePrompt({
@@ -31,13 +32,13 @@ STRICT HUMAN-LIKE RULES:
 1. USE CONTRACTIONS: Always use "I'm", "don't", "you're", "we'll". Never sound robotic.
 2. NATURAL FILLERS: Use words like "Hmm...", "Right...", "Okay, let's see...".
 3. PROFESSIONAL WARMTH: Be warm but strictly high-stakes. Start with a greeting that sounds like you're actually meeting them.
-4. SINGLE QUESTION: Ask only one focused question to start. 
-5. CONTEXTUAL DEPTH: Use the provided skills and JD to make the question feel "tailor-made" for them.
-6. NATURAL PAUSES: In your text, imply natural pauses with commas and ellipses.
+4. CONTEXTUAL START: Look at the candidate's resume and the job description. Mention something specific from their background that caught your eye to make the first question feel personal and "tailor-made".
+5. SINGLE QUESTION: Ask only one focused question to start. 
 
 Context:
-Skills: {{#each skills}}{{{this}}}, {{/each}}
-Job Description: {{{jobDescriptionText}}}`,
+Resume: {{{resumeText}}}
+Job Description: {{{jobDescriptionText}}}
+Skills: {{#each skills}}{{{this}}}, {{/each}}`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {

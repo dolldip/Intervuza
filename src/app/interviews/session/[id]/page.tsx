@@ -218,13 +218,16 @@ export default function InterviewSessionPage() {
       const demoExp = sessionStorage.getItem('demo_exp') || "Mid-level";
       const demoJd = sessionStorage.getItem('demo_jd') || "Professional Job Description";
       const demoRound = sessionStorage.getItem('demo_round') || "technical";
+      const demoResume = sessionStorage.getItem('demo_resume') || "";
+      const analysisSkills = JSON.parse(sessionStorage.getItem('analysis_skills') || '["Logic", "Domain Expertise", "Communication"]');
 
       try {
         const result = await generateInterviewQuestions({
           jobRole: demoRole,
           experienceLevel: demoExp,
-          skills: ["Logic", "Domain Expertise", "Communication"],
+          skills: analysisSkills,
           jobDescriptionText: demoJd,
+          resumeText: demoResume,
           roundType: demoRound
         })
         setOpening(result.openingStatement)
