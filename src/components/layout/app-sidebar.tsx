@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -15,7 +14,8 @@ import {
   Trophy,
   CreditCard,
   LogOut,
-  Loader2
+  Loader2,
+  ShieldAlert
 } from "lucide-react"
 
 import {
@@ -32,8 +32,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useAuth } from "@/firebase"
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { signOut } from "firebase/auth"
+import { doc } from "firebase/firestore"
 
 const items = [
   {
@@ -85,7 +86,16 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isUserLoading } = useUser()
+  const db = useFirestore()
   const auth = useAuth()
+
+  // Use the roles_admin check defined in our security logic
+  const adminDocRef = useMemoFirebase(() => user ? doc(db!, "roles_admin", user.uid) : null, [db, user])
+  const { data: adminDoc } = useDoc(adminDocRef)
+
+  const isAdmin = React.useMemo(() => {
+    return user?.email === "dollyjajra123@gmail.com" || !!adminDoc
+  }, [user, adminDoc])
 
   const handleLogout = async () => {
     try {
@@ -124,6 +134,25 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administrator</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Admin Portal">
+                    <Link href="/admin">
+                      <ShieldAlert className="text-red-500" />
+                      <span className="font-bold text-red-500">Admin Console</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
