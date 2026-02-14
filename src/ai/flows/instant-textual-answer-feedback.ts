@@ -1,8 +1,8 @@
-
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for JD-aware follow-ups.
  * Natural Conversational Loop: Handles "human" reactions and high-stakes logical pivots.
+ * Revised: Added Dynamic Fallback System to prevent repetitive responses during 429 errors.
  */
 
 import {ai} from '@/ai/genkit';
@@ -66,7 +66,7 @@ Random Seed: ${new Date().getTime()}`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
-  const maxRetries = 2;
+  const maxRetries = 3;
   let attempt = 0;
 
   while (attempt <= maxRetries) {
@@ -78,19 +78,41 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, 2500 * attempt));
+        // Increased backoff to help clear the quota window
+        await new Promise(resolve => setTimeout(resolve, 3500 * attempt));
         continue;
       }
 
+      // DYNAMIC FALLBACK SYSTEM
+      // If we are here, retries failed. We must provide a non-repetitive fallback.
+      const fallbacks = [
+        {
+          reaction: "I see your point on that. Let's look at it from a different angle.",
+          question: `Regarding your role as a ${input.jobRole}, how do you prioritize long-term technical health versus short-term delivery pressure?`
+        },
+        {
+          reaction: "Right, that's a common approach. Let's shift gears slightly.",
+          question: `In a high-stakes environment for a ${input.jobRole}, how do you handle a situation where a key project dependency fails at the last minute?`
+        },
+        {
+          reaction: "I understand. Let's move on to a different requirement of the role.",
+          question: `Can you walk me through your process for mentoring junior team members or ensuring high standards of technical logic across your team?`
+        }
+      ];
+
+      // Pick a fallback that hasn't been asked yet
+      const previous = input.previousQuestions || [];
+      const selected = fallbacks.find(f => !previous.includes(f.question)) || fallbacks[0];
+
       return {
-        verbalReaction: "I see your point on that. Let's shift focus to another requirement of this role.",
+        verbalReaction: selected.reaction,
         detectedEmotion: "Neutral",
-        nextQuestion: `Given the requirements for a ${input.jobRole}, how do you handle complex cross-functional alignment when stakeholders have conflicting technical priorities?`,
+        nextQuestion: selected.question,
         feedback: {
-          analysis: "Your answer provided a basic overview but lacked the structural depth required for this seniority level. Focus on providing specific evidence and metrics to demonstrate mastery.",
-          strengths: ["Clear communication"],
-          weaknesses: ["Lacked technical depth", "No specific framework used"],
-          tips: "Try using the STAR method to structure your next response more effectively."
+          analysis: "Your response provided a basic foundation but would benefit from more specific evidence-based examples. In high-stakes interviews, structure and evidence are as critical as technical knowledge.",
+          strengths: ["Clear communication", "Direct approach"],
+          weaknesses: ["Lacked structural depth", "Limited specific metrics"],
+          tips: "Try incorporating the STAR method (Situation, Task, Action, Result) to make your logic more robust."
         },
         isInterviewComplete: false
       };

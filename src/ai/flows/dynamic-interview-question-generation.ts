@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
@@ -52,7 +51,7 @@ Random Seed: ${new Date().getTime()}`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
-  const maxRetries = 2;
+  const maxRetries = 3;
   let attempt = 0;
 
   while (attempt <= maxRetries) {
@@ -64,13 +63,14 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
         continue;
       }
       
+      // Dynamic Fallback for Opening
       return {
-        openingStatement: "Hi, I'm Aria. I've analyzed the role requirements and your background. Let's begin the audit.",
-        firstQuestion: `Given your interest in the ${input.jobRole} position, how would you approach a situation where a critical requirement mentioned in the job description is suddenly compromised by external constraints?`,
+        openingStatement: "Hi, I'm Aria. I've reviewed your background and the role context. Let's begin the professional audit.",
+        firstQuestion: `Given the specific challenges associated with a ${input.jobRole} position, how do you approach complex technical decision-making when faced with incomplete information?`,
         roleCategory: 'Other'
       };
     }
