@@ -44,6 +44,7 @@ export default function InterviewSessionPage() {
   const [questions, setQuestions] = useState<string[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [transcript, setTranscript] = useState("")
+  const [interimTranscript, setInterimTranscript] = useState("")
   const [initializing, setInitializing] = useState(true)
   const [sessionStarted, setSessionStarted] = useState(false)
   const [processingTurn, setProcessingTurn] = useState(false)
@@ -98,22 +99,29 @@ export default function InterviewSessionPage() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = '';
+        let interimText = '';
+        let finalText = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            setTranscript(prev => prev + event.results[i][0].transcript + ' ');
+            finalText += event.results[i][0].transcript;
           } else {
-            interimTranscript += event.results[i][0].transcript;
+            interimText += event.results[i][0].transcript;
           }
         }
+
+        if (finalText) {
+          setTranscript(prev => prev + finalText + ' ');
+        }
+        setInterimTranscript(interimText);
 
         // Automated Silence Detection (Hands-Free Conversation)
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
-          if (transcript.trim().length > 10 && !speaking && !processingTurn && !fetchingAudio) {
+          // If we have some transcript and we're currently listening, finish the turn
+          if ((transcript.trim().length > 5 || interimText.trim().length > 5) && !speaking && !processingTurn && !fetchingAudio) {
             completeTurn();
           }
-        }, 4000); // 4 seconds of silence triggers turn completion naturally
+        }, 4000); 
       };
 
       recognitionRef.current.onerror = (event: any) => {
@@ -260,10 +268,11 @@ export default function InterviewSessionPage() {
       try { recognitionRef.current.stop(); } catch(e) {}
     }
 
+    const fullAnswer = transcript + interimTranscript;
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
     currentAnswers.push({
       question: questions[currentIdx],
-      answer: transcript || "Silent response detected.",
+      answer: fullAnswer || "Silent response detected.",
       emotion: currentEmotion,
       confidence: confidenceLevel,
       eyeContact: eyeAlignment
@@ -275,14 +284,16 @@ export default function InterviewSessionPage() {
         // AI verbally acknowledges response
         const reaction = await instantTextualAnswerFeedback({
           interviewQuestion: questions[currentIdx],
-          userAnswer: transcript || "...",
+          userAnswer: fullAnswer || "...",
           jobRole: sessionStorage.getItem('demo_role') || "Candidate"
         });
         
         const nextIdx = currentIdx + 1;
         setCurrentIdx(nextIdx);
         setTranscript("");
+        setInterimTranscript("");
         
+        // Use the first sentence of feedback as a reaction
         const reactionText = reaction.relevanceFeedback.split('.')[0];
         const responseText = `${reactionText}. Moving on to our next topic. ${questions[nextIdx]}`;
         await triggerSpeech(responseText);
@@ -293,6 +304,7 @@ export default function InterviewSessionPage() {
       if (currentIdx < questions.length - 1) {
         setCurrentIdx(currentIdx + 1);
         setTranscript("");
+        setInterimTranscript("");
         triggerSpeech(questions[currentIdx + 1]);
       } else {
         router.push(`/results/demo-results`);
@@ -309,8 +321,8 @@ export default function InterviewSessionPage() {
           <BrainCircuit className="w-32 h-32 text-primary animate-pulse" />
           <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-ping" />
         </div>
-        <h2 className="text-4xl font-headline font-bold mb-4 text-center px-6 uppercase tracking-wider">Establishing Neural Link</h2>
-        <p className="text-slate-400 text-xl text-center px-6">Initializing AI voice and biometric sensors...</p>
+        <h2 className="text-4xl font-headline font-bold mb-4 text-center px-6 uppercase tracking-wider text-primary">Establishing Neural Link</h2>
+        <p className="text-slate-400 text-xl text-center px-6">Initializing Sarah's AI voice and biometric sensors...</p>
       </div>
     )
   }
@@ -393,7 +405,7 @@ export default function InterviewSessionPage() {
           <div className="absolute top-12 left-12 z-20 flex flex-col gap-4">
              {fetchingAudio && (
                <div className="flex items-center gap-3 bg-blue-600/90 text-white px-6 py-3 rounded-2xl animate-pulse font-bold text-sm shadow-2xl backdrop-blur-md">
-                  <RefreshCw className="w-4 h-4 animate-spin" /> AI IS THINKING...
+                  <RefreshCw className="w-4 h-4 animate-spin" /> SARAH IS THINKING...
                </div>
              )}
              {speaking && !fetchingAudio && (
@@ -499,8 +511,11 @@ export default function InterviewSessionPage() {
                     </label>
                   </div>
                   <div className="w-full bg-slate-900/40 border border-white/5 text-white rounded-[2.5rem] p-8 h-44 overflow-y-auto scrollbar-hide shadow-inner">
-                    {transcript ? (
-                      <p className="text-xl leading-relaxed text-slate-200 font-medium">{transcript}</p>
+                    {(transcript || interimTranscript) ? (
+                      <p className="text-xl leading-relaxed text-slate-200 font-medium italic">
+                        {transcript}
+                        <span className="text-slate-400">{interimTranscript}</span>
+                      </p>
                     ) : (
                       <p className="text-lg text-slate-700 italic">Sarah is listening to your answer...</p>
                     )}
