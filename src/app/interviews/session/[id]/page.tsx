@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { useAuth, useFirestore } from "@/firebase"
+import { useAuth, useFirestore, useUser } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -34,6 +34,7 @@ export default function InterviewSessionPage() {
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
+  const { user } = useUser()
 
   const [currentQuestion, setCurrentQuestion] = useState("")
   const [opening, setOpening] = useState("")

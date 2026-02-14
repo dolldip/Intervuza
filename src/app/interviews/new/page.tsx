@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { auth, db, isMockConfig } from "@/firebase/config"
+import { useAuth, useFirestore, useUser } from "@/firebase"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 export default function NewInterviewPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { user } = useUser()
+  const auth = useAuth()
+  const db = useFirestore()
   
   const [loading, setLoading] = useState(false)
   const [role, setRole] = useState("")
@@ -55,7 +58,8 @@ export default function NewInterviewPage() {
     sessionStorage.setItem('demo_round', roundType);
     sessionStorage.setItem('demo_jd', jd);
     
-    if (isMockConfig) {
+    // Fallback to demo session if no user is signed in
+    if (!user) {
       setTimeout(() => {
         router.push(`/interviews/session/demo-session`)
       }, 1000)
@@ -72,15 +76,14 @@ export default function NewInterviewPage() {
         console.warn("AI Analysis failed, proceeding with default settings.")
       }
       
-      const sessionRef = await addDoc(collection(db, "interviews"), {
-        userId: auth.currentUser?.uid || "anonymous",
-        role: role,
+      const sessionRef = await addDoc(collection(db, "users", user.uid, "interviewSessions"), {
+        userId: user.uid,
+        jobRole: role,
         experienceLevel: experience,
         roundType: roundType,
-        date: serverTimestamp(),
-        questions: [],
-        answers: [],
-        status: "in-progress"
+        startTime: new Date().toISOString(),
+        status: "in-progress",
+        createdAt: new Date().toISOString()
       });
 
       router.push(`/interviews/session/${sessionRef.id}`)
