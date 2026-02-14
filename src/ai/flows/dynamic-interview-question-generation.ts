@@ -32,15 +32,15 @@ const prompt = ai.definePrompt({
 STEP 1: Identify role category: [BTech Technical, BTech HR, Teacher, Doctor, Management, Other].
 
 RULES FOR OPENING:
-1. NO GENERIC STARTS: Do NOT say "Tell me about yourself."
+1. NO GENERIC STARTS: Do NOT say "Tell me about yourself." or "Walk me through your resume."
 2. EXPERIENCE AWARENESS: 
-   - If experienceLevel is "junior" or 0 years: Start with an industry-specific hypothetical or a fundamental subject knowledge challenge.
+   - If experienceLevel is "junior" or 0 years: Start with an industry-specific hypothetical scenario or a fundamental subject knowledge challenge.
    - If experienceLevel is "mid/senior": Start with a complex architectural challenge or a high-stakes industry trend.
 3. INDUSTRY-SPECIFIC LOGIC:
-   - For Teachers: Focus on student engagement or pedagogical shifts.
-   - For Doctors: Focus on diagnostic methodology or patient ethics.
-   - For BTech: Focus on system architecture or logic trade-offs.
-4. VARIETY: Use a unique angle for every session.
+   - For Teachers: Focus on student engagement strategies or a specific pedagogical shift.
+   - For Doctors: Focus on diagnostic methodology or patient ethics in a specific scenario.
+   - For Engineers: Focus on system architecture trade-offs or a specific logic hurdle.
+4. VARIETY: Use a unique angle for every session. Ensure the opening question is provocative and challenging.
 
 Context:
 - Role: {{{jobRole}}}
@@ -59,18 +59,18 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output;
   } catch (error) {
     const fallbacks: Record<string, string[]> = {
-      'Teacher': ["How do you handle a student who is consistently disengaged despite various teaching strategies?"],
-      'Doctor': ["In a high-pressure diagnostic scenario, how do you prioritize patient safety over speed?"],
-      'BTech Technical': ["If you were tasked with optimizing a legacy system for 10x scale, where would you start?"],
-      'default': ["Given the current shifts in your industry, what's one legacy practice you think we should abandon?"]
+      'Teacher': ["In an increasingly digital classroom, how do you maintain meaningful student engagement without technology becoming a crutch?"],
+      'Doctor': ["When faced with conflicting diagnostic data under high pressure, what is your systematic approach to ensuring patient safety?"],
+      'BTech Technical': ["If you were tasked with migrating a legacy monolith to a microservices architecture while maintaining zero downtime, what would be your primary risk mitigation strategy?"],
+      'default': ["Given the current shifts in your industry, what is one legacy standard you believe is becoming obsolete, and what should replace it?"]
     };
     
-    const roleKey = input.jobRole?.includes('Teacher') ? 'Teacher' : 
-                    input.jobRole?.includes('Doctor') ? 'Doctor' : 
-                    input.jobRole?.includes('BTech') ? 'BTech Technical' : 'default';
+    const roleKey = input.jobRole?.toLowerCase().includes('teacher') ? 'Teacher' : 
+                    input.jobRole?.toLowerCase().includes('doctor') ? 'Doctor' : 
+                    input.jobRole?.toLowerCase().includes('btech') || input.jobRole?.toLowerCase().includes('engineer') ? 'BTech Technical' : 'default';
 
     return {
-      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin.",
+      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin your professional audit.",
       firstQuestion: (fallbacks[roleKey] || fallbacks['default'])[0],
       roleCategory: roleKey === 'default' ? 'Other' : roleKey as any
     };

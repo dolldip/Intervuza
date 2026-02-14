@@ -43,7 +43,7 @@ STRICT INTERVIEWER RULES (IRONCLAD):
    - Check the "previousQuestions" list: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
    - If your intended next question is LOGICALLY SIMILAR or covers the SAME SUB-TOPIC as ANY of these, you MUST PIVOT to a completely different dimension of the candidate's role.
    - DO NOT repeat words or phrasing from previous questions. 
-   - DO NOT ask about "critical feedback to a peer" if already asked or if it is conceptually similar to a leadership turn.
+   - BLACKLIST: Do NOT ask "Can you walk me through a time you had to deliver critical feedback to a peer" unless the role is explicitly Senior Management or HR.
 
 2. EXPERIENCE AWARENESS (0-EXP SUPPORT):
    - If experienceLevel is "junior" or 0-2 years: DO NOT ask about "leading teams," "hiring," or "delivering critical feedback to peers." 
@@ -51,10 +51,10 @@ STRICT INTERVIEWER RULES (IRONCLAD):
    - For mid/senior: Ask about high-stakes leadership, architecture trade-offs, and legacy management.
 
 3. ROLE-SENSITIVE TECHNICALITY:
-   - For Teachers: Focus on Pedagogy, Inclusion, Classroom Conflict, or Student engagement.
-   - For Doctors: Focus on Diagnosis, Ethics, Case scenarios, or Patient relations.
-   - For Engineers: Focus on Architecture, Performance, or System Design.
-   - NEVER ask a Teacher about "Projects" unless they are in research.
+   - For Teachers: Focus on Pedagogy, Inclusion, Classroom Conflict, Student engagement, or Lesson Design.
+   - For Doctors: Focus on Clinical Reasoning, Ethics, Patient Scenarios, or Diagnostic Pressure.
+   - For Engineers: Focus on Architecture, System Design, Scalability, or Logic trade-offs.
+   - NEVER ask a Teacher about "Projects" unless they are specifically in research.
 
 4. CONVERSATIONAL PROGRESSION:
    - Acknowledge their answer naturally ("I see your point...", "Interesting perspective...").
@@ -71,36 +71,40 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     if (!output) throw new Error("Aria failed to respond.");
     return output;
   } catch (error) {
-    // DYNAMIC ROLE-AWARE FALLBACKS
+    // DYNAMIC ROLE-AWARE FALLBACKS - NO STATIC REPETITION
     const fallbacks: Record<string, string[]> = {
       'Teacher': [
         "How do you handle a student who is consistently disengaged despite various teaching strategies?",
         "What's your philosophy on using technology in the classroom without it becoming a distraction?",
-        "Tell me about a time you had to adapt your lesson plan on the fly because students weren't grasping the concept."
+        "How do you ensure your lesson plans are inclusive for students with diverse learning needs?",
+        "Tell me about a time you had to adapt your teaching style on the fly."
       ],
       'Doctor': [
         "In a high-pressure diagnostic scenario, how do you prioritize patient safety over speed?",
         "How do you handle a situation where a patient's family disagrees with your proposed treatment plan?",
-        "What steps do you take to stay current with the rapidly evolving medical literature?"
+        "What's your approach to delivering difficult news to a patient's loved ones?",
+        "How do you stay updated with the rapidly evolving medical literature in your specialty?"
       ],
       'BTech Technical': [
         "Can you explain the trade-offs between vertical and horizontal scaling in a distributed system?",
         "How do you ensure data integrity in a system with high concurrency?",
-        "Walk me through your process for debugging a complex performance bottleneck in production."
+        "Walk me through your process for debugging a complex performance bottleneck in production.",
+        "If you had to redesign a legacy system for 10x scale, where would you start?"
       ],
       'default': [
         "Given the current shifts in your industry, what's one legacy practice you think we should abandon?",
         "How do you balance the need for immediate results with the long-term sustainability of your work?",
-        "What's one area of your professional toolkit you're currently trying to improve?"
+        "What's one area of your professional toolkit you're currently trying to improve?",
+        "How do you approach learning a complex new system or methodology under a tight deadline?"
       ]
     };
 
-    const roleKey = input.jobRole?.includes('Teacher') ? 'Teacher' : 
-                    input.jobRole?.includes('Doctor') ? 'Doctor' : 
-                    input.jobRole?.includes('BTech') ? 'BTech Technical' : 'default';
+    const roleKey = input.jobRole?.toLowerCase().includes('teacher') ? 'Teacher' : 
+                    input.jobRole?.toLowerCase().includes('doctor') ? 'Doctor' : 
+                    input.jobRole?.toLowerCase().includes('btech') || input.jobRole?.toLowerCase().includes('engineer') ? 'BTech Technical' : 'default';
     
     const roleFallbacks = fallbacks[roleKey] || fallbacks['default'];
-    // Filter out previous questions
+    // Filter out previous questions to ensure fallback is also unique
     const freshFallback = roleFallbacks.find(f => !input.previousQuestions?.includes(f)) || roleFallbacks[Math.floor(Math.random() * roleFallbacks.length)];
 
     return {

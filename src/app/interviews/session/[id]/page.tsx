@@ -61,11 +61,9 @@ export default function InterviewSessionPage() {
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
   
-  // Real-time Feedback State
   const [turnFeedback, setTurnFeedback] = useState<any>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   
-  // Coding Logic Pad State
   const [code, setCode] = useState("// Write your logic or explanation here...")
   const [showCodePad, setShowCodePad] = useState(false)
   
@@ -191,11 +189,11 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
-        // INITIAL LOGGING: Ensure first question is in history instantly
+        // Ensure the opening question is immediately logged in history
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
-        const fb = "Given your background, what do you think is the biggest challenge in your industry today?"
+        const fb = "Given your specific industry background, what is the most significant strategic shift you've observed in the last 24 months?"
         setCurrentQuestion(fb)
         historyRef.current = [fb]
       } finally {
@@ -236,7 +234,7 @@ export default function InterviewSessionPage() {
     utterance.onend = () => {
       setSpeaking(false);
       setListening(true);
-      if (recognitionRef.current) try { recognitionRef.current.start(); } catch (e) {}
+      if (recognitionRef.current) try { recognitionRef.current.start(); } catch ( e) {}
     };
     window.speechSynthesis.speak(utterance);
   }
@@ -292,11 +290,11 @@ export default function InterviewSessionPage() {
       setShowFeedback(true);
       
       if (!feedback.isInterviewComplete && currentTurn < 6) {
+        // INSTANT HISTORY LOGGING: Commit the NEW question to history BEFORE it's generated to ensure 100% sync
+        historyRef.current = [...historyRef.current, feedback.nextQuestion];
+        
         setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
-        
-        // IRONCLAD MEMORY COMMIT: Add the newly generated question to history BEFORE it's even spoken
-        historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
         setInterimTranscript("");
