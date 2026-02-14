@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -186,7 +185,7 @@ export default function InterviewSessionPage() {
             setIsStuck(true);
             completeTurn(true);
           }
-        }, 12000); 
+        }, 15000); 
       };
 
       recognitionRef.current.onend = () => {
@@ -204,12 +203,6 @@ export default function InterviewSessionPage() {
       if (stream) stream.getTracks().forEach(track => track.stop());
     };
   }, []);
-
-  useEffect(() => {
-    if (stream && userVideoRef.current) {
-      userVideoRef.current.srcObject = stream;
-    }
-  }, [stream, sessionStarted, hasCameraPermission]);
 
   useEffect(() => {
     async function init() {
@@ -329,18 +322,20 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         previousQuestions: history,
-        isStuck: forcedStuck || fullAnswer.length < 8
+        isStuck: forcedStuck || (fullAnswer.length < 8 && !forcedStuck)
       });
       
       setCurrentEmotion(feedback.detectedEmotion);
       const nextTurnCount = feedback.isOfferingHint ? currentTurn : currentTurn + 1;
-      setTurnCount(nextTurnCount);
-
+      
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
+        setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
+        
         if (!feedback.isOfferingHint) {
           setAskedQuestions(prev => [...prev, feedback.nextQuestion]);
         }
+        
         setTranscript("");
         setInterimTranscript("");
         transcriptAccumulatorRef.current = "";
@@ -349,7 +344,7 @@ export default function InterviewSessionPage() {
         const finalPrompt = `${feedback.verbalReaction}. ${feedback.nextQuestion}`;
         setTimeout(() => {
           triggerSpeech(finalPrompt);
-        }, 800);
+        }, 1200);
       } else {
         terminateSession();
       }

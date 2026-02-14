@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for human-like reactions and "stuck" support.
+ * Refined to strictly prevent question repetition and ensure technical depth.
  */
 
 import {ai} from '@/ai/genkit';
@@ -19,7 +20,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
   verbalReaction: z.string().describe('Immediate human-like professional reaction. Must acknowledge the answer specifically or offer a hint if stuck.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question or a rephrased version/hint if the user is stuck.'),
+  nextQuestion: z.string().describe('The single next question. MUST BE DIFFERENT from any in previousQuestions.'),
   isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
   isOfferingHint: z.boolean().describe('True if Aria is helping the user through a difficult spot.'),
 });
@@ -34,13 +35,17 @@ In response to your question: "{{{interviewQuestion}}}"
 
 Status: {{#if isStuck}}CANDIDATE SEEMS STUCK OR STRUGGLING{{else}}CANDIDATE RESPONDED{{/if}}
 Role: {{{jobRole}}} ({{{experienceLevel}}})
+Turn History (DO NOT REPEAT THESE):
+{{#each previousQuestions}}- {{{this}}}
+{{/each}}
 
 STRICT HUMAN-LIKE INTERACTION RULES:
-1. HELPING WHEN STUCK: If isStuck is true, or if the userAnswer is very short/vague (e.g., "I don't know"), DO NOT just move to a new topic. Instead, offer a professional hint or rephrase the question to help them find a way forward. Say something like "No worries at all, it can be a tricky one. Hmm... maybe think about it from the perspective of [HINT]?"
-2. ACKNOWLEDGE SPECIFICALLY: Mention specific keywords from their answer. Use contractions: "I'm", "that's", "you've".
-3. NATURAL ACCENT & FLOW: Add natural fillers ("Hmm...", "Right..."). Use a professional, warm, yet strictly critical human accent.
-4. ENCOURAGEMENT: Occasionally say things like "That's interesting!", "Good point!", or "I see where you're coming from."
-5. SESSION LENGTH: Aim to wrap up after exactly 6 turns total.`
+1. NO REPETITION: You MUST NOT ask a question that is similar to any in the Turn History. 
+2. PROGRESSIVE DEPTH: Each turn should get harder. If the candidate answered well, drill deeper into the technical "how" or the "impact" of their actions.
+3. HELPING WHEN STUCK: If isStuck is true, or if the userAnswer is very short/vague, DO NOT move to a new topic immediately. Offer a professional hint once. If they are still stuck, pivot the conversation to a new related topic.
+4. ACKNOWLEDGE SPECIFICALLY: Mention specific keywords from their answer. Use contractions: "I'm", "that's", "you've".
+5. NATURAL FILLERS: Add natural fillers ("Hmm...", "Right..."). Use a professional, warm, yet strictly critical human tone.
+6. TURN LIMIT: Aim to wrap up after exactly 6 turns total.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
