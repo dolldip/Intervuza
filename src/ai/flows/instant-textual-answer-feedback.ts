@@ -1,6 +1,8 @@
+
 'use server';
 /**
  * @fileOverview Sarah's real-time adaptive reaction and follow-up engine.
+ * Refined to provide corrective feedback on grammar, focus, and clarity.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,7 +18,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Short, natural human-like reaction to the answer (e.g. "I see", "Great point").'),
+  verbalReaction: z.string().describe('Short, natural human-like reaction. MUST include corrective feedback if the answer was unclear or had grammar issues.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. If the answer was strong, ask a deeper follow-up. If weak, move to a new topic.'),
   isInterviewComplete: z.boolean().describe('Set to true if you have covered enough for this round (usually 5 questions).'),
@@ -34,13 +36,13 @@ Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
 STRICT RULES:
-1. React naturally like a human (Acknowledge depth or express slight concern if vague).
-2. Ask ONLY ONE next question.
-3. Adaptive Logic: If they answered well, ask a deeper "how" or "why" follow-up. If they said "I don't know", respond supportively and pivot to a NEW skill.
-4. DO NOT repeat these previous questions:
+1. React naturally like a human.
+2. CORRECTIVE FEEDBACK: If the candidate was unfocused, rambled, had significant grammar errors, or provided a weak answer, you MUST mention it politely in your verbalReaction (e.g., "I see. Try to be a bit more concise next time", or "That was a bit unclear, but let's move on to...").
+3. Ask ONLY ONE next question.
+4. Adaptive Logic: If they answered well, ask a deeper "how" or "why" follow-up. If they said "I don't know", respond supportively and pivot to a NEW skill.
+5. DO NOT repeat these previous questions:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-5. Ensure the question is strictly relevant to the role of {{{jobRole}}}.
 6. Keep the difficulty appropriate for {{{experienceLevel}}}.
 7. If you have covered ~5 distinct topics, set isInterviewComplete to true.`
 });
@@ -50,7 +52,6 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     const {output} = await prompt(input);
     return output!;
   } catch (error) {
-    // Rotating fallbacks to avoid repeating same question on error
     const fallbacks = [
       "I see. Moving forward, how do you handle tight deadlines in your projects?",
       "That's interesting. Can you tell me about a time you had to solve a complex problem?",
@@ -59,7 +60,7 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     ];
     const randomIndex = Math.floor(Math.random() * fallbacks.length);
     return {
-      verbalReaction: "I see. Thank you for sharing that.",
+      verbalReaction: "I see. Thank you for sharing that. Try to be more focused in your next response.",
       detectedEmotion: "Neutral",
       nextQuestion: fallbacks[randomIndex],
       isInterviewComplete: false
