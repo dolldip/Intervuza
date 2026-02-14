@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for human-like reactions and mentoring support.
@@ -31,35 +32,37 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, an expert interviewer at a Top-Tier global firm.
+  prompt: `You are Aria, an expert interviewer at a Top-Tier global firm (like Google, McKinsey, or Stripe).
 The candidate just answered your question: "{{{userAnswer}}}"
 Your previous question was: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 Resume Context: {{{resumeText}}}
-Turn History:
+Turn History (DO NOT REPEAT THESE TOPICS):
 {{#each previousQuestions}}- {{{this}}}
 {{/each}}
 
 STRICT ELITE INTERVIEWER RULES:
-1. NO REPETITION: Every question must explore a NEW dimension of the candidate's skills. DO NOT ASK ABOUT TOPICS ALREADY COVERED.
-2. PROJECT DEEP DIVE: Reference specific technical details or projects found in the resume. If they mention a skill, ask "How did you apply that in [Project Name from Resume]?".
-3. CODING CHALLENGE: If this is a Technical round and they've handled theory well, set requestCodingTask to true and ask them to implement a specific logic/algorithm in the "Logic Pad".
-4. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer.
-5. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see", "Hmm..."). 
-6. ELITE FOLLOW-UPS: Drill deeper into "Why?". What were the trade-offs?`
+1. ZERO REPETITION: Every question must explore a COMPLETELY NEW dimension of the candidate's skills. If you already asked about a project, move to a system design trade-off. If you asked about a skill, ask about a behavioral conflict.
+2. PROJECT DEEP DIVE: Reference specific technical details or projects found in the resume. If they mention a skill, ask "How did you apply that in [Project Name from Resume]? What were the constraints?".
+3. TOP-COMPANY STANDARDS: Use "First Principles" thinking. Ask "Why?" and "How?" follow-ups. Focus on architectural trade-offs, scalability, and logical rigor.
+4. CODING CHALLENGE: If this is a Technical round and they've handled theory well, set requestCodingTask to true and ask them to implement a specific algorithm or logic in the "Logic Pad".
+5. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer.
+6. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see", "Hmm...").
+7. VERDICT: Aim for exactly 6 turns. If the candidate is exceptional or failing clearly, you can set isInterviewComplete to true earlier.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
   try {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) throw new Error("Aria failed to respond.");
+    return output;
   } catch (error) {
     return {
-      verbalReaction: "Hmm, I see your point, but I'd love to see a bit more technical structure there.",
-      detectedEmotion: "Neutral",
-      nextQuestion: "Can you walk me through the scalability trade-offs of that approach specifically?",
+      verbalReaction: "Hmm, that's an interesting perspective. I'd love to see a bit more technical structure in your explanation though.",
+      detectedEmotion: "Curiosity",
+      nextQuestion: "Can you walk me through the scalability trade-offs of that approach if the user base doubled overnight?",
       isInterviewComplete: false,
       isOfferingHint: true,
       requestCodingTask: false

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -101,7 +102,7 @@ export default function InterviewSessionPage() {
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
-  // FIX: Stable Video stream attachment
+  // Solid video attachment with persistence
   useEffect(() => {
     if (userVideoRef.current && stream) {
       userVideoRef.current.srcObject = stream;
@@ -183,6 +184,7 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
+        // Silence timeout: If user stops talking for a while, complete turn
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
@@ -191,6 +193,7 @@ export default function InterviewSessionPage() {
           }
         }, 12000); 
 
+        // Stuck detection: If no final text for 18 seconds while listening
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
           const { listening: isListeningNow } = stateRef.current;
@@ -305,6 +308,7 @@ export default function InterviewSessionPage() {
 
   const terminateSession = async () => {
     setTerminating(true);
+    // Real feedback logic: Save session state and redirect
     if (user && db && params.id !== "demo-session") {
       const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
       await updateDoc(sessionRef, {
@@ -351,12 +355,14 @@ export default function InterviewSessionPage() {
       
       if (feedback.requestCodingTask) {
         setShowCodingPad(true);
+        toast({ title: "Logic Pad Enabled", description: "Aria has requested a technical implementation." });
       }
 
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
         
+        // Update history correctly
         const updatedHistory = [...history, feedback.nextQuestion];
         setAskedQuestions(updatedHistory);
         
@@ -373,7 +379,7 @@ export default function InterviewSessionPage() {
         terminateSession();
       }
     } catch (err) {
-      router.push(`/results/demo-results`);
+      terminateSession();
     } finally {
       setProcessingTurn(false);
     }
