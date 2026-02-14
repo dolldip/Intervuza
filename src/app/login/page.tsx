@@ -34,12 +34,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error(error);
       let message = "Invalid email or password.";
-      if (error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
         message = "The credentials provided are incorrect. Please try again.";
-      } else if (error.code === 'auth/user-not-found') {
-        message = "No account found with this email.";
-      } else if (error.code === 'auth/wrong-password') {
-        message = "Incorrect password.";
       }
       
       toast({
@@ -91,7 +87,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="#" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                  <Link href="/forgot-password" name="forgot-password" className="text-xs text-primary font-bold hover:underline">Forgot password?</Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -105,7 +101,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              <Button className="w-full h-12 rounded-xl font-bold text-lg" type="submit" disabled={loading}>
+              <Button className="w-full h-12 rounded-xl font-bold text-lg shadow-lg" type="submit" disabled={loading}>
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
               </Button>
             </form>

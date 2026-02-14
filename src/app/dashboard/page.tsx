@@ -17,7 +17,8 @@ import {
   Target,
   BrainCircuit,
   Zap,
-  History
+  History,
+  AlertCircle
 } from "lucide-react"
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
@@ -35,7 +36,7 @@ export default function DashboardPage() {
     return query(
       collection(db, "users", user.uid, "interviewSessions"),
       orderBy("createdAt", "desc"),
-      limit(5)
+      limit(10)
     )
   }, [db, user])
   const { data: sessions, isLoading: sessionsLoading } = useCollection(sessionsQuery)
@@ -77,13 +78,13 @@ export default function DashboardPage() {
           <h1 className="text-4xl font-headline font-bold tracking-tight">
             Welcome back, {profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate"}
           </h1>
-          <p className="text-muted-foreground text-lg">Ready to sharpen your interview skills with Sarah today?</p>
+          <p className="text-muted-foreground text-lg">Ready for a critical high-stakes session today?</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" asChild className="hidden sm:flex h-11 rounded-xl px-6 font-bold">
             <Link href="/profile">
               <UserPen className="mr-2 w-4 h-4" />
-              Edit Profile
+              AI Profile
             </Link>
           </Button>
           <Button asChild className="h-11 rounded-xl px-6 font-bold shadow-lg shadow-primary/20">
@@ -140,8 +141,8 @@ export default function DashboardPage() {
                   <BrainCircuit className="w-6 h-6 text-primary shrink-0 mt-1" />
                   <div className="space-y-2">
                     <p className="font-bold text-sm">Sarah's Analysis</p>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {profile?.education ? `Your education background at ${profile.education} is being used to calibrate your technical depth. Sarah will adapt questions to match your ${profile.experienceLevel} level expertise.` : "Please update your profile education. This helps Sarah calibrate her logic and propose role-specific coding challenges for your sessions."}
+                    <p className="text-sm leading-relaxed text-muted-foreground italic">
+                      {profile?.education ? `Your background at ${profile.education} helps Sarah calibrate your technical depth. She is currently programmed for critical corrective feedback.` : "Update your profile education to help Sarah calibrate her logic and propose role-specific coding challenges."}
                     </p>
                   </div>
                 </div>
@@ -165,13 +166,13 @@ export default function DashboardPage() {
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] border hover:bg-muted/10 transition-all group">
                     <div className="flex items-center gap-6">
                       <div className={`w-16 h-16 rounded-[1.5rem] flex flex-col items-center justify-center font-black text-xl shadow-inner ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {item.overallScore || "--"}
+                        {item.status === 'completed' ? (item.overallScore || "--") : <AlertCircle className="w-6 h-6" />}
                         <span className="text-[8px] uppercase tracking-widest opacity-60">{item.status === 'completed' ? 'Score' : 'Active'}</span>
                       </div>
                       <div>
                         <h4 className="font-bold text-lg">{item.jobRole}</h4>
                         <p className="text-xs text-muted-foreground font-medium flex items-center gap-2 capitalize">
-                          <Calendar className="w-3 h-3" /> {new Date(item.createdAt).toLocaleDateString()} • {item.status}
+                          <Calendar className="w-3 h-3" /> {new Date(item.createdAt).toLocaleDateString()} • <span className={item.status === 'completed' ? 'text-green-600 font-bold' : 'text-blue-600 font-bold animate-pulse'}>{item.status}</span>
                         </p>
                       </div>
                     </div>
@@ -185,7 +186,7 @@ export default function DashboardPage() {
               ) : (
                 <div className="text-center py-12 space-y-4">
                   <p className="text-muted-foreground">No sessions found. Start your first assessment with Sarah.</p>
-                  <Button asChild className="rounded-xl"><Link href="/interviews/new">Start Now</Link></Button>
+                  <Button asChild className="rounded-xl shadow-lg"><Link href="/interviews/new">Start Now</Link></Button>
                 </div>
               )}
             </CardContent>
@@ -219,9 +220,9 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-0 space-y-8">
               {[
-                { label: "Technical Fluency", progress: 65 },
-                { label: "Behavioral Consistency", progress: 40 },
-                { label: "Linguistic Clarity", progress: 15 },
+                { label: "Technical Fluency", progress: Math.min(stats.avgScore, 85) || 30 },
+                { label: "Behavioral Consistency", progress: 45 },
+                { label: "Linguistic Clarity", progress: 20 },
               ].map((goal, i) => (
                 <div key={i} className="space-y-3">
                   <div className="flex justify-between items-end">
