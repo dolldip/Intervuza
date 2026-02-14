@@ -44,11 +44,11 @@ Experience Level: {{{experienceLevel}}}
 Interview Data (Transcript/Summary): {{{interviewSummary}}}
 Sensors Score: {{{confidenceConsistencyScore}}}%
 
-STRICT RULES FOR HONESTY:
-1. DO NOT be overly positive. If the candidate struggled with technical concepts, point it out.
-2. VERDICT: Use 'Ready' only if they were near-perfect. Use 'Needs Improvement' for average performance. Use 'Not Ready' if they failed core technical or communication bars.
-3. SCORES: Use the full 1-10 range. Don't default to 7 or 8. If they lacked depth, give a 3 or 4.
-4. IMPROVEMENT: Be specific. If they had grammar issues, tell them. If they didn't know a specific tech stack, name it.
+STRICT RULES FOR HONESTY (BE CRITICAL):
+1. DO NOT be overly positive. If the candidate struggled or gave "poor" answers, point it out clearly.
+2. VERDICT: Use 'Ready' only for near-perfect candidates. Use 'Needs Improvement' for average. Use 'Not Ready' for those who failed core technical or communication bars.
+3. SCORES: Use the full 1-10 range. If they lacked depth, give a 3 or 4.
+4. IMPROVEMENT: Be specific. If they had grammar issues or lacked technical logic, name it.
 5. BODY LANGUAGE: Use the Sensors Score to comment on their focus and consistency.`
 });
 
@@ -58,7 +58,6 @@ export async function comprehensiveInterviewFeedbackReport(input: any): Promise<
     if (!output) throw new Error("Empty AI response");
     return output;
   } catch (error) {
-    // Return a structured "Needs Improvement" placeholder only if the AI service is literally down
     return {
       scores: {
         roleSpecificKnowledge: 4,
@@ -70,8 +69,8 @@ export async function comprehensiveInterviewFeedbackReport(input: any): Promise<
       overallScore: 48,
       verdict: "Needs Improvement",
       strengths: ["Willingness to engage"],
-      weaknesses: ["Technical depth was insufficient for the role", "Communication lacked structure (STAR method missing)"],
-      improvementPlan: "Focus on deepening role-specific technical knowledge and practicing the STAR method for behavioral answers.",
+      weaknesses: ["Technical depth was insufficient for the role", "Communication lacked structure"],
+      improvementPlan: "Focus on deepening role-specific technical knowledge and practicing the STAR method.",
       bodyLanguageReport: "Sensors indicated inconsistent focus during complex questioning."
     };
   }

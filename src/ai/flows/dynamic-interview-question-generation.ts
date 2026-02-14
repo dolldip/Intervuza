@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Updated: Strict Job Description (JD) and Job Title alignment.
+ * Updated: Human-like professional greeting and strict JD alignment.
  */
 
 import { ai } from '@/ai/genkit';
@@ -18,7 +18,7 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  openingStatement: z.string().describe('Aria\'s professional human-like greeting.'),
+  openingStatement: z.string().describe('Aria\'s professional human-like greeting. e.g., "Hi, I\'m Aria. I\'ve reviewed your background for the [Role] position..."'),
   firstQuestion: z.string().describe('The very first question to start the interview.'),
   roleCategory: z.enum(['BTech Technical', 'BTech HR', 'Teacher', 'Doctor', 'Management', 'Other']).describe('The category of the role detected.'),
 });
@@ -29,10 +29,14 @@ const prompt = ai.definePrompt({
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
   prompt: `You are Aria, an elite professional interviewer. Your goal is to start a high-stakes interview for the position of: {{{jobRole}}}.
 
+GREETING PROTOCOL:
+- Be professional but human. 
+- Example: "Hi, I'm Aria. I've analyzed the specific requirements for this {{{jobRole}}} opening and your background. Let's get right into the assessment."
+
 STRICT ALIGNMENT RULES:
-1. JOB DESCRIPTION (JD) PRIORITY: If a Job Description is provided below, extract the most critical technical requirement or behavioral competency mentioned and base the first question on it.
+1. JOB DESCRIPTION (JD) PRIORITY: If a Job Description is provided below, extract the most critical technical requirement or behavioral competency and base the first question on it.
 2. JOB TITLE CONTEXT: If no JD is provided, use the Job Title ({{{jobRole}}}) and Experience Level ({{{experienceLevel}}}) to generate a highly specific industry-standard challenge.
-3. ZERO REPETITION: Do NOT use generic icebreakers. Start with a substantial logic or strategy question.
+3. ZERO REPETITION: Start with a substantial logic or strategy question.
 
 Context:
 - Role Title: {{{jobRole}}}

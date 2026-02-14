@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive intelligence engine for JD-aware follow-ups.
- * Updated: Strict follow-up alignment with Job Description and Job Title.
+ * Updated: Human-like verbal reactions (Yes, Yeah, Good, Poor) and strict JD alignment.
  */
 
 import {ai} from '@/ai/genkit';
@@ -21,7 +21,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 });
 
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
-  verbalReaction: z.string().describe('Immediate human-like professional reaction referencing specific details from the candidate answer.'),
+  verbalReaction: z.string().describe('Immediate human-like professional reaction (e.g., "Yeah," "I see," "Good point," "That seems a bit shallow"). Must reference specific candidate details.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
   nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC but strictly related to the JD/Role.'),
   feedback: z.object({
@@ -37,25 +37,26 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Aria, an elite AI interviewer for the position of {{{jobRole}}}. 
+  prompt: `You are Aria, an elite human-like AI interviewer for the position of {{{jobRole}}}. 
 
 CORE OBJECTIVE:
-Evaluate the candidate's answer and generate a follow-up that explores a DIFFERENT requirement from the Job Description or a different dimension of the Job Title.
+React to the candidate's answer naturally and generate a follow-up that explores a DIFFERENT requirement.
+
+REACTION PROTOCOL (Be Human):
+1. VERBAL REACTION: Start with a natural acknowledgment like "Yeah," "I see," "Right," "Good point," or a skeptical "I'm not sure about that," "That's a bit brief." 
+2. Reference a specific detail from their answer: "{{{userAnswer}}}" to prove you are listening.
+3. Be honest. If the answer was "poor" or "vague," let your reaction reflect that professional skepticism.
 
 EVALUATION CRITERIA (Strict Analysis):
 1. CORRECTNESS: Is the answer technically or logically sound?
-2. CLARITY: Is the communication structured and easy to follow?
+2. CLARITY: Is the communication structured?
 3. COMPLETENESS: Did they address the core of your previous question?
 4. CONFIDENCE: Does the language suggest mastery?
 
-STRICT PROTOCOL:
-1. VERBAL REACTION: Acknowledge the candidate's answer by referencing a specific point they made.
-2. ANALYSIS: Provide one concise paragraph of feedback covering the 4 criteria above.
-3. NEXT QUESTION: 
-   - Look at the Job Description ({{{jobDescriptionText}}}).
-   - Pick a DIFFERENT requirement or skill that hasn't been discussed yet.
-   - If no JD, pick a different technical or behavioral pillar of the Job Title ({{{jobRole}}}).
-   - AVOID these previous questions: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
+NEXT QUESTION: 
+- Look at the Job Description ({{{jobDescriptionText}}}).
+- Pick a DIFFERENT requirement or skill that hasn't been discussed.
+- AVOID these previous questions: {{#each previousQuestions}} - "{{{this}}}" {{/each}}
 
 Candidate Answer: "{{{userAnswer}}}" 
 To your previous question: "{{{interviewQuestion}}}"
