@@ -28,7 +28,9 @@ import {
   Zap,
   Smile,
   Target,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  Play
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -49,6 +51,7 @@ export default function InterviewSessionPage() {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answer, setAnswer] = useState("")
   const [initializing, setInitializing] = useState(true)
+  const [sessionStarted, setSessionStarted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(180)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
@@ -79,7 +82,6 @@ export default function InterviewSessionPage() {
         setStream(mediaStream)
         setHasCameraPermission(true)
         
-        // Immediately try to attach to ref if it exists
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
@@ -101,7 +103,7 @@ export default function InterviewSessionPage() {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []); // Only run once on mount
+  }, []);
 
   // Ensure stream is always attached to videoRef
   useEffect(() => {
@@ -109,11 +111,11 @@ export default function InterviewSessionPage() {
       videoRef.current.srcObject = stream;
       videoRef.current.play().catch(e => console.error("Video play error:", e));
     }
-  }, [stream, initializing]);
+  }, [stream, sessionStarted]);
 
   // Simulated AI analysis updates
   useEffect(() => {
-    if (!initializing) {
+    if (sessionStarted) {
       const emotions = ["Confident", "Analyzing", "Neutral", "Thoughtful", "Focused", "Calm"]
       const interval = setInterval(() => {
         setCurrentEmotion(emotions[Math.floor(Math.random() * emotions.length)])
@@ -124,15 +126,15 @@ export default function InterviewSessionPage() {
       }, 4000)
       return () => clearInterval(interval)
     }
-  }, [initializing])
+  }, [sessionStarted])
 
   // Timer logic
   useEffect(() => {
-    if (!initializing && timeLeft > 0) {
+    if (sessionStarted && timeLeft > 0) {
       const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
       return () => clearInterval(timer);
     }
-  }, [initializing, timeLeft]);
+  }, [sessionStarted, timeLeft]);
 
   // Question generation
   useEffect(() => {
@@ -172,21 +174,33 @@ export default function InterviewSessionPage() {
   }, [profile, authLoading])
 
   // AI Voice trigger
-  useEffect(() => {
-    async function speak() {
-      if (questions[currentIdx] && !initializing) {
-        try {
-          setSpeaking(true)
-          const { media } = await textToSpeech(questions[currentIdx])
-          setAudioSrc(media)
-        } catch (err) {
-          console.warn("Speech failed, falling back to text.")
-          setSpeaking(false)
-        }
+  const triggerSpeech = async (index: number) => {
+    if (questions[index]) {
+      try {
+        setSpeaking(true)
+        const { media } = await textToSpeech(questions[index])
+        setAudioSrc(media)
+      } catch (err) {
+        console.warn("Speech failed, falling back to text.")
+        setSpeaking(false)
       }
     }
-    speak();
-  }, [currentIdx, questions, initializing])
+  }
+
+  // Effect to play audio when audioSrc updates
+  useEffect(() => {
+    if (audioSrc && audioRef.current) {
+      audioRef.current.play().catch(e => {
+        console.warn("Autoplay blocked, user must interact.");
+        setSpeaking(false);
+      });
+    }
+  }, [audioSrc]);
+
+  const startSession = () => {
+    setSessionStarted(true);
+    triggerSpeech(0);
+  };
 
   const handleNext = async () => {
     if (!questions[currentIdx]) return
@@ -195,24 +209,28 @@ export default function InterviewSessionPage() {
     const currentAnswers = JSON.parse(sessionStorage.getItem('session_answers') || '[]');
     currentAnswers.push({
       question: questions[currentIdx],
-      answer: answer || "Provided a verbal response during the session.",
+      answer: answer || "Provided a response during the session.",
       emotion: currentEmotion,
       confidence: confidenceLevel
     });
     sessionStorage.setItem('session_answers', JSON.stringify(currentAnswers));
 
-    if (isMockConfig || !db || params.id === "demo-session") {
+    const isDemo = isMockConfig || !db || params.id === "demo-session";
+
+    if (isDemo) {
       setTimeout(() => {
         if (currentIdx < questions.length - 1) {
-          setCurrentIdx(currentIdx + 1)
+          const nextIdx = currentIdx + 1;
+          setCurrentIdx(nextIdx)
           setAnswer("")
           setTimeLeft(180)
           setAudioSrc(null)
           setSubmitting(false)
+          triggerSpeech(nextIdx);
         } else {
           router.push(`/results/demo-results`)
         }
-      }, 1000)
+      }, 800)
       return
     }
 
@@ -227,10 +245,12 @@ export default function InterviewSessionPage() {
       });
 
       if (currentIdx < questions.length - 1) {
-        setCurrentIdx(currentIdx + 1)
+        const nextIdx = currentIdx + 1;
+        setCurrentIdx(nextIdx)
         setAnswer("")
         setTimeLeft(180)
         setAudioSrc(null)
+        triggerSpeech(nextIdx);
       } else {
         router.push(`/results/${params.id}`)
       }
@@ -252,6 +272,43 @@ export default function InterviewSessionPage() {
         <p className="text-slate-400 text-xl max-w-md text-center px-6 font-medium">
           Setting up your secure live session and calibrating biometric sensors...
         </p>
+      </div>
+    )
+  }
+
+  if (!sessionStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
+        <div className="max-w-2xl w-full text-center space-y-10 animate-fade-in">
+          <div className="w-32 h-32 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30 mx-auto shadow-[0_0_50px_rgba(var(--primary),0.2)]">
+            <VideoIcon className="w-12 h-12 text-primary" />
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-headline font-bold">Secure Session Ready</h1>
+            <p className="text-slate-400 text-lg">
+              Sarah AI is ready to begin your assessment. Ensure you are in a quiet, well-lit environment.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-left">
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <ShieldCheck className="w-5 h-5 text-green-500 mb-2" />
+              <p className="text-xs font-black uppercase text-slate-500">Privacy</p>
+              <p className="text-sm font-bold">End-to-End Encrypted</p>
+            </div>
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <Mic className="w-5 h-5 text-blue-500 mb-2" />
+              <p className="text-xs font-black uppercase text-slate-500">Audio</p>
+              <p className="text-sm font-bold">Noise Cancellation Active</p>
+            </div>
+          </div>
+          <Button 
+            className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 text-2xl font-black shadow-[0_20px_60px_rgba(var(--primary),0.3)] transition-all hover:scale-[1.02]"
+            onClick={startSession}
+          >
+            BEGIN ASSESSMENT
+            <Play className="ml-4 w-6 h-6 fill-current" />
+          </Button>
+        </div>
       </div>
     )
   }
@@ -308,7 +365,7 @@ export default function InterviewSessionPage() {
           
           <div className="relative w-full h-full flex items-center justify-center">
             <img 
-              src="https://picsum.photos/seed/sarah-pm-interview/1200/1200" 
+              src="https://picsum.photos/seed/sarah-pm-ai/1200/1200" 
               alt="Sarah AI Interviewer" 
               className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'scale-105 brightness-110 saturate-[1.1]' : 'brightness-75 grayscale-[0.2]'}`}
               data-ai-hint="professional headshot"
@@ -318,18 +375,28 @@ export default function InterviewSessionPage() {
             <div className="absolute bottom-16 inset-x-0 px-16 z-20">
               <div className="max-w-4xl mx-auto bg-slate-950/80 backdrop-blur-3xl border border-white/10 p-12 rounded-[3rem] shadow-[0_0_120px_rgba(0,0,0,0.6)] animate-fade-in">
                 <div className="flex items-start gap-10">
-                  <div className={`p-8 rounded-[2.5rem] transition-all duration-700 ${speaking ? 'bg-primary shadow-[0_0_50px_rgba(var(--primary),0.5)]' : 'bg-slate-800'}`}>
-                    <Volume2 className={`w-12 h-12 ${speaking ? 'text-white animate-pulse' : 'text-slate-600'}`} />
+                  <div className="flex flex-col gap-4">
+                    <div className={`p-8 rounded-[2.5rem] transition-all duration-700 ${speaking ? 'bg-primary shadow-[0_0_50px_rgba(var(--primary),0.5)]' : 'bg-slate-800'}`}>
+                      <Volume2 className={`w-12 h-12 ${speaking ? 'text-white animate-pulse' : 'text-slate-600'}`} />
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="rounded-full hover:bg-white/10 text-slate-500"
+                      onClick={() => triggerSpeech(currentIdx)}
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                    </Button>
                   </div>
                   <div className="flex-1 pt-3">
                     <div className="flex items-center gap-5 mb-5">
                       <Badge className="bg-primary/20 text-primary border-primary/30 px-4 py-1.5 text-[11px] uppercase font-black tracking-widest shadow-sm">AI COACH: SARAH</Badge>
                       <span className="text-[12px] text-slate-500 font-mono tracking-widest flex items-center gap-2">
                          <Activity className="w-3.5 h-3.5" /> 
-                         STATUS: {speaking ? 'STREAMING_VOICE' : 'IDLE_LISTENING'}
+                         STATUS: {speaking ? 'SPEAKING' : 'LISTENING'}
                       </span>
                     </div>
-                    <h3 className="text-3xl md:text-4xl font-headline font-bold leading-[1.3] tracking-tight text-white/95">
+                    <h3 className="text-3xl md:text-5xl font-headline font-bold leading-[1.2] tracking-tight text-white/95">
                       {questions[currentIdx]}
                     </h3>
                   </div>
@@ -353,7 +420,6 @@ export default function InterviewSessionPage() {
                 </div>
               </div>
               <div className="relative aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] group">
-                {/* Mirroring enabled for user comfort */}
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -465,7 +531,6 @@ export default function InterviewSessionPage() {
         <audio 
           ref={audioRef} 
           src={audioSrc} 
-          autoPlay 
           onEnded={() => setSpeaking(false)} 
           className="hidden" 
         />
