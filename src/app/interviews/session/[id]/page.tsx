@@ -197,7 +197,6 @@ export default function InterviewSessionPage() {
       setFetchingAudio(false)
       
       if (result.fallback) {
-        // Fallback to browser's built-in speech synthesis
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.onend = handleAudioEnded;
         window.speechSynthesis.speak(utterance);
@@ -206,7 +205,6 @@ export default function InterviewSessionPage() {
         if (audioRef.current) {
           audioRef.current.load()
           await audioRef.current.play().catch(() => {
-            // If play fails, use fallback
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.onend = handleAudioEnded;
             window.speechSynthesis.speak(utterance);

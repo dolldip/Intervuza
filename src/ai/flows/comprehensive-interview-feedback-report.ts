@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for generating a comprehensive interview feedback report.
- * Includes fallbacks to handle API quota limits gracefully.
+ * Includes robust error handling for quota limits.
  */
 
 import {ai} from '@/ai/genkit';
@@ -41,14 +41,14 @@ const prompt = ai.definePrompt({
   name: 'comprehensiveInterviewFeedbackReportPrompt',
   input: {schema: ComprehensiveInterviewFeedbackReportInputSchema},
   output: {schema: ComprehensiveInterviewFeedbackReportOutputSchema},
-  prompt: `You are an expert AI Interview Coach. Your task is to provide a comprehensive and actionable feedback report for a job seeker.
+  prompt: `You are an expert AI Interview Coach. Provide a report for a seeker who just finished a mock interview.
 
 Job Role: {{{jobRole}}} ({{{experienceLevel}}})
 Interview Summary: {{{interviewSummary}}}
 Scores: Text:{{{overallTextAnalysisFeedback}}}, Voice:{{{overallVoiceAnalysisFeedback}}}, Camera:{{{overallCameraAnalysisFeedback}}}
 Confidence Score: {{{confidenceConsistencyScore}}}
 
-Synthesize this into a structured report focusing on overall scores, strengths, weaknesses, and a detailed improvement plan.`
+Summarize the performance focusing on scores, strengths, weaknesses, and a structured plan.`
 });
 
 export async function comprehensiveInterviewFeedbackReport(input: any): Promise<ComprehensiveInterviewFeedbackReportOutput> {
