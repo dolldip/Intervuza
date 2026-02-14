@@ -30,7 +30,8 @@ import {
   Target,
   Sparkles,
   RefreshCw,
-  Play
+  Play,
+  VolumeX
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -57,6 +58,7 @@ export default function InterviewSessionPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [speaking, setSpeaking] = useState(false)
+  const [audioError, setAudioError] = useState(false)
   
   // Real-time analysis simulation states
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
@@ -116,20 +118,20 @@ export default function InterviewSessionPage() {
     }
   }, [stream, sessionStarted]);
 
-  // Dynamic Analysis Simulation
+  // Dynamic Analysis Simulation (More realistic fluctuations)
   useEffect(() => {
     if (sessionStarted) {
-      const emotions = ["Confident", "Analyzing", "Neutral", "Thoughtful", "Focused", "Calm"]
+      const emotions = ["Confident", "Analyzing", "Neutral", "Thoughtful", "Focused", "Calm", "Searching"]
       const interval = setInterval(() => {
         // Fluctuate emotion
         setCurrentEmotion(emotions[Math.floor(Math.random() * emotions.length)])
         
-        // Fluctuate metrics to feel more "real"
-        setConfidenceLevel(prev => Math.max(70, Math.min(98, prev + (Math.floor(Math.random() * 11) - 5))))
-        setEyeAlignment(prev => Math.max(60, Math.min(99, prev + (Math.floor(Math.random() * 15) - 7))))
-        setNeuralClarity(prev => Math.max(75, Math.min(96, prev + (Math.floor(Math.random() * 7) - 3))))
-        setStressMarker(prev => Math.max(5, Math.min(45, prev + (Math.floor(Math.random() * 9) - 4))))
-      }, 3500)
+        // Fluctuate metrics more significantly to feel reactive
+        setConfidenceLevel(prev => Math.max(65, Math.min(98, prev + (Math.floor(Math.random() * 15) - 7))))
+        setEyeAlignment(prev => Math.max(50, Math.min(99, prev + (Math.floor(Math.random() * 20) - 10))))
+        setNeuralClarity(prev => Math.max(70, Math.min(96, prev + (Math.floor(Math.random() * 10) - 5))))
+        setStressMarker(prev => Math.max(5, Math.min(55, prev + (Math.floor(Math.random() * 12) - 6))))
+      }, 2500)
       return () => clearInterval(interval)
     }
   }, [sessionStarted])
@@ -184,11 +186,13 @@ export default function InterviewSessionPage() {
     if (questions[index]) {
       try {
         setSpeaking(true)
+        setAudioError(false)
         const { media } = await textToSpeech(questions[index])
         setAudioSrc(media)
       } catch (err) {
         console.warn("Speech failed, falling back to text.")
         setSpeaking(false)
+        setAudioError(true)
       }
     }
   }
@@ -196,10 +200,14 @@ export default function InterviewSessionPage() {
   // Effect to play audio
   useEffect(() => {
     if (audioSrc && audioRef.current) {
-      audioRef.current.play().catch(e => {
-        console.warn("Autoplay blocked, click play button to hear Sarah.");
-        setSpeaking(false);
-      });
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.warn("Autoplay blocked, user interaction required.");
+          setSpeaking(false);
+          setAudioError(true);
+        });
+      }
     }
   }, [audioSrc]);
 
@@ -277,17 +285,20 @@ export default function InterviewSessionPage() {
     if (type === 'eye') {
       if (val > 85) return "OPTIMAL"
       if (val > 70) return "STABLE"
-      return "FLUCTUATING"
+      if (val > 55) return "FLUCTUATING"
+      return "SEARCHING"
     }
     if (type === 'stress') {
       if (val < 20) return "STABLE"
       if (val < 35) return "MODERATE"
+      if (val < 45) return "RISING"
       return "ELEVATED"
     }
     if (type === 'confidence') {
       if (val > 80) return "HIGH"
       if (val > 60) return "CONSISTENT"
-      return "RECOVERING"
+      if (val > 40) return "RECOVERING"
+      return "MINIMAL"
     }
     return "SHARP"
   }
@@ -389,46 +400,52 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative overflow-hidden bg-slate-950">
-        {/* LEFT VIEWPORT: AI INTERVIEWER (SARAH) */}
+        {/* LEFT VIEWPORT: AI INTERVIEWER (SARAH) + QUESTION */}
         <div className="flex-1 relative flex items-center justify-center border-r border-white/5">
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-10" />
           
           <div className="relative w-full h-full flex items-center justify-center">
             <img 
-              src="https://picsum.photos/seed/sarah-pm-ai/1200/1200" 
+              src="https://picsum.photos/seed/sarah-pm-ai-v2/1200/1200" 
               alt="Sarah AI Interviewer" 
-              className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'scale-105 brightness-110 saturate-[1.1]' : 'brightness-75 grayscale-[0.2]'}`}
-              data-ai-hint="professional human headshot"
+              className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'scale-105 brightness-110 saturate-[1.2]' : 'brightness-75 grayscale-[0.3]'}`}
+              data-ai-hint="professional human woman headshot"
             />
             
-            {/* Question Overlay */}
-            <div className="absolute bottom-16 inset-x-0 px-16 z-20">
-              <div className="max-w-4xl mx-auto bg-slate-950/80 backdrop-blur-3xl border border-white/10 p-12 rounded-[3rem] shadow-[0_0_120px_rgba(0,0,0,0.6)] animate-fade-in">
-                <div className="flex items-start gap-10">
+            {/* Question Overlay - More prominent as requested */}
+            <div className="absolute bottom-12 inset-x-0 px-10 z-20">
+              <div className="max-w-4xl mx-auto bg-slate-950/85 backdrop-blur-3xl border border-white/15 p-10 rounded-[3rem] shadow-[0_0_150px_rgba(0,0,0,0.8)] animate-fade-in">
+                <div className="flex items-start gap-8">
                   <div className="flex flex-col gap-4">
-                    <div className={`p-8 rounded-[2.5rem] transition-all duration-700 ${speaking ? 'bg-primary shadow-[0_0_50px_rgba(var(--primary),0.5)]' : 'bg-slate-800'}`}>
-                      <Volume2 className={`w-12 h-12 ${speaking ? 'text-white animate-pulse' : 'text-slate-600'}`} />
+                    <div className={`p-6 rounded-[2rem] transition-all duration-700 ${speaking ? 'bg-primary shadow-[0_0_60px_rgba(var(--primary),0.6)] animate-pulse' : 'bg-slate-800'}`}>
+                      <Volume2 className={`w-10 h-10 ${speaking ? 'text-white' : 'text-slate-600'}`} />
                     </div>
                     <Button 
-                      variant="ghost" 
+                      variant="outline" 
                       size="icon" 
-                      className="rounded-full hover:bg-white/10 text-slate-500"
+                      className={`rounded-full border-white/10 hover:bg-white/10 ${audioError ? 'text-amber-500 border-amber-500/50 animate-bounce' : 'text-slate-500'}`}
                       onClick={() => triggerSpeech(currentIdx)}
+                      title="Replay Voice"
                     >
                       <RefreshCw className="w-5 h-5" />
                     </Button>
                   </div>
-                  <div className="flex-1 pt-3">
-                    <div className="flex items-center gap-5 mb-5">
-                      <Badge className="bg-primary/20 text-primary border-primary/30 px-4 py-1.5 text-[11px] uppercase font-black tracking-widest shadow-sm">AI COACH: SARAH</Badge>
-                      <span className="text-[12px] text-slate-500 font-mono tracking-widest flex items-center gap-2 uppercase">
-                         <Activity className="w-3.5 h-3.5" /> 
-                         {speaking ? 'Speaking' : 'Listening'}
+                  <div className="flex-1 pt-2">
+                    <div className="flex items-center gap-5 mb-4">
+                      <Badge className="bg-primary/20 text-primary border-primary/30 px-3 py-1 text-[10px] uppercase font-black tracking-widest shadow-sm">AI HUMAN: SARAH</Badge>
+                      <span className="text-[11px] text-slate-500 font-mono tracking-widest flex items-center gap-2 uppercase">
+                         <Activity className={`w-3 h-3 ${speaking ? 'text-primary' : 'text-slate-700'}`} /> 
+                         {speaking ? 'Synthesizing Voice...' : 'Waiting for Response'}
                       </span>
                     </div>
-                    <h3 className="text-3xl md:text-5xl font-headline font-bold leading-[1.2] tracking-tight text-white/95">
+                    <h3 className="text-2xl md:text-4xl font-headline font-bold leading-[1.3] tracking-tight text-white/95">
                       {questions[currentIdx]}
                     </h3>
+                    {audioError && !speaking && (
+                       <p className="text-[10px] text-amber-500/80 mt-3 font-mono uppercase tracking-widest">
+                         Audio playback failed. Click the replay icon to manually trigger Sarah's voice.
+                       </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -440,16 +457,16 @@ export default function InterviewSessionPage() {
         <div className="w-[580px] bg-slate-950 border-l border-white/10 flex flex-col z-30 shadow-2xl relative">
           <div className="p-10 space-y-12 flex-1 overflow-y-auto">
             
-            {/* LIVE CAMERA FEED */}
+            {/* LIVE CAMERA FEED (YOUR FACE) */}
             <div className="space-y-6">
               <div className="flex items-center justify-between px-3">
-                <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em]">Live Expression Scan</span>
+                <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em]">Live Biometric Scan</span>
                 <div className="flex items-center gap-3">
                    <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.5)]" />
-                   <span className="text-[11px] text-red-500 font-black uppercase tracking-widest">Biometric Stream</span>
+                   <span className="text-[11px] text-red-500 font-black uppercase tracking-widest">Real-Time Data Stream</span>
                 </div>
               </div>
-              <div className="relative aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
+              <div className="relative aspect-video bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group ring-2 ring-primary/5">
                 <video 
                   ref={videoRef} 
                   autoPlay 
@@ -463,19 +480,19 @@ export default function InterviewSessionPage() {
                   <div className="absolute inset-x-0 h-1 bg-primary/40 shadow-[0_0_30px_rgba(var(--primary),1)] animate-[scan_6s_linear_infinite]" />
                   
                   {/* Face Framing */}
-                  <div className="absolute top-12 left-12 w-12 h-12 border-t-2 border-l-2 border-primary/40 rounded-tl-xl" />
-                  <div className="absolute top-12 right-12 w-12 h-12 border-t-2 border-r-2 border-primary/40 rounded-tr-xl" />
-                  <div className="absolute bottom-12 left-12 w-12 h-12 border-b-2 border-l-2 border-primary/40 rounded-bl-xl" />
-                  <div className="absolute bottom-12 right-12 w-12 h-12 border-b-2 border-r-2 border-primary/40 rounded-br-xl" />
+                  <div className="absolute top-10 left-10 w-12 h-12 border-t-2 border-l-2 border-primary/40 rounded-tl-xl" />
+                  <div className="absolute top-10 right-10 w-12 h-12 border-t-2 border-r-2 border-primary/40 rounded-tr-xl" />
+                  <div className="absolute bottom-10 left-10 w-12 h-12 border-b-2 border-l-2 border-primary/40 rounded-bl-xl" />
+                  <div className="absolute bottom-10 right-10 w-12 h-12 border-b-2 border-r-2 border-primary/40 rounded-br-xl" />
 
                   <div className="absolute bottom-8 left-8 flex items-center gap-3">
                     <div className="bg-primary text-white px-4 py-2 rounded-xl text-[11px] font-black flex items-center gap-2 shadow-lg">
                       <Sparkles className="w-3.5 h-3.5" />
                       {currentEmotion.toUpperCase()}
                     </div>
-                    <div className="bg-black/80 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
+                    <div className="bg-black/85 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-xl flex items-center gap-2">
                        <Target className="w-3.5 h-3.5 text-primary" />
-                       <span className="text-[10px] font-mono text-white/90">CALIB: {confidenceLevel}%</span>
+                       <span className="text-[10px] font-mono text-white/90 uppercase">Confidence: {confidenceLevel}%</span>
                     </div>
                   </div>
                 </div>
@@ -485,38 +502,40 @@ export default function InterviewSessionPage() {
                     <Camera className="w-12 h-12 text-red-500 mb-6" />
                     <h4 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Access Denied</h4>
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                      Camera permission is required for expression mapping.
+                      Camera permission is required for facial expression mapping.
                     </p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* NEURAL ANALYSIS METRICS */}
+            {/* NEURAL ANALYSIS METRICS (DYNAMNIC STATUSES) */}
             <div className="space-y-10">
                <div className="flex items-center justify-between px-3">
                  <h4 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em]">Neural Biometrics</h4>
-                 <Badge variant="outline" className="text-[10px] border-primary/20 text-primary uppercase font-black px-3 py-1">Analyzing Data...</Badge>
+                 <Badge variant="outline" className="text-[10px] border-primary/20 text-primary uppercase font-black px-3 py-1">Analyzing Performance...</Badge>
                </div>
                
                <div className="grid grid-cols-2 gap-4">
                  {[
                    { label: "Confidence", value: `${confidenceLevel}%`, icon: MessageSquare, type: 'confidence' as const },
                    { label: "Neural Clarity", value: `${neuralClarity}%`, icon: Zap, type: 'clarity' as const },
-                   { label: "Eye Alignment", value: eyeAlignment > 80 ? "Locked" : "Fluctuating", icon: Target, type: 'eye' as const },
-                   { label: "Stress Level", value: stressMarker < 20 ? "Stable" : "Detecting", icon: Activity, type: 'stress' as const },
+                   { label: "Eye Alignment", value: eyeAlignment > 75 ? "Focused" : "Fluctuating", icon: Target, type: 'eye' as const },
+                   { label: "Stress Marker", value: stressMarker < 25 ? "Stable" : "Detecting", icon: Activity, type: 'stress' as const },
                  ].map((stat, i) => {
                    const val = stat.type === 'eye' ? eyeAlignment : stat.type === 'stress' ? stressMarker : stat.type === 'confidence' ? confidenceLevel : neuralClarity;
                    const status = getStatusLabel(val, stat.type);
+                   const isAlert = status === 'SEARCHING' || status === 'ELEVATED' || status === 'MINIMAL';
+                   
                    return (
-                     <div key={i} className="p-6 bg-white/5 border border-white/5 rounded-[2rem] flex flex-col gap-5 hover:bg-white/[0.08] transition-all">
-                       <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-inner">
-                         <stat.icon className="w-6 h-6 text-primary" />
+                     <div key={i} className="p-6 bg-white/5 border border-white/5 rounded-[2rem] flex flex-col gap-5 hover:bg-white/[0.08] transition-all group">
+                       <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                         <stat.icon className={`w-6 h-6 ${isAlert ? 'text-amber-500' : 'text-primary'}`} />
                        </div>
                        <div>
                          <p className="text-[11px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">{stat.label}</p>
                          <p className="text-2xl font-black text-white mt-1">{stat.value}</p>
-                         <span className={`text-[10px] font-mono mt-2 block uppercase font-black tracking-widest ${status === 'FLUCTUATING' || status === 'ELEVATED' ? 'text-amber-500' : 'text-primary/70'}`}>
+                         <span className={`text-[10px] font-mono mt-2 block uppercase font-black tracking-widest ${isAlert ? 'text-amber-500 animate-pulse' : 'text-primary/70'}`}>
                            {status}
                          </span>
                        </div>
@@ -526,10 +545,10 @@ export default function InterviewSessionPage() {
                </div>
 
                <div className="space-y-5 pt-10 border-t border-white/10">
-                <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] px-3">Voice-to-Text Stream</label>
+                <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] px-3">Voice-to-Text Transcription</label>
                 <textarea 
                   placeholder="Neural transcription in progress... Respond now." 
-                  className="w-full bg-slate-900/50 border border-white/10 text-white rounded-[2.5rem] p-8 h-44 resize-none focus:ring-2 focus:ring-primary/50 outline-none text-lg transition-all shadow-inner placeholder:text-slate-700 font-medium"
+                  className="w-full bg-slate-900/50 border border-white/15 text-white rounded-[2.5rem] p-8 h-44 resize-none focus:ring-2 focus:ring-primary/50 outline-none text-lg transition-all shadow-inner placeholder:text-slate-700 font-medium"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                 />
@@ -553,32 +572,31 @@ export default function InterviewSessionPage() {
                 </>
               )}
             </Button>
-            <p className="text-center text-[11px] text-slate-700 mt-8 uppercase tracking-[0.4em] font-black">
-              Neural data is end-to-end encrypted
+            <p className="text-center text-[10px] text-slate-700 mt-8 uppercase tracking-[0.4em] font-black">
+              Neural assessment data is end-to-end encrypted
             </p>
           </div>
         </div>
       </div>
 
-      {/* AI Voice Playback */}
-      {audioSrc && (
-        <audio 
-          ref={audioRef} 
-          src={audioSrc} 
-          onEnded={() => setSpeaking(false)} 
-          className="hidden" 
-        />
-      )}
+      {/* AI Voice Playback - Essential for Sarah's Human Voice */}
+      <audio 
+        ref={audioRef} 
+        src={audioSrc || ""} 
+        onEnded={() => setSpeaking(false)} 
+        className="hidden" 
+        autoPlay={false}
+      />
 
       <style jsx global>{`
         @keyframes scan {
           0% { transform: translateY(0); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
-          100% { transform: translateY(400px); opacity: 0; }
+          100% { transform: translateY(450px); opacity: 0; }
         }
         @keyframes fade-in {
-          0% { opacity: 0; transform: translateY(20px); }
+          0% { opacity: 0; transform: translateY(30px); }
           100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
