@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ShieldCheck, Mail, Lock, Loader2, Phone, KeyRound, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Loader2, Phone, KeyRound } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -161,7 +161,7 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <Label htmlFor="password">Password</Label>
-                      <Link href="/forgot-password" text-primary font-bold hover:underline>Forgot password?</Link>
+                      <Link href="/forgot-password" className="text-primary font-bold hover:underline text-sm">Forgot password?</Link>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -226,7 +226,7 @@ export default function LoginPage() {
                     <button 
                       type="button"
                       onClick={() => setOtpSent(false)}
-                      className="text-xs text-muted-foreground w-full text-center hover:underline"
+                      className="text-xs text-muted-foreground w-full text-center hover:underline mt-4"
                     >
                       Change Phone Number
                     </button>

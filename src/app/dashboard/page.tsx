@@ -4,7 +4,6 @@
 import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { 
   Trophy, 
   TrendingUp, 
@@ -96,7 +95,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: "Daily Streak", value: `${stats.currentStreak} Days`, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
@@ -142,7 +140,7 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     <p className="font-bold text-sm">Sarah's Analysis</p>
                     <p className="text-sm leading-relaxed text-muted-foreground italic">
-                      {profile?.education ? `Your background at ${profile.education} helps Sarah calibrate your technical depth. She is currently programmed for critical corrective feedback.` : "Update your profile education to help Sarah calibrate her logic and propose role-specific coding challenges."}
+                      {profile?.education ? `Your background at ${profile.education} helps Sarah calibrate your technical depth.` : "Update your profile education to help Sarah calibrate her logic."}
                     </p>
                   </div>
                 </div>
@@ -193,7 +191,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Sidebar Column */}
         <div className="space-y-8">
           <Card className="shadow-sm bg-slate-950 text-white border-none rounded-[2.5rem] overflow-hidden relative group">
             <CardHeader className="p-8">
@@ -212,32 +209,6 @@ export default function DashboardPage() {
               </Button>
             </CardContent>
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-          </Card>
-
-          <Card className="shadow-sm rounded-[2.5rem] border-none bg-white p-8">
-            <CardHeader className="p-0 mb-8">
-              <CardTitle className="font-headline text-xl">Preparation Gaps</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 space-y-8">
-              {[
-                { label: "Technical Fluency", progress: Math.min(stats.avgScore, 85) || 30 },
-                { label: "Behavioral Consistency", progress: 45 },
-                { label: "Linguistic Clarity", progress: 20 },
-              ].map((goal, i) => (
-                <div key={i} className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <span className="text-sm font-bold text-slate-600">{goal.label}</span>
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">{goal.progress}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-1000" 
-                      style={{ width: `${goal.progress}%` }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
           </Card>
         </div>
       </div>
