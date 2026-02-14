@@ -58,11 +58,9 @@ export default function ResultsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
-        <BrainCircuit className="w-24 h-24 text-primary animate-pulse mb-10" />
-        <h2 className="text-3xl font-headline font-black uppercase tracking-[0.4em] text-center">Neural Performance Audit</h2>
-        <div className="mt-10 flex items-center gap-3 text-primary font-black text-xs uppercase tracking-widest glass px-8 py-3 rounded-full">
-           <Loader2 className="w-4 h-4 animate-spin" />
-           Aria is generating your strategic feedback...
+        <div className="flex items-center gap-3 text-primary font-black text-sm uppercase tracking-[0.2em] glass px-10 py-4 rounded-full">
+           <Loader2 className="w-5 h-5 animate-spin" />
+           Syncing Professional Audit...
         </div>
       </div>
     )

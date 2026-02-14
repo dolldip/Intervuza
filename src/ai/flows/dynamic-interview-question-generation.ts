@@ -71,7 +71,7 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
 
     return {
       openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm ready to begin your professional audit.",
-      firstQuestion: (fallbacks[roleKey] || fallbacks['default'])[0],
+      firstQuestion: (fallbacks[roleKey] || fallbacks['default'])[Math.floor(Math.random() * (fallbacks[roleKey] || fallbacks['default']).length)],
       roleCategory: roleKey === 'default' ? 'Other' : roleKey as any
     };
   }

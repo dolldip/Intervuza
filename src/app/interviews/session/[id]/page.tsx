@@ -76,7 +76,6 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // IRONCLAD MEMORY: Tracks every single question asked to prevent ANY repetition.
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -189,7 +188,6 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setRoleCategory(result.roleCategory)
-        // Ensure the opening question is immediately logged in history
         historyRef.current = [result.firstQuestion]
       } catch (err) {
         setOpening("Hi, I'm Aria. Let's begin your professional audit.")
@@ -254,12 +252,13 @@ export default function InterviewSessionPage() {
     setTerminating(true);
     if (user && db && params.id !== "demo-session") {
       const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
-      await updateDoc(sessionRef, {
+      updateDoc(sessionRef, {
         status: "completed",
         endTime: new Date().toISOString(),
         overallScore: Math.round(confidenceLevel * 0.7 + 25),
       });
     }
+    // Redirect immediately to results to "show feedback dont show progress" in the session page.
     router.push(`/results/${params.id === "demo-session" ? 'demo-results' : params.id}`);
   };
 
@@ -290,7 +289,6 @@ export default function InterviewSessionPage() {
       setShowFeedback(true);
       
       if (!feedback.isInterviewComplete && currentTurn < 6) {
-        // INSTANT HISTORY LOGGING: Commit the NEW question to history BEFORE it's generated to ensure 100% sync
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTurnCount(currentTurn + 1);
