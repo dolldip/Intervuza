@@ -3,6 +3,7 @@
 /**
  * @fileOverview Aria's adaptive human-like question generator.
  * Updated to act like a Tier-1 elite recruiter focusing on resume projects.
+ * Enforces strict round separation.
  */
 
 import { ai } from '@/ai/genkit';
@@ -37,11 +38,13 @@ Context:
 - Past Performance: {{{pastPerformanceSummary}}}
 
 STRICT ELITE RECRUITER RULES:
-1. PROJECT DEEP DIVE: Immediately identify a project from their resume and ask a "First Principles" question about it. For example: "I saw your work on [Project]. What was the most difficult architectural trade-off you had to make there?"
-2. HUMAN VOICE: Use contractions ("I'm", "We'll", "It's"). Use natural fillers ("Hmm...", "Right...").
-3. NO GENERIC STARTERS: Avoid "Tell me about yourself." Start with a high-stakes question that tests their technical or behavioral depth right away.
-4. ADAPTIVE CHALLENGE: If their past performance shows technical weakness, start with a logic-heavy architectural question.
-5. PROFESSIONAL EMPATHY: Sound encouraging but make it clear that the bar is high.`,
+1. PROJECT DEEP DIVE: Immediately identify a project from their resume and ask a "First Principles" question about it.
+2. ROUND LOGIC:
+   - TECHNICAL: Start with a heavy architectural trade-off or logic challenge from their resume projects.
+   - HR/BEHAVIORAL: Start with a high-stakes situational question about leadership or conflict in their previous role.
+3. HUMAN VOICE: Use contractions ("I'm", "We'll", "It's"). Use natural fillers ("Hmm...", "Right...").
+4. NO GENERIC STARTERS: Avoid "Tell me about yourself." Go straight to the technical or behavioral depth.
+5. ADAPTIVE CHALLENGE: If past performance shows technical weakness, start with a logic-heavy architectural question.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {
@@ -50,7 +53,7 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm interested to dive into your architectural experience today.",
+      openingStatement: "Hi, I'm Aria. I've been reviewing your background and I'm interested to dive into your experience today.",
       firstQuestion: `Based on your role as a ${input.jobRole}, I'd love to start with a project you've worked on—could you explain the biggest technical trade-off you made in your most recent project and why you chose that path?`
     };
   }

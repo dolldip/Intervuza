@@ -78,6 +78,9 @@ export default function InterviewSessionPage() {
   const stuckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
+  // Use a ref for history to ensure the feedback logic always has the absolute latest list
+  const historyRef = useRef<string[]>([])
+
   const stateRef = useRef({ 
     speaking, 
     listening, 
@@ -100,9 +103,9 @@ export default function InterviewSessionPage() {
       sessionStarted,
       isStuck
     }
+    historyRef.current = askedQuestions
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, askedQuestions, sessionStarted, isStuck])
 
-  // Solid video attachment with persistence
   useEffect(() => {
     if (userVideoRef.current && stream) {
       userVideoRef.current.srcObject = stream;
@@ -143,12 +146,11 @@ export default function InterviewSessionPage() {
         setStream(mediaStream)
         setHasCameraPermission(true)
       } catch (error) {
-        console.error('Camera access error:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
           title: 'Neural Feed Failed',
-          description: 'Aria needs camera access to monitor biometric focus levels.',
+          description: 'Aria needs camera access for biometric focus monitoring.',
         });
       }
     };
@@ -184,7 +186,6 @@ export default function InterviewSessionPage() {
         }
         setInterimTranscript(interimText);
 
-        // Silence timeout: If user stops talking for a while, complete turn
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
           const combinedText = (transcriptAccumulatorRef.current + interimText).trim();
@@ -193,7 +194,6 @@ export default function InterviewSessionPage() {
           }
         }, 12000); 
 
-        // Stuck detection: If no final text for 18 seconds while listening
         if (stuckTimeoutRef.current) clearTimeout(stuckTimeoutRef.current);
         stuckTimeoutRef.current = setTimeout(() => {
           const { listening: isListeningNow } = stateRef.current;
@@ -243,12 +243,14 @@ export default function InterviewSessionPage() {
         setOpening(result.openingStatement)
         setCurrentQuestion(result.firstQuestion)
         setAskedQuestions([result.firstQuestion])
+        historyRef.current = [result.firstQuestion]
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
         setOpening("Hi, I'm Aria. I've been reviewing your background and I'm interested to dive into your experience.")
         const fb = "To get us started, could you walk me through a technical project from your resume and the biggest challenge you faced there?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
+        historyRef.current = [fb]
         sessionStorage.setItem('session_answers', '[]');
       } finally {
         setInitializing(false)
@@ -308,7 +310,6 @@ export default function InterviewSessionPage() {
 
   const terminateSession = async () => {
     setTerminating(true);
-    // Real feedback logic: Save session state and redirect
     if (user && db && params.id !== "demo-session") {
       const sessionRef = doc(db, "users", user.uid, "interviewSessions", params.id as string);
       await updateDoc(sessionRef, {
@@ -322,7 +323,7 @@ export default function InterviewSessionPage() {
   };
 
   const completeTurn = async (forcedStuck: boolean = false) => {
-    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question, askedQuestions: history } = stateRef.current;
+    const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
     if (isProcessing) return;
     
     setProcessingTurn(true);
@@ -341,12 +342,12 @@ export default function InterviewSessionPage() {
     try {
       const feedback = await instantTextualAnswerFeedback({
         interviewQuestion: question,
-        userAnswer: fullAnswer || (forcedStuck ? "Hmm... I'm finding this a bit difficult to explain clearly right now." : "Silence."),
+        userAnswer: fullAnswer || (forcedStuck ? "I'm finding this a bit difficult to explain clearly." : "Silence."),
         jobRole: sessionStorage.getItem('demo_role') || "Candidate",
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: history,
+        previousQuestions: historyRef.current, // Use the absolute latest history ref
         isStuck: forcedStuck || (fullAnswer.length < 15 && !forcedStuck)
       });
       
@@ -355,16 +356,19 @@ export default function InterviewSessionPage() {
       
       if (feedback.requestCodingTask) {
         setShowCodingPad(true);
-        toast({ title: "Logic Pad Enabled", description: "Aria has requested a technical implementation." });
+        toast({ title: "Logic Pad Enabled", description: "Aria requested a technical implementation." });
       }
 
       if (!feedback.isInterviewComplete && nextTurnCount < 6) {
         setTurnCount(nextTurnCount);
         setCurrentQuestion(feedback.nextQuestion);
         
-        // Update history correctly
-        const updatedHistory = [...history, feedback.nextQuestion];
-        setAskedQuestions(updatedHistory);
+        // Update history IMMEDIATELY so the next turn's feedback logic sees it
+        setAskedQuestions(prev => {
+           const nextHistory = [...prev, feedback.nextQuestion];
+           historyRef.current = nextHistory;
+           return nextHistory;
+        });
         
         setTranscript("");
         setInterimTranscript("");
@@ -424,7 +428,7 @@ export default function InterviewSessionPage() {
             <Alert variant="destructive" className="glass border-red-500/30 rounded-2xl text-left">
               <AlertCircle className="h-6 w-6" />
               <AlertTitle className="font-bold">Neural Feed Missing</AlertTitle>
-              <AlertDescription className="text-sm font-medium">Enable camera permissions to allow Aria's focus tracking system.</AlertDescription>
+              <AlertDescription className="text-sm font-medium">Enable camera permissions for Aria's focus tracking system.</AlertDescription>
             </Alert>
           )}
         </div>
@@ -472,7 +476,6 @@ export default function InterviewSessionPage() {
       </div>
 
       <div className="flex-1 flex relative bg-black overflow-hidden">
-        {/* Main AI Feed */}
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden">
           <div className="absolute inset-0 transition-all duration-1000">
              <img 
@@ -500,7 +503,6 @@ export default function InterviewSessionPage() {
           </div>
         </div>
 
-        {/* Sidebar for Biometrics or Code */}
         <div className={cn("transition-all duration-500 glass-dark border-l border-white/5 flex flex-col z-30 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden", showCodingPad ? "w-[600px]" : "w-[480px]")}>
           <div className="p-10 space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             

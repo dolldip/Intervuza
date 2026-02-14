@@ -3,6 +3,7 @@
 /**
  * @fileOverview Aria's adaptive intelligence engine for human-like reactions and mentoring support.
  * Updated: Strictly unique questions, project deep-dives, and coding task requests.
+ * Fixed: Explicitly prevents repetition and enforces round-specific questioning.
  */
 
 import {ai} from '@/ai/genkit';
@@ -22,7 +23,7 @@ const InstantTextualAnswerFeedbackInputSchema = z.object({
 const InstantTextualAnswerFeedbackOutputSchema = z.object({
   verbalReaction: z.string().describe('Immediate human-like professional reaction. Must acknowledge specific points from the answer.'),
   detectedEmotion: z.string().describe('Approval, Curiosity, Concern, or Neutral.'),
-  nextQuestion: z.string().describe('The single next question. MUST BE DIFFERENT from any in previousQuestions.'),
+  nextQuestion: z.string().describe('The single next question. MUST BE COMPLETELY DIFFERENT TOPIC from any in previousQuestions.'),
   isInterviewComplete: z.boolean().describe('True after ~6 turns.'),
   isOfferingHint: z.boolean().describe('True if Aria is helping the user through a difficult spot.'),
   requestCodingTask: z.boolean().optional().describe('True if Aria wants the user to write code in the Logic Pad.'),
@@ -39,18 +40,21 @@ Your previous question was: "{{{interviewQuestion}}}"
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 Resume Context: {{{resumeText}}}
-Turn History (DO NOT REPEAT THESE TOPICS):
+
+STRICT CONVERSATIONAL HISTORY (DO NOT REPEAT THESE TOPICS OR QUESTIONS):
 {{#each previousQuestions}}- {{{this}}}
 {{/each}}
 
 STRICT ELITE INTERVIEWER RULES:
-1. ZERO REPETITION: Every question must explore a COMPLETELY NEW dimension of the candidate's skills. If you already asked about a project, move to a system design trade-off. If you asked about a skill, ask about a behavioral conflict.
-2. PROJECT DEEP DIVE: Reference specific technical details or projects found in the resume. If they mention a skill, ask "How did you apply that in [Project Name from Resume]? What were the constraints?".
-3. TOP-COMPANY STANDARDS: Use "First Principles" thinking. Ask "Why?" and "How?" follow-ups. Focus on architectural trade-offs, scalability, and logical rigor.
-4. CODING CHALLENGE: If this is a Technical round and they've handled theory well, set requestCodingTask to true and ask them to implement a specific algorithm or logic in the "Logic Pad".
-5. STUCK DETECTION: If isStuck is true, or the answer is very short ("I don't know", "Not sure"), set isOfferingHint to true. Provide a professional, high-level conceptual nudge. Don't give the answer.
-6. HUMAN BEHAVIOR: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see", "Hmm...").
-7. VERDICT: Aim for exactly 6 turns. If the candidate is exceptional or failing clearly, you can set isInterviewComplete to true earlier.`
+1. ZERO REPETITION: Every question must explore a COMPLETELY NEW dimension. If you asked about a technical project, move to a system design trade-off. If you asked about a skill, ask about a behavioral conflict. 
+2. FORBIDDEN: Do not ask the same question or a similar question twice. Check the history list above carefully.
+3. ROUND DIFFERENTIATION:
+   - If round is TECHNICAL: Focus on architectural trade-offs, scalability, code logic, and "First Principles" thinking. Use requestCodingTask = true if they need to implement logic.
+   - If round is HR/BEHAVIORAL: Focus on leadership, conflict resolution, ownership, and the STAR method. Never ask for code in HR rounds.
+4. PROJECT DEEP DIVE: Reference specific technical details from the resume. Ask "Why did you choose X over Y?" or "How did you handle the constraints in [Project Name]?".
+5. HUMAN VOICE: Use contractions ("I'm", "Don't", "You've"). Use natural fillers ("Right", "Okay, I see", "Hmm...").
+6. STUCK DETECTION: If isStuck is true, or the answer is vague, set isOfferingHint to true. Provide a professional conceptual nudge.
+7. TURN PROGRESSION: Aim for exactly 6 turns. Make each question progressively more difficult.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
