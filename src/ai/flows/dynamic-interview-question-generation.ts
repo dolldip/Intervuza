@@ -3,6 +3,7 @@
 /**
  * @fileOverview Aria's adaptive human-like question generator.
  * Updated: Deep Industry Reasoning and Role Categorization.
+ * Strictly avoids generic "projects" for non-tech roles.
  */
 
 import { ai } from '@/ai/genkit';
@@ -49,8 +50,12 @@ Context:
 
 RULES:
 1. BE HUMAN: Use contractions ("I'm", "We've"). Be warm but critically professional.
-2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario, a project, or a case study relevant to the role.
-3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category. If the user is a Teacher, ask about classroom management or a student scenario. If a Doctor, ask about a diagnosis or ethical dilemma.`,
+2. NO GENERIC TEMPLATES: Do not say "Tell me about yourself." Start with a specific scenario, a project (only if IT), or a case study relevant to the role.
+3. INDUSTRY LANGUAGE: Use the specific jargon and logic of the identified category. 
+   - If Teacher: Ask about classroom management or a specific pedagogy scenario.
+   - If Doctor: Ask about a diagnosis dilemma or ethical case.
+   - If HR: Ask about a complex employee relations issue.
+   - If IT: Ask about a recent complex system architecture decision.`,
 });
 
 export async function generateInterviewQuestions(input: any): Promise<any> {

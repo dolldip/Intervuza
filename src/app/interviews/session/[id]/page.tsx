@@ -72,7 +72,7 @@ export default function InterviewSessionPage() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const transcriptAccumulatorRef = useRef("")
   
-  // History source of truth
+  // History source of truth - Strictly tracking previous questions to prevent repetition
   const historyRef = useRef<string[]>([])
 
   const stateRef = useRef({ 
@@ -275,7 +275,7 @@ export default function InterviewSessionPage() {
         experienceLevel: sessionStorage.getItem('demo_exp') || "Professional",
         currentRound: sessionStorage.getItem('demo_round') === 'hr' ? 'hr' : 'technical',
         resumeText: sessionStorage.getItem('demo_resume') || "",
-        previousQuestions: historyRef.current,
+        previousQuestions: historyRef.current, // Passing history to prevent repetition
         isStuck: forcedStuck || isStuck
       });
       
@@ -286,6 +286,8 @@ export default function InterviewSessionPage() {
       if (!feedback.isInterviewComplete && currentTurn < 6) {
         setTurnCount(currentTurn + 1);
         setCurrentQuestion(feedback.nextQuestion);
+        
+        // Strictly updating history to ensure next turn is aware of what was just asked
         historyRef.current = [...historyRef.current, feedback.nextQuestion];
         
         setTranscript("");
