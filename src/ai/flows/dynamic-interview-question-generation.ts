@@ -16,7 +16,6 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
   jobDescriptionText: z.string().optional(),
   resumeText: z.string().optional(),
   roundType: z.enum(['technical', 'hr', 'both']).default('technical'),
-  pastPerformanceSummary: z.string().optional(),
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
