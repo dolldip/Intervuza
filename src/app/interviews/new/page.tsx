@@ -93,7 +93,7 @@ export default function NewInterviewPage() {
           <Sparkles className="w-3 h-3" /> Adaptive Intelligence Enabled
         </Badge>
         <h1 className="text-5xl font-headline font-bold tracking-tight text-foreground">Prepare for Your Next Big Move</h1>
-        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Dolly will conduct a role-specific adaptive interview targeting top-tier firms.</p>
+        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Aria will conduct a role-specific adaptive interview targeting top-tier firms.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -101,7 +101,7 @@ export default function NewInterviewPage() {
           <Card className="shadow-lg border-primary/10 rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-muted/30 p-8">
               <CardTitle className="font-headline text-2xl">Interview Parameters</CardTitle>
-              <CardDescription>Dolly adapts her conversational depth based on your role.</CardDescription>
+              <CardDescription>Aria adapts her conversational depth based on your role.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -174,7 +174,7 @@ export default function NewInterviewPage() {
 
               <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-100 text-xs flex gap-3 shadow-sm italic leading-relaxed">
                 <ShieldCheck className="w-5 h-5 shrink-0" />
-                <span>Dolly analyzes your profile gaps compared to JD requirements in real-time.</span>
+                <span>Aria analyzes your profile gaps compared to JD requirements in real-time.</span>
               </div>
             </CardContent>
             <CardFooter className="p-8 bg-muted/10">

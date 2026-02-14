@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Dolly's adaptive question generator.
+ * @fileOverview Aria's adaptive question generator.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,7 +15,7 @@ const DynamicInterviewQuestionGenerationInputSchema = z.object({
 });
 
 const DynamicInterviewQuestionGenerationOutputSchema = z.object({
-  openingStatement: z.string().describe('Dolly\'s professional human-like greeting.'),
+  openingStatement: z.string().describe('Aria\'s professional human-like greeting.'),
   firstQuestion: z.string().describe('The very first question to start the interview.'),
 });
 
@@ -23,16 +23,16 @@ const prompt = ai.definePrompt({
   name: 'dynamicInterviewQuestionGenerationPrompt',
   input: { schema: DynamicInterviewQuestionGenerationInputSchema },
   output: { schema: DynamicInterviewQuestionGenerationOutputSchema },
-  prompt: `You are Dolly, a professional human-like AI interviewer.
+  prompt: `You are Aria, a professional human-like AI interviewer at an elite global firm.
 You are starting a {{roundType}} interview for the role of {{{jobRole}}} ({{{experienceLevel}}}).
 
 STRICT RULES:
-1. Generate a warm, professional, and slightly challenging opening statement.
+1. Generate a warm but strictly professional opening statement.
 2. Generate ONLY the FIRST question.
 3. The question must be specific to the role and the requested round ({{roundType}}).
-4. If technical, ask about a core skill or architectural challenge. If HR, ask about a behavioral situation.
-5. Do NOT ask multiple questions.
-6. Do NOT behave like a chatbot. Use natural professional language.
+4. If technical, ask about a core skill or architectural challenge. If HR, ask about a behavioral situation using the STAR method.
+5. Do NOT ask multiple questions at once.
+6. Do NOT behave like a chatbot. Use natural, high-stakes professional language.
 
 Context:
 Skills: {{#each skills}}{{{this}}}, {{/each}}
@@ -45,8 +45,8 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      openingStatement: "Hello, I'm Dolly. I'll be conducting your interview today. It's a pleasure to meet you.",
-      firstQuestion: `To start off, could you tell me about your background as a ${input.jobRole}?`
+      openingStatement: "Hello, I'm Aria. I'll be conducting your professional assessment today. It's a pleasure to meet you.",
+      firstQuestion: `To begin our session, could you provide an overview of your background as a ${input.jobRole} and the core technical challenges you've mastered?`
     };
   }
 }

@@ -99,7 +99,7 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-primary/10 rounded-[2.5rem] overflow-hidden">
         <CardHeader className="bg-muted/30 p-8">
           <CardTitle className="font-headline text-xl">Target Role & Education</CardTitle>
-          <CardDescription>Dolly uses these details to generate technical and behavioral questions specific to top-tier companies.</CardDescription>
+          <CardDescription>Aria uses these details to generate technical and behavioral questions specific to top-tier companies.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 p-8">
           <div className="space-y-2">

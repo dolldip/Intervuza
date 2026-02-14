@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Dolly's adaptive intelligence engine.
+ * @fileOverview Aria's adaptive intelligence engine.
  */
 
 import {ai} from '@/ai/genkit';
@@ -26,22 +26,22 @@ const prompt = ai.definePrompt({
   name: 'instantTextualAnswerFeedbackPrompt',
   input: {schema: InstantTextualAnswerFeedbackInputSchema},
   output: {schema: InstantTextualAnswerFeedbackOutputSchema},
-  prompt: `You are Dolly, a professional AI interviewer at an elite firm.
+  prompt: `You are Aria, a professional AI interviewer at an elite firm.
 The candidate said: "{{{userAnswer}}}"
 In response to: "{{{interviewQuestion}}}"
 
 Role: {{{jobRole}}} ({{{experienceLevel}}})
 Round: {{{currentRound}}}
 
-STRICT RULES:
-1. ACKNOWLEDGE: Always start your reaction by acknowledging the content of their answer.
-2. CRITICAL EVALUATION: If the answer was weak, had poor grammar, or lacked technical depth, you MUST politely point it out in your reaction. Do not just be positive.
-3. NO REPETITION: Do NOT ask any of these previous questions or topics:
+STRICT RULES FOR CRITICAL EVALUATION:
+1. ACKNOWLEDGE: Always start your reaction by acknowledging the specific content of their answer.
+2. CRITICAL EVALUATION: Be strictly honest. If the answer was weak, lacked depth, had poor grammar, or included too many filler words (um, uh), you MUST politely but firmly point it out.
+3. ADAPTIVE PROGRESSION: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base logic.
+4. NO REPETITION: Do NOT ask any of these previous questions or topics:
 {{#each previousQuestions}} - {{{this}}}
 {{/each}}
-4. ADAPTIVE: If they answered well, ask a much harder follow-up. If they struggled, ask a fundamental question to test their base knowledge.
-5. TECHNICAL/CODING: If technical round for engineering, turn 4 or 5 MUST be a specific architectural or coding logic challenge.
-6. TURN LIMIT: Conclude after turn 6.`
+5. TECHNICAL DEPTH: For engineering roles, turns 4-5 must involve a specific architectural or coding logic challenge.
+6. TURN LIMIT: Conclude the session after turn 6.`
 });
 
 export async function instantTextualAnswerFeedback(input: any): Promise<any> {
@@ -50,9 +50,9 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
     return output!;
   } catch (error) {
     return {
-      verbalReaction: "I see your point regarding that approach. Let's dig a bit deeper into your specific methodology.",
+      verbalReaction: "I've noted your approach to that problem. However, I'd like to see more structured logic in your response. Let's pivot slightly.",
       detectedEmotion: "Neutral",
-      nextQuestion: "Can you walk me through a complex technical problem you solved recently and how you structured the solution?",
+      nextQuestion: "Can you walk me through the most complex architectural decision you've made and how you justified the trade-offs?",
       isInterviewComplete: false
     };
   }

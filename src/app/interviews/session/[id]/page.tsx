@@ -121,7 +121,7 @@ export default function InterviewSessionPage() {
         toast({
           variant: "destructive",
           title: "Hardware Permission Denied",
-          description: "Dolly needs camera and microphone access to conduct the assessment."
+          description: "Aria needs camera and microphone access to conduct the assessment."
         })
       }
     }
@@ -209,7 +209,7 @@ export default function InterviewSessionPage() {
         setAskedQuestions([result.firstQuestion])
         sessionStorage.setItem('session_answers', '[]');
       } catch (err) {
-        setOpening("Hello, I'm Dolly. I'll be conducting your high-stakes assessment today.")
+        setOpening("Hello, I'm Aria. I'll be conducting your high-stakes assessment today.")
         const fb = "To start off, could you walk me through your technical background and how it prepares you for this specific challenge?";
         setCurrentQuestion(fb)
         setAskedQuestions([fb])
@@ -352,7 +352,7 @@ export default function InterviewSessionPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-headline font-bold uppercase tracking-tighter">Professional Assessment</h1>
-            <p className="text-slate-400">Dolly evaluates grammar, technical depth, and focus in real-time. Ensure your environment is quiet and well-lit.</p>
+            <p className="text-slate-400">Aria evaluates grammar, technical depth, and focus in real-time. Ensure your environment is quiet and well-lit.</p>
           </div>
           <Button className="w-full h-20 rounded-[2rem] bg-primary text-2xl font-black shadow-lg hover:scale-105 transition-all shadow-primary/20" onClick={startSession}>
             BEGIN SESSION
@@ -391,9 +391,10 @@ export default function InterviewSessionPage() {
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden border-r border-white/5">
           <div className="absolute inset-0">
              <img 
-               src={`https://picsum.photos/seed/dolly-professional/1200/1200`} 
-               alt="Dolly AI" 
+               src={`https://picsum.photos/seed/aria-professional/1200/1200`} 
+               alt="Aria AI" 
                className={`w-full h-full object-cover transition-all duration-1000 ${speaking ? 'opacity-100 scale-105 saturate-150' : 'opacity-60 brightness-75 blur-[2px]'}`}
+               data-ai-hint="professional woman"
              />
              {speaking && <div className="absolute inset-0 animate-pulse bg-primary/10 mix-blend-overlay" />}
           </div>
@@ -401,7 +402,7 @@ export default function InterviewSessionPage() {
           
           <div className="absolute top-8 left-8 z-20 flex flex-col gap-3">
              {fetchingAudio && <Badge className="bg-blue-600 animate-pulse px-4 py-1.5 rounded-full shadow-lg">SYNTHESIZING...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Volume2 className="w-4 h-4" /> DOLLY SPEAKING</Badge>}
+             {speaking && !fetchingAudio && <Badge className="bg-primary animate-pulse px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Volume2 className="w-4 h-4" /> ARIA SPEAKING</Badge>}
              {listening && <Badge className="bg-green-600 animate-bounce px-4 py-1.5 rounded-full flex gap-2 shadow-lg"><Mic className="w-4 h-4" /> LISTENING</Badge>}
              {processingTurn && <Badge className="bg-amber-600 animate-pulse px-4 py-1.5 rounded-full text-white uppercase text-[10px] font-bold shadow-lg">Analyzing Logic...</Badge>}
           </div>
@@ -432,7 +433,7 @@ export default function InterviewSessionPage() {
                     <Badge variant="outline" className="text-[9px] border-primary/20">Critical Logic</Badge>
                  </div>
                  <p className="text-xs text-slate-400 leading-relaxed italic">
-                   "Explain your architectural reasoning. Dolly is evaluating technical precision."
+                   "Explain your architectural reasoning. Aria is evaluating technical precision."
                  </p>
               </div>
             )}

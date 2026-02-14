@@ -53,8 +53,8 @@ export default function SubscriptionPage() {
   const currentPlan = activeSubs?.[0]
 
   const defaultPlans = [
-    { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "Dolly Lite Logic"], icon: Star },
-    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 29, features: ["Unlimited Interviews", "High-Stakes Biometrics", "Dolly Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
+    { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "Aria Lite Logic"], icon: Star },
+    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 29, features: ["Unlimited Interviews", "High-Stakes Biometrics", "Aria Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
     { id: "enterprise", name: "Enterprise", description: "Custom logic for high-tier recruitment.", price: 99, features: ["Custom Roles", "Recruiter Dashboard", "Team Analytics", "Priority AI"], icon: ShieldCheck },
   ]
 
@@ -100,7 +100,7 @@ export default function SubscriptionPage() {
 
       toast({
         title: "Upgrade Successful",
-        description: `Welcome to the ${selectedPlan.name} tier! Dolly's logic has been upgraded.`,
+        description: `Welcome to the ${selectedPlan.name} tier! Aria's logic has been upgraded.`,
       });
       setIsCheckoutOpen(false);
     } catch (error: any) {
@@ -130,7 +130,7 @@ export default function SubscriptionPage() {
           <Zap className="mr-2 w-3 h-3" /> Billing & Tiers
         </Badge>
         <h1 className="text-5xl font-headline font-bold tracking-tight">Manage Your Intelligence Plan</h1>
-        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Select the tier that matches your career ambitions. Dolly's logic scales with your choice.</p>
+        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Select the tier that matches your career ambitions. Aria's logic scales with your choice.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
