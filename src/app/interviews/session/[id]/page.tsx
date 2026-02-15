@@ -25,7 +25,8 @@ import {
   Code2,
   Waves,
   Eye,
-  CameraOff
+  CameraOff,
+  RefreshCw
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -56,7 +57,7 @@ export default function InterviewSessionPage() {
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
-  const [hasCameraPermission, setHasCameraPermission] = useState(true)
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
@@ -104,6 +105,24 @@ export default function InterviewSessionPage() {
       isStuck
     }
   }, [speaking, listening, processingTurn, turnCount, currentQuestion, sessionStarted, isStuck])
+
+  const requestCameraAccess = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setStream(mediaStream)
+      setHasCameraPermission(true)
+      return true
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false)
+      toast({
+        variant: 'destructive',
+        title: 'Biometric Access Restricted',
+        description: 'Aria needs camera and audio permissions. Please allow access in your browser settings.',
+      });
+      return false
+    }
+  };
 
   const completeTurn = async (forcedStuck: boolean = false) => {
     const { processingTurn: isProcessing, turnCount: currentTurn, currentQuestion: question } = stateRef.current;
@@ -158,22 +177,7 @@ export default function InterviewSessionPage() {
   };
 
   useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setStream(mediaStream)
-        setHasCameraPermission(true)
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Biometric Access Restricted',
-          description: 'Aria needs camera and audio permissions to conduct the professional audit.',
-        });
-      }
-    };
-    getCameraPermission();
+    requestCameraAccess();
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -295,7 +299,7 @@ export default function InterviewSessionPage() {
     utterance.onend = () => {
       setSpeaking(false);
       setListening(true);
-      if (recognitionRef.current) try { recognitionRef.current.start(); } catch ( e) {}
+      if (recognitionRef.current) try { recognitionRef.current.start(); } catch( e) {}
     };
     window.speechSynthesis.speak(utterance);
   }
@@ -341,10 +345,13 @@ export default function InterviewSessionPage() {
         <div className="max-w-2xl w-full text-center space-y-8 md:space-y-12 relative z-10">
           <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2rem] md:rounded-[3.5rem] flex flex-col items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_50px_rgba(var(--primary),0.2)] group">
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
-            {!hasCameraPermission && (
+            {hasCameraPermission === false && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 p-6 text-center">
                 <CameraOff className="w-12 h-12 text-destructive mb-4 animate-pulse" />
                 <p className="text-sm font-black uppercase tracking-widest text-destructive">Visual Feed Offline</p>
+                <Button variant="outline" size="sm" onClick={requestCameraAccess} className="mt-4 glass h-10 px-6 rounded-xl font-bold border-destructive/30 text-destructive hover:bg-destructive/10">
+                  <RefreshCw className="mr-2 w-4 h-4" /> RETRY SENSORS
+                </Button>
               </div>
             )}
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
@@ -356,7 +363,7 @@ export default function InterviewSessionPage() {
             <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
             <p className="text-slate-500 text-sm md:text-lg">Aria is ready to begin your professional audit. Questions are calibrated for your specific level and industry.</p>
             
-            {!hasCameraPermission && (
+            {hasCameraPermission === false && (
               <Alert variant="destructive" className="max-w-md mx-auto rounded-2xl glass-dark border-destructive/30">
                 <AlertTitle className="font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
                   <CameraOff className="w-4 h-4" /> Camera Access Required
@@ -370,7 +377,7 @@ export default function InterviewSessionPage() {
           <Button 
             className="w-full h-16 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-primary text-lg md:text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" 
             onClick={startSession}
-            disabled={!hasCameraPermission}
+            disabled={hasCameraPermission === false}
           >
             START INTERVIEW
             <Play className="ml-3 md:ml-4 w-5 h-5 md:w-6 md:h-6 fill-current" />
@@ -504,11 +511,14 @@ export default function InterviewSessionPage() {
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
               <div className="aspect-video glass bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner flex items-center justify-center">
-                <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover grayscale opacity-80", !hasCameraPermission && "hidden")} />
-                {!hasCameraPermission && (
-                  <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
+                <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover grayscale opacity-80")} />
+                {hasCameraPermission === false && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-4 text-center space-y-4 z-20">
                     <CameraOff className="w-8 h-8 text-destructive animate-pulse" />
-                    <p className="text-[8px] font-black uppercase tracking-widest text-destructive">Permission Denied</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-destructive">Permission Denied</p>
+                    <Button variant="outline" size="sm" onClick={requestCameraAccess} className="glass h-9 px-4 rounded-lg font-bold border-destructive/30 text-destructive">
+                      RE-SYNC FEED
+                    </Button>
                   </div>
                 )}
                 <div className="absolute inset-x-0 h-[1px] md:h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
