@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * @fileOverview A touch-responsive canvas background featuring neural ripples and floating DOM bubbles.
@@ -8,9 +8,15 @@ import { useEffect, useRef } from 'react'
  */
 
 export function NeuralBackground() {
+  const [mounted, setMounted] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -113,12 +119,14 @@ export function NeuralBackground() {
       window.removeEventListener('touchstart', onTouchStart)
       cancelAnimationFrame(animationId)
     }
-  }, [])
+  }, [mounted])
+
+  if (!mounted) return null
 
   return (
     <canvas 
       ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-[0] opacity-60 select-none"
+      className="fixed inset-0 pointer-events-none z-0 opacity-60 select-none"
     />
   )
 }
