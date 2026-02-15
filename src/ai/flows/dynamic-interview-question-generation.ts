@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Aria's adaptive human-like question generator.
- * Enhanced: Added retry logic for 429 errors and strict JD alignment.
+ * Enhanced: Added industry-standard fallback pools and strict JD alignment logic.
  */
 
 import { ai } from '@/ai/genkit';
@@ -63,14 +63,23 @@ export async function generateInterviewQuestions(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 3500 * attempt));
         continue;
       }
       
-      // Dynamic Fallback for Opening
+      // INDUSTRY-STANDARD FALLBACK DATABASE (100% FREE)
+      const roleFallbacks: Record<string, string> = {
+        'BTech Technical': "Can you walk me through the most complex architectural trade-off you've had to make in a production environment?",
+        'BTech HR': "Tell me about a time you had to deliver critical feedback to a superior. How did you structure the conversation?",
+        'Teacher': "How do you handle a situation where a curriculum requirement conflicts with the immediate learning needs of a struggling student?",
+        'Doctor': "Describe your protocol for maintaining diagnostic accuracy under extreme fatigue or high-volume stress.",
+        'Management': "How do you align a team's day-to-day execution with a long-term strategic pivot that is unpopular with the staff?",
+        'Other': `Given the specific challenges associated with a ${input.jobRole} position, how do you approach complex decision-making when faced with incomplete information?`
+      };
+
       return {
         openingStatement: "Hi, I'm Aria. I've reviewed your background and the role context. Let's begin the professional audit.",
-        firstQuestion: `Given the specific challenges associated with a ${input.jobRole} position, how do you approach complex technical decision-making when faced with incomplete information?`,
+        firstQuestion: roleFallbacks[input.roleCategory] || roleFallbacks['Other'],
         roleCategory: 'Other'
       };
     }

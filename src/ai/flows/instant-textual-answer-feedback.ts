@@ -2,7 +2,7 @@
 /**
  * @fileOverview Aria's adaptive intelligence engine for JD-aware follow-ups.
  * Natural Conversational Loop: Handles "human" reactions and high-stakes logical pivots.
- * Enhanced: Now detects and reacts to honesty (e.g., "I don't know") with professional empathy.
+ * Enhanced: Now includes "Integrity Detection" for honest admissions.
  */
 
 import {ai} from '@/ai/genkit';
@@ -76,11 +76,11 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
       const isRateLimit = error?.status === 'RESOURCE_EXHAUSTED' || error?.code === 429;
       if (isRateLimit && attempt < maxRetries) {
         attempt++;
-        await new Promise(resolve => setTimeout(resolve, 3500 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 4000 * attempt));
         continue;
       }
 
-      // DYNAMIC FALLBACK SYSTEM
+      // DYNAMIC FREE FALLBACK SYSTEM
       const fallbacks = [
         {
           reaction: "I appreciate your perspective on that. Let's look at a different aspect of the role.",
@@ -93,6 +93,10 @@ export async function instantTextualAnswerFeedback(input: any): Promise<any> {
         {
           reaction: "Thanks for being direct. Let's pivot to your experience with project lifecycles.",
           question: `Can you walk me through a time you had to pivot a strategy based on new data or feedback?`
+        },
+        {
+          reaction: "Right. That's a common approach. Let's dig into something else.",
+          question: `How do you measure success in this ${input.jobRole} role beyond just meeting deadlines?`
         }
       ];
 

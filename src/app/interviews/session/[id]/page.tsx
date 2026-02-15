@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Lightbulb,
   Code2,
-  Waves
+  Waves,
+  Eye
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -401,7 +402,11 @@ export default function InterviewSessionPage() {
              <img 
                src={ariaImage} 
                alt="Aria" 
-               className={`w-full h-full object-cover transition-all duration-[2000ms] ${speaking ? 'opacity-100 scale-105 brightness-110' : 'opacity-40 grayscale-[40%]'}`}
+               className={cn(
+                 "w-full h-full object-cover transition-all duration-[2000ms]",
+                 speaking ? "opacity-100 scale-105 brightness-110" : "opacity-40 grayscale-[40%]",
+                 processingTurn && "animate-pulse scale-100 brightness-90"
+               )}
              />
              {speaking && <div className="absolute inset-0 bg-primary/10 animate-pulse-slow pointer-events-none" />}
           </div>
@@ -410,7 +415,11 @@ export default function InterviewSessionPage() {
           <div className="absolute top-4 left-4 md:top-10 md:left-10 z-20 flex flex-col gap-2 md:gap-4">
              {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Aria Reasoning...</Badge>}
              {speaking && !fetchingAudio && <Badge className="glass bg-primary/20 text-primary animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Volume2 className="w-3 h-3 md:w-4 md:h-4" /> Aria Speaking</Badge>}
-             {listening && <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Waves className="w-3 h-3 md:w-4 md:h-4" /> Natural Sync Active</Badge>}
+             {listening && (
+               <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">
+                 <Eye className="w-3 h-3 md:w-4 md:h-4 text-green-500" /> Focus Maintained
+               </Badge>
+             )}
              {processingTurn && <Badge className="glass bg-purple-500/20 text-purple-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Sparkles className="w-3 h-3 md:w-4 md:h-4" /> Analyzing NLP Context...</Badge>}
              {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Lightbulb className="w-3 h-3 md:w-4 md:h-4" /> Awaiting Input...</Badge>}
           </div>
