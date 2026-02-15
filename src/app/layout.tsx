@@ -3,6 +3,7 @@ import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { NeuralBackground } from '@/components/ui/neural-background';
 
 export const metadata: Metadata = {
   title: 'Intervuza | Advanced Interview Preparation',
@@ -39,9 +40,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="font-body antialiased selection:bg-primary/20 bg-background text-foreground overflow-x-hidden">
+      <body className="font-body antialiased selection:bg-primary/20 bg-background text-foreground overflow-x-hidden relative">
         <FirebaseClientProvider { ...{ } }>
-          {children}
+          <NeuralBackground />
+          <div className="relative z-10 min-h-screen flex flex-col">
+            {children}
+          </div>
           <Toaster />
         </FirebaseClientProvider>
       </body>
