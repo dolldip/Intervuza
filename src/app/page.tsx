@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 function AnimatedTitle({ text, className }: { text: string; className?: string }) {
   return (
-    <span className={cn("inline-flex flex-nowrap justify-center overflow-hidden", className)}>
+    <span className={cn("inline-flex flex-nowrap justify-center overflow-hidden whitespace-nowrap", className)}>
       {text.split("").map((char, i) => (
         <span
           key={i}
@@ -38,7 +38,7 @@ export default function Home() {
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
             <BrainCircuit className="text-white w-6 h-6" />
           </div>
-          <span className="font-headline font-bold text-xl md:text-2xl tracking-tighter whitespace-nowrap">
+          <span className="font-headline font-bold text-xl md:text-2xl tracking-tighter whitespace-nowrap overflow-hidden">
             <AnimatedTitle text="Intervuza" />
           </span>
         </Link>
@@ -66,7 +66,7 @@ export default function Home() {
                 <Badge variant="secondary" className="glass px-6 py-2 rounded-full text-primary font-black uppercase tracking-[0.2em] text-[10px] animate-sudden">
                   <Sparkles className="w-3 h-3 mr-2" /> Neural Coaching Engine
                 </Badge>
-                <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-9xl font-headline font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1] px-4">
+                <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-9xl font-headline font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 leading-[1.1] px-4 whitespace-nowrap overflow-hidden">
                   <AnimatedTitle text="Intervuza" /> <br /> 
                   <span className="text-primary"><AnimatedTitle text="Interviews" /></span>
                 </h1>

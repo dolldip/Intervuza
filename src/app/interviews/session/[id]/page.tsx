@@ -56,7 +56,7 @@ export default function InterviewSessionPage() {
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
-  const [hasCameraPermission, setHasCameraPermission] = useState(true) // Default true to avoid flash of alert
+  const [hasCameraPermission, setHasCameraPermission] = useState(true)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
@@ -392,7 +392,7 @@ export default function InterviewSessionPage() {
           <Badge variant="outline" className="text-[8px] md:text-[10px] glass border-white/10 text-slate-400 py-1 md:py-2 px-3 md:px-6 rounded-full font-black uppercase tracking-widest">
             {turnCount + 1} / 7
           </Badge>
-          <span className="text-[9px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] hidden sm:block">
+          <span className="text-[9px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] hidden sm:block whitespace-nowrap">
             {roleCategory} Turn
           </span>
         </div>
