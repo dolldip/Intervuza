@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 /**
  * @fileOverview A touch-responsive canvas background featuring neural ripples and floating DOM bubbles.
  * Inspired by the glass-ripple and bubble-pop aesthetic.
+ * Revised: Removed text labels from bubbles for a purely visual experience.
  */
 
 export function NeuralBackground() {
@@ -34,7 +35,7 @@ export function NeuralBackground() {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // 1. Draw Glass Ripples
+      // Draw Glass Ripples
       ripples.forEach((r, i) => {
         r.radius += 2.5
         r.opacity = 1 - r.radius / 150
@@ -52,34 +53,22 @@ export function NeuralBackground() {
     }
 
     const showBubble = (x: number, y: number) => {
-      // Create a floating intelligence bubble
-      const texts = ["NEURAL", "SYNC", "LOGIC", "AI", "AUDIT", "READY", "INTERVUZA", "EXPERT"]
-      const text = texts[Math.floor(Math.random() * texts.length)]
-      
+      // Create a floating glassy bubble (pure visual, no text)
       const bubble = document.createElement('div')
       bubble.style.position = 'fixed'
       bubble.style.left = `${x}px`
       bubble.style.top = `${y}px`
       bubble.style.transform = 'translate(-50%, -50%) scale(0)'
-      bubble.style.width = '90px'
-      bubble.style.height = '90px'
+      bubble.style.width = '70px'
+      bubble.style.height = '70px'
       bubble.style.borderRadius = '50%'
-      bubble.style.background = 'rgba(59, 130, 246, 0.15)'
+      bubble.style.background = 'rgba(59, 130, 246, 0.12)'
       bubble.style.backdropFilter = 'blur(12px)'
-      bubble.style.border = '1px solid rgba(255, 255, 255, 0.2)'
-      bubble.style.color = 'white'
-      bubble.style.display = 'flex'
-      bubble.style.alignItems = 'center'
-      bubble.style.justifyContent = 'center'
-      bubble.style.fontSize = '9px'
-      bubble.style.fontWeight = '900'
+      bubble.style.border = '1px solid rgba(255, 255, 255, 0.25)'
       bubble.style.pointerEvents = 'none'
       bubble.style.zIndex = '9999'
-      bubble.style.fontFamily = 'Space Grotesk, sans-serif'
-      bubble.style.letterSpacing = '0.2em'
-      bubble.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease'
-      bubble.style.boxShadow = 'inset 0 0 30px rgba(255, 255, 255, 0.1), 0 15px 45px rgba(0, 0, 0, 0.4)'
-      bubble.innerText = text
+      bubble.style.transition = 'transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.9s ease'
+      bubble.style.boxShadow = 'inset 0 0 25px rgba(255, 255, 255, 0.15), 0 15px 45px rgba(0, 0, 0, 0.4)'
       
       document.body.appendChild(bubble)
       
@@ -90,12 +79,12 @@ export function NeuralBackground() {
       
       // Float up and vanish
       setTimeout(() => {
-        bubble.style.transform = 'translate(-50%, -200%) scale(1.3)'
+        bubble.style.transform = 'translate(-50%, -250%) scale(1.4)'
         bubble.style.opacity = '0'
         setTimeout(() => {
           if (bubble.parentNode) bubble.remove()
         }, 800)
-      }, 1000)
+      }, 900)
     }
 
     const handleInteraction = (x: number, y: number) => {
