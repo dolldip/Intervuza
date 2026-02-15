@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from 'react';
@@ -50,14 +49,14 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Welcome back!",
-        description: "Successfully authenticated to the intelligence portal.",
+        description: "Successfully logged into the intelligence portal.",
       });
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Auth error:", error);
       let message = "Invalid credentials provided.";
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        message = "Verify your email and password. Neural access denied.";
+        message = "Verify your email and password. Access denied.";
       }
       toast({
         variant: "destructive",
@@ -84,7 +83,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
       <div className="w-full max-w-md space-y-12 animate-fade-in relative z-10">
         <div className="text-center space-y-4">
           <Link className="inline-flex items-center space-x-3 group" href="/">
@@ -96,15 +95,15 @@ export default function LoginPage() {
             </span>
           </Link>
           <div className="space-y-1">
-            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Security Portal</h2>
-            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Authentication required for intelligence access.</p>
+            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Portal Login</h2>
+            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Welcome back to your intelligence dashboard.</p>
           </div>
         </div>
 
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
             <CardTitle className="font-headline text-3xl font-black">Sign In</CardTitle>
-            <CardDescription className="text-lg">Access your Intervuza professional audit.</CardDescription>
+            <CardDescription className="text-lg">Access your professional audit.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
             <Button 
@@ -119,12 +118,12 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Google Authentication
+              Google Login
             </Button>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-slate-900 px-4 text-slate-500">Email Gateway</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-[#0a0c1a] px-4 text-slate-500">Email Login</span></div>
             </div>
 
             <form onSubmit={handleEmailLogin} className="space-y-6">
@@ -138,7 +137,7 @@ export default function LoginPage() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
                   <Label htmlFor="password" className="font-black text-xs uppercase tracking-widest text-slate-500">Secure Password</Label>
-                  <Link href="/forgot-password" disabled={loading} className="text-primary font-black uppercase tracking-widest text-[9px] hover:underline">Reset Recovery</Link>
+                  <Link href="/forgot-password" disabled={loading} className="text-primary font-black uppercase tracking-widest text-[9px] hover:underline">Forgot Password?</Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
@@ -146,13 +145,13 @@ export default function LoginPage() {
                 </div>
               </div>
               <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "AUTHENTICATE"}
+                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "LOGIN"}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
-              New to the platform? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Secure Enrollment</Link>
+              New here? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Register Now</Link>
             </p>
           </CardFooter>
         </Card>

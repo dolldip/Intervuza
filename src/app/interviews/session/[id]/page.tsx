@@ -26,7 +26,8 @@ import {
   Waves,
   Eye,
   CameraOff,
-  RefreshCw
+  RefreshCw,
+  Cpu
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -312,7 +313,7 @@ export default function InterviewSessionPage() {
   const handleAudioEnded = () => {
     setSpeaking(false);
     setListening(true);
-    if (recognitionRef.current) try { recognitionRef.current.start(); } catch (e) {}
+    if (recognitionRef.current) try { recognitionRef.current.start(); } catch ( e) {}
   };
 
   const terminateSession = async () => {
@@ -332,7 +333,7 @@ export default function InterviewSessionPage() {
 
   if (initializing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
         <BrainCircuit className="w-12 h-12 md:w-20 md:h-20 text-primary animate-pulse mb-8" />
         <h2 className="text-sm md:text-xl font-headline font-black uppercase tracking-[0.2em] text-primary text-center">Neural Synchronization</h2>
       </div>
@@ -341,10 +342,10 @@ export default function InterviewSessionPage() {
 
   if (!sessionStarted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6 relative overflow-hidden">
-        <div className="max-w-2xl w-full text-center space-y-8 md:space-y-12 relative z-10">
-          <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2rem] md:rounded-[3.5rem] flex flex-col items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_50px_rgba(var(--primary),0.2)] group">
-            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+      <div className="flex flex-col items-center justify-center min-h-screen text-white p-6 relative overflow-hidden perspective-container">
+        <div className="max-w-2xl w-full text-center space-y-8 md:space-y-12 relative z-10 animate-magic-reveal">
+          <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2.5rem] md:rounded-[4rem] flex flex-col items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_80px_rgba(var(--primary),0.3)] group transition-transform duration-700 hover:rotate-y-12">
+            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
             {hasCameraPermission === false && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 p-6 text-center">
                 <CameraOff className="w-12 h-12 text-destructive mb-4 animate-pulse" />
@@ -355,228 +356,225 @@ export default function InterviewSessionPage() {
               </div>
             )}
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+            <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_4s_linear_infinite]" />
           </div>
           <div className="space-y-4">
             <Badge variant="secondary" className="glass px-4 py-1.5 md:px-6 md:py-2 rounded-full font-black text-primary gap-2 uppercase tracking-widest text-[9px] md:text-[10px]">
-              <TrendingUp className="w-3 h-3" /> {roleCategory} Sector Active
+              <Cpu className="w-3 h-3" /> {roleCategory} Sector Calibrated
             </Badge>
-            <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
-            <p className="text-slate-500 text-sm md:text-lg">Aria is ready to begin your professional audit. Questions are calibrated for your specific level and industry.</p>
+            <h1 className="text-3xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">Neural Calibration</h1>
+            <p className="text-slate-400 text-sm md:text-lg max-w-lg mx-auto font-medium">Aria is ready to begin your professional audit. Biometric sensors are active and awaiting spatial synchronization.</p>
             
             {hasCameraPermission === false && (
-              <Alert variant="destructive" className="max-w-md mx-auto rounded-2xl glass-dark border-destructive/30">
+              <Alert variant="destructive" className="max-w-md mx-auto rounded-2xl glass-dark border-destructive/30 mt-6">
                 <AlertTitle className="font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-                  <CameraOff className="w-4 h-4" /> Camera Access Required
+                  <CameraOff className="w-4 h-4" /> Permission Required
                 </AlertTitle>
                 <AlertDescription className="text-xs font-medium opacity-80">
-                  Please enable camera and microphone permissions in your browser to proceed with the neural biometric audit.
+                  Please enable camera and microphone permissions in your browser to proceed with the high-stakes neural audit.
                 </AlertDescription>
               </Alert>
             )}
           </div>
           <Button 
-            className="w-full h-16 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-primary text-lg md:text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" 
+            className="w-full h-16 md:h-22 rounded-[2rem] md:rounded-[3rem] bg-primary text-lg md:text-2xl font-black shadow-[0_20px_50px_rgba(var(--primary),0.4)] hover:scale-[1.05] transition-all hover:translate-y-[-5px]" 
             onClick={startSession}
             disabled={hasCameraPermission === false}
           >
-            START INTERVIEW
+            START ASSESSMENT
             <Play className="ml-3 md:ml-4 w-5 h-5 md:w-6 md:h-6 fill-current" />
           </Button>
         </div>
-        <div className="absolute inset-0 bg-primary/5 blur-[100px] md:blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute inset-0 bg-primary/10 blur-[150px] md:blur-[250px] rounded-full pointer-events-none -z-10 animate-pulse-slow" />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white overflow-hidden font-body select-none">
-      <div className="h-16 md:h-20 glass-dark px-4 md:px-10 flex items-center justify-between z-50 shrink-0 border-b border-white/5">
-        <div className="flex items-center gap-2 md:gap-6">
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg md:rounded-xl flex items-center justify-center">
-            <BrainCircuit className="text-white w-5 h-5 md:w-6 md:h-6" />
+    <div className="flex flex-col h-screen text-white overflow-hidden font-body select-none perspective-container">
+      <div className="h-16 md:h-24 glass-dark px-4 md:px-12 flex items-center justify-between z-50 shrink-0 border-b border-white/5">
+        <div className="flex items-center gap-2 md:gap-8">
+          <div className="w-10 h-10 md:w-14 md:h-14 bg-primary rounded-xl md:rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20">
+            <BrainCircuit className="text-white w-6 h-6 md:w-8 md:h-8" />
           </div>
-          <div className="h-6 md:h-8 w-px bg-white/10 hidden md:block" />
-          <Badge variant="outline" className="text-[8px] md:text-[10px] glass border-white/10 text-slate-400 py-1 md:py-2 px-3 md:px-6 rounded-full font-black uppercase tracking-widest">
-            {turnCount + 1} / 7
+          <div className="h-8 md:h-12 w-px bg-white/10 hidden md:block" />
+          <Badge variant="outline" className="text-[8px] md:text-[11px] glass border-white/10 text-slate-400 py-1.5 md:py-2.5 px-4 md:px-8 rounded-full font-black uppercase tracking-[0.2em]">
+            SESSION TURN {turnCount + 1} / 7
           </Badge>
-          <span className="text-[9px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] hidden sm:block whitespace-nowrap">
-            {roleCategory} Turn
-          </span>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-3 md:gap-6">
           <Button 
             variant="ghost" 
             size="sm" 
-            className={cn("h-9 md:h-12 px-3 md:px-6 rounded-lg md:rounded-2xl glass-button font-black transition-all text-[10px] md:text-sm", showCodePad ? "bg-primary text-white" : "text-slate-500")}
+            className={cn("h-10 md:h-14 px-4 md:px-8 rounded-xl md:rounded-[1.5rem] glass-button font-black transition-all text-[10px] md:text-sm", showCodePad ? "bg-primary text-white" : "text-slate-500")}
             onClick={() => setShowCodePad(!showCodePad)}
           >
-            <Code2 className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-3" />
+            <Code2 className="w-4 h-4 md:w-6 md:h-6 mr-2 md:mr-3" />
             <span className="hidden sm:inline">{showCodePad ? "HIDE LOGIC PAD" : "SHOW LOGIC PAD"}</span>
             <span className="sm:hidden">PAD</span>
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-slate-500 hover:text-red-500 font-black h-9 md:h-12 px-3 md:px-6 rounded-lg md:rounded-2xl glass-button text-[10px] md:text-sm" 
+            className="text-slate-500 hover:text-red-500 font-black h-10 md:h-14 px-4 md:px-8 rounded-xl md:rounded-[1.5rem] glass-button text-[10px] md:text-sm" 
             onClick={terminateSession}
             disabled={terminating}
           >
-            {terminating ? <Loader2 className="animate-spin w-4 h-4 mr-1 md:mr-3" /> : <StopCircle className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-3" />} 
-            FINISH
+            {terminating ? <Loader2 className="animate-spin w-4 h-4 mr-2 md:mr-3" /> : <StopCircle className="w-4 h-4 md:w-6 md:h-6 mr-2 md:mr-3" />} 
+            TERMINATE
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row relative bg-black overflow-hidden">
-        <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden min-h-[40vh] md:min-h-0">
-          <div className="absolute inset-0 transition-all duration-1000">
+      <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
+        <div className="flex-1 relative flex items-center justify-center bg-transparent overflow-hidden min-h-[40vh] md:min-h-0">
+          <div className="absolute inset-0 transition-all duration-1000 animate-magic-reveal">
              <img 
                src={ariaImage} 
                alt="Aria" 
                className={cn(
-                 "w-full h-full object-cover transition-all duration-[2000ms]",
-                 speaking ? "opacity-100 scale-105 brightness-110" : "opacity-40 grayscale-[40%]",
-                 processingTurn && "animate-pulse scale-100 brightness-90"
+                 "w-full h-full object-cover transition-all duration-[3000ms]",
+                 speaking ? "opacity-100 scale-110 brightness-110 blur-0" : "opacity-30 grayscale-[60%] blur-[2px]",
+                 processingTurn && "animate-pulse scale-100 brightness-90 blur-[5px]"
                )}
              />
-             {speaking && <div className="absolute inset-0 bg-primary/10 animate-pulse-slow pointer-events-none" />}
+             {speaking && <div className="absolute inset-0 bg-primary/15 animate-pulse-slow pointer-events-none" />}
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c1a] via-transparent to-[#0a0c1a]/80" />
           
-          <div className="absolute top-4 left-4 md:top-10 md:left-10 z-20 flex flex-col gap-2 md:gap-4">
-             {fetchingAudio && <Badge className="glass bg-blue-500/20 text-blue-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Aria Reasoning...</Badge>}
-             {speaking && !fetchingAudio && <Badge className="glass bg-primary/20 text-primary animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Volume2 className="w-3 h-3 md:w-4 md:h-4" /> Aria Speaking</Badge>}
+          <div className="absolute top-6 left-6 md:top-14 md:left-14 z-20 flex flex-col gap-3 md:gap-5">
+             {fetchingAudio && <Badge className="glass bg-blue-500/30 text-blue-400 animate-pulse px-4 py-2 md:px-8 md:py-3.5 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]">Aria Thinking...</Badge>}
+             {speaking && !fetchingAudio && <Badge className="glass bg-primary/30 text-primary animate-pulse px-4 py-2 md:px-8 md:py-3.5 rounded-full flex gap-3 md:gap-4 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]"><Volume2 className="w-4 h-4 md:w-5 md:h-5" /> Aria Speaking</Badge>}
              {listening && (
-               <Badge className="glass bg-green-500/20 text-green-400 animate-bounce px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">
-                 <Eye className="w-3 h-3 md:w-4 md:h-4 text-green-500" /> Focus Maintained
+               <Badge className="glass bg-green-500/30 text-green-400 animate-bounce px-4 py-2 md:px-8 md:py-3.5 rounded-full flex gap-3 md:gap-4 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]">
+                 <Eye className="w-4 h-4 md:w-5 md:h-5 text-green-500" /> Biometric Link Active
                </Badge>
              )}
-             {processingTurn && <Badge className="glass bg-purple-500/20 text-purple-400 animate-pulse px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Sparkles className="w-3 h-3 md:w-4 md:h-4" /> Analyzing NLP Context...</Badge>}
-             {isStuck && <Badge className="glass bg-amber-500/20 text-amber-400 px-3 py-1.5 md:px-6 md:py-2.5 rounded-full flex gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]"><Lightbulb className="w-3 h-3 md:w-4 md:h-4" /> Awaiting Input...</Badge>}
+             {processingTurn && <Badge className="glass bg-purple-500/30 text-purple-400 animate-pulse px-4 py-2 md:px-8 md:py-3.5 rounded-full flex gap-3 md:gap-4 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em]"><Sparkles className="w-4 h-4 md:w-5 md:h-5" /> Auditing logic...</Badge>}
           </div>
 
-          <div className="absolute bottom-4 inset-x-4 md:bottom-16 md:inset-x-16 z-20 animate-fade-in">
-            <div className="max-w-5xl mx-auto glass-dark border-white/10 p-6 md:p-14 rounded-[1.5rem] md:rounded-[3.5rem] shadow-2xl relative">
+          <div className="absolute bottom-6 inset-x-6 md:bottom-20 md:inset-x-20 z-20 animate-magic-reveal">
+            <div className="max-w-5xl mx-auto glass-dark border-white/10 p-8 md:p-16 rounded-[2rem] md:rounded-[4rem] shadow-2xl relative transition-transform duration-700 hover:scale-[1.02]">
               {showFeedback && turnFeedback && (
-                <div className="absolute -top-40 md:-top-64 left-0 right-0 animate-fade-in z-30 px-2">
-                  <div className="glass bg-slate-900/90 backdrop-blur-3xl border-primary/20 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col gap-2 md:gap-4 max-w-2xl mx-auto">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Sparkles className="w-3 h-3 md:w-4 md:h-4" /> Performance Insight
+                <div className="absolute -top-48 md:-top-72 left-0 right-0 animate-magic-reveal z-30 px-4">
+                  <div className="glass bg-slate-950/90 backdrop-blur-3xl border-primary/20 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_80px_rgba(0,0,0,0.8)] flex flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                      <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3">
+                        <Sparkles className="w-4 h-4 md:w-5 md:h-5" /> Performance Insight
                       </span>
-                      <button onClick={() => setShowFeedback(false)} className="text-slate-500 hover:text-white"><X className="w-3 h-3 md:w-4 md:h-4" /></button>
+                      <button onClick={() => setShowFeedback(false)} className="text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4 md:w-5 md:h-5" /></button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 md:gap-6">
-                      <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-green-400 uppercase tracking-widest">Insight</p>
-                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.analysis}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                      <div className="space-y-2">
+                        <p className="text-[8px] md:text-[10px] font-black text-green-400 uppercase tracking-[0.2em]">Neural Insight</p>
+                        <p className="text-xs md:text-sm text-slate-300 italic leading-relaxed">{turnFeedback.analysis}</p>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[7px] md:text-[9px] font-black text-amber-400 uppercase tracking-widest">Aria Tip</p>
-                        <p className="text-[10px] md:text-xs text-slate-300 italic line-clamp-2">{turnFeedback.tips}</p>
+                      <div className="space-y-2">
+                        <p className="text-[8px] md:text-[10px] font-black text-amber-400 uppercase tracking-[0.2em]">Aria Guidance</p>
+                        <p className="text-xs md:text-sm text-slate-300 italic leading-relaxed">{turnFeedback.tips}</p>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-              <h3 className="text-lg md:text-4xl font-headline font-black leading-tight text-white tracking-tight">
-                {currentQuestion || "Initializing industry conversation..."}
+              <h3 className="text-xl md:text-5xl font-headline font-black leading-tight text-white tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
+                {currentQuestion || "Synchronizing industry logic..."}
               </h3>
             </div>
           </div>
         </div>
 
         {showCodePad && (
-          <div className="fixed inset-0 lg:relative lg:inset-auto lg:w-[600px] glass-dark border-l border-white/10 flex flex-col z-50 shadow-2xl animate-in slide-in-from-right duration-500">
-            <div className="p-6 md:p-10 flex-1 space-y-4 md:space-y-6 flex flex-col">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] md:text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3">
-                  <Code2 className="w-4 h-4" /> Logic & Coding Pad
+          <div className="fixed inset-0 lg:relative lg:inset-auto lg:w-[650px] glass-dark border-l border-white/10 flex flex-col z-50 shadow-[0_0_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-right duration-700">
+            <div className="p-8 md:p-14 flex-1 space-y-6 md:space-y-8 flex flex-col">
+              <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                <span className="text-[10px] md:text-[12px] font-black text-primary uppercase tracking-[0.3em] flex items-center gap-4">
+                  <Code2 className="w-5 h-5 md:w-7 md:h-7" /> Neural Logic Pad
                 </span>
-                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowCodePad(false)}><X className="w-5 h-5" /></Button>
+                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowCodePad(false)}><X className="w-6 h-6" /></Button>
               </div>
               <Textarea 
                 value={code} 
                 onChange={(e) => setCode(e.target.value)}
-                className="flex-1 bg-black/40 border-white/5 rounded-[1rem] md:rounded-[2rem] p-6 md:p-10 font-code text-green-400 resize-none focus:ring-1 focus:ring-primary/30 text-base"
-                placeholder="Write your code or architectural explanation here..."
+                className="flex-1 bg-black/60 border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] p-8 md:p-14 font-code text-green-400 resize-none focus:ring-2 focus:ring-primary/20 text-lg md:text-xl shadow-inner selection:bg-primary/20"
+                placeholder="Submit your architectural logic or code segments here..."
               />
-              <p className="text-[9px] text-slate-500 italic">This content will be submitted along with your verbal response automatically.</p>
+              <p className="text-[10px] text-slate-500 italic font-medium">Aria will analyze this input context alongside your verbal responses.</p>
             </div>
           </div>
         )}
 
-        <div className="w-full lg:w-[480px] glass-dark lg:border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden max-h-[50vh] lg:max-h-none">
-          <div className="p-6 md:p-10 space-y-6 md:space-y-10 flex-1 overflow-y-auto scrollbar-hide">
-            <div className="space-y-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
-              <div className="aspect-video glass bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner flex items-center justify-center">
-                <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover grayscale opacity-80")} />
+        <div className="w-full lg:w-[520px] glass-dark lg:border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden max-h-[50vh] lg:max-h-none">
+          <div className="p-8 md:p-12 space-y-8 md:space-y-12 flex-1 overflow-y-auto scrollbar-hide">
+            <div className="space-y-6">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Biometric Feed</span>
+              <div className="aspect-video glass bg-slate-950 rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 relative shadow-2xl flex items-center justify-center transition-transform duration-700 hover:scale-[1.02]">
+                <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover grayscale opacity-70")} />
                 {hasCameraPermission === false && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-4 text-center space-y-4 z-20">
-                    <CameraOff className="w-8 h-8 text-destructive animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-destructive">Permission Denied</p>
-                    <Button variant="outline" size="sm" onClick={requestCameraAccess} className="glass h-9 px-4 rounded-lg font-bold border-destructive/30 text-destructive">
-                      RE-SYNC FEED
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 p-6 text-center space-y-6 z-20">
+                    <CameraOff className="w-10 h-10 text-destructive animate-pulse" />
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-destructive">Visual Link Offline</p>
+                    <Button variant="outline" size="sm" onClick={requestCameraAccess} className="glass h-11 px-6 rounded-xl font-bold border-destructive/30 text-destructive hover:bg-destructive/10">
+                      RE-SYNC SENSORS
                     </Button>
                   </div>
                 )}
-                <div className="absolute inset-x-0 h-[1px] md:h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
+                <div className="absolute inset-x-0 h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_6s_linear_infinite]" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:gap-6">
-              <div className="p-4 md:p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group">
-                <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary mb-2 md:mb-3 mx-auto" />
-                <p className="text-[7px] md:text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
-                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{hasCameraPermission ? Math.round(confidenceLevel) : "--"}%</p>
+            <div className="grid grid-cols-2 gap-6 md:gap-8">
+              <div className="p-6 md:p-10 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:translate-y-[-5px]">
+                <Activity className="w-5 h-5 md:w-7 md:h-7 text-primary mb-3 md:mb-4 mx-auto group-hover:scale-110 transition-transform" />
+                <p className="text-[8px] md:text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Confidence</p>
+                <p className="text-2xl md:text-4xl font-black mt-2 tracking-tighter">{hasCameraPermission ? Math.round(confidenceLevel) : "--"}%</p>
               </div>
-              <div className="p-4 md:p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group">
-                <Target className="w-4 h-4 md:w-5 md:h-5 text-primary mb-2 md:mb-3 mx-auto" />
-                <p className="text-[7px] md:text-[9px] text-slate-500 uppercase font-black tracking-widest">Focus</p>
-                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{hasCameraPermission ? Math.round(eyeFocus) : "--"}%</p>
+              <div className="p-6 md:p-10 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group transition-all hover:translate-y-[-5px]">
+                <Target className="w-5 h-5 md:w-7 md:h-7 text-primary mb-3 md:mb-4 mx-auto group-hover:scale-110 transition-transform" />
+                <p className="text-[8px] md:text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Eye Focus</p>
+                <p className="text-2xl md:text-4xl font-black mt-2 tracking-tighter">{hasCameraPermission ? Math.round(eyeFocus) : "--"}%</p>
               </div>
             </div>
 
-            <div className="space-y-4 md:space-y-6">
-              <span className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.3em] flex items-center gap-2 md:gap-3">
-                <Mic className={cn("w-3 h-3 md:w-4 md:h-4", listening ? "text-green-500 animate-pulse" : "text-slate-800")} />
-                Conversational Sync
+            <div className="space-y-6 md:space-y-8">
+              <span className="text-[10px] md:text-[12px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-4">
+                <Mic className={cn("w-4 h-4 md:w-6 md:h-6", listening ? "text-green-500 animate-pulse" : "text-slate-800")} />
+                Linguistic Stream
               </span>
-              <div className="glass bg-black/40 border-white/5 rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 h-32 md:h-64 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative group transition-all">
+              <div className="glass bg-black/60 border-white/5 rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 h-40 md:h-80 overflow-y-auto scrollbar-hide flex flex-col justify-end shadow-inner relative group transition-all">
                 {(transcript || interimTranscript) ? (
-                  <p className="text-sm md:text-lg text-slate-300 italic leading-relaxed font-medium">
+                  <p className="text-base md:text-2xl text-slate-300 italic leading-relaxed font-medium">
                     {transcript}
                     <span className="text-primary font-black animate-pulse">{interimTranscript}</span>
                   </p>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-800">
-                    <Waves className="w-6 h-6 md:w-10 md:h-10 opacity-20" />
-                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-black">Aria is Listening</p>
+                  <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-800">
+                    <Waves className="w-8 h-8 md:w-14 md:h-14 opacity-20" />
+                    <p className="text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-black">Awaiting Input</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="p-6 md:p-10 glass-dark border-t border-white/5 bg-slate-900/30 shrink-0">
+          <div className="p-8 md:p-14 glass-dark border-t border-white/5 bg-slate-950/50 shrink-0">
             {processingTurn ? (
-              <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-primary/10 flex items-center justify-center text-primary font-black gap-2 md:gap-4 border border-primary/20">
-                <Loader2 className="animate-spin h-5 w-5 md:h-6 md:w-6 text-primary" />
-                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Aria is Reasoning...</span>
+              <div className="w-full h-16 md:h-24 rounded-[1.5rem] md:rounded-[2.5rem] glass bg-primary/15 flex items-center justify-center text-primary font-black gap-4 md:gap-6 border border-primary/30 shadow-[0_0_40px_rgba(var(--primary),0.2)]">
+                <Loader2 className="animate-spin h-6 w-6 md:h-8 md:w-8" />
+                <span className="text-[10px] md:text-[13px] uppercase tracking-[0.4em]">Aria Reasoning</span>
               </div>
             ) : listening ? (
-              <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-green-500/10 flex items-center justify-center text-green-400 font-black gap-2 md:gap-4 border border-green-500/20">
-                <Waves className="animate-pulse h-5 w-5 md:h-6 md:w-6" />
-                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Natural Listening On</span>
+              <div className="w-full h-16 md:h-24 rounded-[1.5rem] md:rounded-[2.5rem] glass bg-green-500/15 flex items-center justify-center text-green-400 font-black gap-4 md:gap-6 border border-green-500/30 shadow-[0_0_40px_rgba(0,255,0,0.1)]">
+                <Waves className="animate-pulse h-6 w-6 md:h-8 md:w-8" />
+                <span className="text-[10px] md:text-[13px] uppercase tracking-[0.4em]">Listening...</span>
               </div>
             ) : (
-              <div className="w-full h-14 md:h-20 rounded-[1rem] md:rounded-[2rem] glass bg-slate-800/40 flex items-center justify-center text-slate-400 font-black gap-2 md:gap-4 border border-white/5">
-                <Loader2 className="animate-spin h-5 w-5 md:h-6 md:w-6 text-primary" />
-                <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em]">Aria Syncing...</span>
+              <div className="w-full h-16 md:h-24 rounded-[1.5rem] md:rounded-[2.5rem] glass bg-slate-900/60 flex items-center justify-center text-slate-500 font-black gap-4 md:gap-6 border border-white/5">
+                <Loader2 className="animate-spin h-6 w-6 md:h-8 md:w-8 text-primary/40" />
+                <span className="text-[10px] md:text-[13px] uppercase tracking-[0.4em]">Syncing...</span>
               </div>
             )}
-            <p className="text-center text-[8px] md:text-[9px] text-slate-600 mt-3 md:mt-4 uppercase tracking-[0.2em] font-black">Conversation flows automatically after silence.</p>
+            <p className="text-center text-[9px] md:text-[11px] text-slate-600 mt-5 md:mt-8 uppercase tracking-[0.3em] font-black">Turn cycles automatically after silence detection.</p>
           </div>
         </div>
       </div>
@@ -588,15 +586,18 @@ export default function InterviewSessionPage() {
           0% { transform: translateY(0); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
-          100% { transform: translateY(180px); opacity: 0; }
+          100% { transform: translateY(200px); opacity: 0; }
         }
         @media (min-width: 768px) {
           @keyframes scan {
             0% { transform: translateY(0); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(280px); opacity: 0; }
+            100% { transform: translateY(320px); opacity: 0; }
           }
+        }
+        .rotate-y-12 {
+          transform: rotateY(12deg);
         }
       `}</style>
     </div>
