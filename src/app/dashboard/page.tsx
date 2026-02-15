@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
-import { doc, collection, query, orderBy, limit } from "firebase/firestore"
+import { doc, collection, query, orderBy, limit, setDoc, updateDoc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 function AnimatedText({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
@@ -63,13 +63,73 @@ export default function DashboardPage() {
   }, [db, user])
   const { data: streaks } = useCollection(streaksQuery)
 
+  // Streak Management Logic
+  useEffect(() => {
+    if (!user || !db || streaks === null) return;
+
+    const syncStreak = async () => {
+      // Get today and yesterday in local date format (YYYY-MM-DD)
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const yesterdayDate = new Date(now);
+      yesterdayDate.setDate(now.getDate() - 1);
+      const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+      const streakId = "dailyPractice";
+      const streakRef = doc(db, "users", user.uid, "userStreaks", streakId);
+      const currentStreakDoc = streaks.find(s => s.id === streakId);
+
+      if (!currentStreakDoc) {
+        // Initial Streak Record
+        await setDoc(streakRef, {
+          id: streakId,
+          userId: user.uid,
+          streakType: 'dailyPractice',
+          currentStreak: 1,
+          longestStreak: 1,
+          lastActiveDate: today,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        return;
+      }
+
+      const { lastActiveDate, currentStreak, longestStreak } = currentStreakDoc;
+
+      if (lastActiveDate === today) {
+        // Already logged activity today
+        return;
+      }
+
+      let newStreak = 1;
+      if (lastActiveDate === yesterday) {
+        // Logged activity yesterday, increment
+        newStreak = (currentStreak || 0) + 1;
+      }
+
+      const newLongest = Math.max(longestStreak || 0, newStreak);
+
+      await updateDoc(streakRef, {
+        currentStreak: newStreak,
+        longestStreak: newLongest,
+        lastActiveDate: today,
+        updatedAt: new Date().toISOString()
+      });
+    };
+
+    syncStreak();
+  }, [user, db, streaks]);
+
   const stats = useMemo(() => {
     const total = sessions?.length || 0
     const completed = sessions?.filter(s => s.status === "completed") || []
     const avgScore = completed.length > 0 
       ? Math.round(completed.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / completed.length) 
       : 0
-    const currentStreak = streaks?.[0]?.currentStreak || 0
+    
+    // Find the dailyPractice streak
+    const dailyStreak = streaks?.find(s => s.id === 'dailyPractice');
+    const currentStreak = dailyStreak?.currentStreak || 0
 
     return {
       total,
