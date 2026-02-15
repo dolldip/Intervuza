@@ -1,3 +1,4 @@
+
 export const MOCK_USER = {
   name: "Alex Rivera",
   email: "alex.rivera@example.com",
@@ -16,7 +17,7 @@ export const MOCK_INTERVIEW_HISTORY = [
   {
     id: "int-1",
     role: "Senior Technical PM",
-    date: "2024-05-15",
+    date: "2025-02-15",
     score: 88,
     status: "Completed",
     feedback: "Strong technical understanding, but could improve situational leadership examples."
@@ -24,7 +25,7 @@ export const MOCK_INTERVIEW_HISTORY = [
   {
     id: "int-2",
     role: "Head of Product",
-    date: "2024-05-10",
+    date: "2025-02-10",
     score: 76,
     status: "Completed",
     feedback: "Good confidence, tone was slightly aggressive at times."
@@ -32,7 +33,7 @@ export const MOCK_INTERVIEW_HISTORY = [
   {
     id: "int-3",
     role: "Product Strategy Lead",
-    date: "2024-05-02",
+    date: "2025-02-02",
     score: 92,
     status: "Completed",
     feedback: "Excellent clarity and structure. Perfect use of STAR method."

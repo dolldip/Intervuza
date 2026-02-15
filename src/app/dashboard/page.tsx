@@ -65,10 +65,9 @@ export default function DashboardPage() {
 
   // Streak Management Logic
   useEffect(() => {
-    if (!user || !db || streaks === null) return;
+    if (!user || !db || !streaks) return;
 
     const syncStreak = async () => {
-      // Get today and yesterday in local date format (YYYY-MM-DD)
       const now = new Date();
       const today = now.toISOString().split('T')[0];
       const yesterdayDate = new Date(now);
@@ -80,7 +79,6 @@ export default function DashboardPage() {
       const currentStreakDoc = streaks.find(s => s.id === streakId);
 
       if (!currentStreakDoc) {
-        // Initial Streak Record
         await setDoc(streakRef, {
           id: streakId,
           userId: user.uid,
@@ -96,14 +94,10 @@ export default function DashboardPage() {
 
       const { lastActiveDate, currentStreak, longestStreak } = currentStreakDoc;
 
-      if (lastActiveDate === today) {
-        // Already logged activity today
-        return;
-      }
+      if (lastActiveDate === today) return;
 
       let newStreak = 1;
       if (lastActiveDate === yesterday) {
-        // Logged activity yesterday, increment
         newStreak = (currentStreak || 0) + 1;
       }
 
@@ -127,7 +121,6 @@ export default function DashboardPage() {
       ? Math.round(completed.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / completed.length) 
       : 0
     
-    // Find the dailyPractice streak
     const dailyStreak = streaks?.find(s => s.id === 'dailyPractice');
     const currentStreak = dailyStreak?.currentStreak || 0
 
