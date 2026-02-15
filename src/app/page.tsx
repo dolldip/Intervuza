@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -176,7 +175,7 @@ export default function Home() {
               </div>
               <span className="font-headline font-bold text-xl tracking-tight">Intervuza</span>
             </Link>
-            <p className="text-sm text-slate-500 font-medium">© 2024 Intervuza Inc. Engineered for the 1%.</p>
+            <p className="text-sm text-slate-500 font-medium">© 2025 Intervuza Inc. Engineered for the 1%.</p>
           </div>
           <div className="flex gap-10">
             <Link className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors" href="#">Terms</Link>
