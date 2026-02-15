@@ -6,6 +6,7 @@ import { useAuth, useFirestore, useUser } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { 
   StopCircle, 
   Volume2, 
@@ -23,7 +24,8 @@ import {
   Lightbulb,
   Code2,
   Waves,
-  Eye
+  Eye,
+  CameraOff
 } from "lucide-react"
 import { generateInterviewQuestions } from "@/ai/flows/dynamic-interview-question-generation"
 import { textToSpeech } from "@/ai/flows/tts-flow"
@@ -54,7 +56,7 @@ export default function InterviewSessionPage() {
   const [listening, setListening] = useState(false)
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   const [currentEmotion, setCurrentEmotion] = useState("Neutral")
-  const [hasCameraPermission, setHasCameraPermission] = useState(false)
+  const [hasCameraPermission, setHasCameraPermission] = useState(true) // Default true to avoid flash of alert
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isStuck, setIsStuck] = useState(false)
   const [terminating, setTerminating] = useState(false)
@@ -162,11 +164,12 @@ export default function InterviewSessionPage() {
         setStream(mediaStream)
         setHasCameraPermission(true)
       } catch (error) {
+        console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions to use the biometric analyzer.',
+          title: 'Biometric Access Restricted',
+          description: 'Aria needs camera and audio permissions to conduct the professional audit.',
         });
       }
     };
@@ -336,8 +339,14 @@ export default function InterviewSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6 relative overflow-hidden">
         <div className="max-w-2xl w-full text-center space-y-8 md:space-y-12 relative z-10">
-          <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2rem] md:rounded-[3.5rem] flex items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_50px_rgba(var(--primary),0.2)] group">
+          <div className="w-48 h-48 md:w-72 md:h-72 rounded-[2rem] md:rounded-[3.5rem] flex flex-col items-center justify-center glass bg-slate-900 mx-auto overflow-hidden relative shadow-[0_0_50px_rgba(var(--primary),0.2)] group">
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+            {!hasCameraPermission && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 p-6 text-center">
+                <CameraOff className="w-12 h-12 text-destructive mb-4 animate-pulse" />
+                <p className="text-sm font-black uppercase tracking-widest text-destructive">Visual Feed Offline</p>
+              </div>
+            )}
             <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
           </div>
           <div className="space-y-4">
@@ -346,8 +355,23 @@ export default function InterviewSessionPage() {
             </Badge>
             <h1 className="text-3xl md:text-5xl font-headline font-black tracking-tighter uppercase leading-[1.1]">Elite Calibration</h1>
             <p className="text-slate-500 text-sm md:text-lg">Aria is ready to begin your professional audit. Questions are calibrated for your specific level and industry.</p>
+            
+            {!hasCameraPermission && (
+              <Alert variant="destructive" className="max-w-md mx-auto rounded-2xl glass-dark border-destructive/30">
+                <AlertTitle className="font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                  <CameraOff className="w-4 h-4" /> Camera Access Required
+                </AlertTitle>
+                <AlertDescription className="text-xs font-medium opacity-80">
+                  Please enable camera and microphone permissions in your browser to proceed with the neural biometric audit.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
-          <Button className="w-full h-16 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-primary text-lg md:text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" onClick={startSession}>
+          <Button 
+            className="w-full h-16 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-primary text-lg md:text-2xl font-black shadow-2xl hover:scale-[1.03] transition-all" 
+            onClick={startSession}
+            disabled={!hasCameraPermission}
+          >
             START INTERVIEW
             <Play className="ml-3 md:ml-4 w-5 h-5 md:w-6 md:h-6 fill-current" />
           </Button>
@@ -479,8 +503,14 @@ export default function InterviewSessionPage() {
           <div className="p-6 md:p-10 space-y-6 md:space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
-              <div className="aspect-video glass bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover grayscale opacity-80" />
+              <div className="aspect-video glass bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-inner flex items-center justify-center">
+                <video ref={videoRef} autoPlay muted playsInline className={cn("w-full h-full object-cover grayscale opacity-80", !hasCameraPermission && "hidden")} />
+                {!hasCameraPermission && (
+                  <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
+                    <CameraOff className="w-8 h-8 text-destructive animate-pulse" />
+                    <p className="text-[8px] font-black uppercase tracking-widest text-destructive">Permission Denied</p>
+                  </div>
+                )}
                 <div className="absolute inset-x-0 h-[1px] md:h-[2px] bg-primary/40 shadow-[0_0_20px_rgba(var(--primary),0.8)] animate-[scan_8s_linear_infinite]" />
               </div>
             </div>
@@ -489,12 +519,12 @@ export default function InterviewSessionPage() {
               <div className="p-4 md:p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group">
                 <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary mb-2 md:mb-3 mx-auto" />
                 <p className="text-[7px] md:text-[9px] text-slate-500 uppercase font-black tracking-widest">Confidence</p>
-                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{Math.round(confidenceLevel)}%</p>
+                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{hasCameraPermission ? Math.round(confidenceLevel) : "--"}%</p>
               </div>
               <div className="p-4 md:p-8 glass-card bg-white/5 text-center relative overflow-hidden shadow-inner group">
                 <Target className="w-4 h-4 md:w-5 md:h-5 text-primary mb-2 md:mb-3 mx-auto" />
                 <p className="text-[7px] md:text-[9px] text-slate-500 uppercase font-black tracking-widest">Focus</p>
-                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{Math.round(eyeFocus)}%</p>
+                <p className="text-xl md:text-3xl font-black mt-1 md:mt-2">{hasCameraPermission ? Math.round(eyeFocus) : "--"}%</p>
               </div>
             </div>
 
