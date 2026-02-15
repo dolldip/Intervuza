@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 
 function AnimatedTitle({ text, className }: { text: string; className?: string }) {
   return (
-    <span className={cn("inline-flex overflow-hidden", className)}>
+    <span className={cn("inline-flex flex-nowrap overflow-hidden", className)}>
       {text.split("").map((char, i) => (
         <span
           key={i}
@@ -91,7 +91,7 @@ export default function LoginPage() {
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/30 transition-transform group-hover:scale-110">
               <BrainCircuit className="text-white w-7 h-7" />
             </div>
-            <span className="font-headline font-black text-4xl tracking-tighter">
+            <span className="font-headline font-black text-3xl md:text-4xl tracking-tighter whitespace-nowrap">
               <AnimatedTitle text="Intervuza" />
             </span>
           </Link>

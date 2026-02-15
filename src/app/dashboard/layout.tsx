@@ -17,7 +17,7 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center gap-4 border-b bg-background/50 backdrop-blur-sm px-6 sticky top-0 z-30">
             <SidebarTrigger />
             <div className="h-4 w-px bg-border" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Intervuza | Performance Portal</h2>
+            <h2 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap overflow-hidden">Intervuza | Performance Portal</h2>
           </div>
           <main className="flex-1 overflow-y-auto">
             {children}

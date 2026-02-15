@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 
 function AnimatedText({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
   return (
-    <span className={cn("inline-flex flex-wrap overflow-hidden", className)}>
+    <span className={cn("inline-flex flex-nowrap overflow-hidden", className)}>
       {text.split("").map((char, i) => (
         <span
           key={i}
@@ -97,7 +97,7 @@ export default function DashboardPage() {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
           </div>
-          <h1 className="text-5xl font-headline font-black tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-5xl font-headline font-black tracking-tight leading-tight">
             <AnimatedText text="Welcome back," /> <br /> 
             <span className="text-primary"><AnimatedText text={welcomeName} delay={400} /></span>
           </h1>
