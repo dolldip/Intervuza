@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BrainCircuit, User, Mail, Lock, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,7 +19,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -38,12 +37,6 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: name });
       
-      try {
-        await sendEmailVerification(user);
-      } catch (emailError) {
-        console.warn("Linguistic recovery link failure.", emailError);
-      }
-      
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: email,
@@ -54,11 +47,12 @@ export default function RegisterPage() {
         dataDeletionRequested: false
       });
 
-      setVerificationSent(true);
       toast({
         title: "Security Profile Created",
-        description: "Linguistic verification link transmitted to your inbox.",
+        description: "Welcome to Intervuza. Your professional audit profile is ready.",
       });
+      
+      router.push('/dashboard');
     } catch (error: any) {
       console.error("Enrollment Error:", error);
       let message = "Neural enrollment failed. System error.";
@@ -79,28 +73,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  if (verificationSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
-        <div className="w-full max-w-md text-center space-y-12 animate-fade-in relative z-10">
-          <div className="w-24 h-24 bg-green-500/10 text-green-400 rounded-[2.5rem] glass flex items-center justify-center mx-auto shadow-2xl">
-            <CheckCircle2 className="w-12 h-12" />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-5xl font-headline font-black uppercase tracking-tighter">Identity Audit</h1>
-            <p className="text-slate-400 text-lg font-medium leading-relaxed">
-              We've transmitted a verification link to <b className="text-white">{email}</b>. Please verify your identity to proceed.
-            </p>
-          </div>
-          <Button asChild className="w-full h-18 rounded-[1.5rem] font-black text-xl shadow-2xl transition-all hover:scale-[1.02]">
-            <Link href="/login">RETURN TO GATEWAY</Link>
-          </Button>
-        </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-green-500/5 blur-[120px] rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">

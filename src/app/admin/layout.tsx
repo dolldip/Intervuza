@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -21,13 +22,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const isGlobalAdmin = user?.email === "dollyjajra123@gmail.com"
     const hasAdminRole = !!adminDoc
-    const isEmailVerified = user?.emailVerified
 
     if (!user) {
       router.push("/login")
-    } else if (!isEmailVerified) {
-      // Non-verified users stay in dashboard
-      router.push("/dashboard")
     } else if (!isGlobalAdmin && !hasAdminRole) {
       // Unauthorized users go to security page
       router.push("/not-authorized")
