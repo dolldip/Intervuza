@@ -395,7 +395,7 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col md:flex-row relative bg-black overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row relative bg-black overflow-hidden">
         <div className="flex-1 relative flex items-center justify-center bg-black overflow-hidden min-h-[40vh] md:min-h-0">
           <div className="absolute inset-0 transition-all duration-1000">
              <img 
@@ -447,18 +447,18 @@ export default function InterviewSessionPage() {
         </div>
 
         {showCodePad && (
-          <div className="fixed inset-0 md:relative md:inset-auto md:w-[600px] glass-dark border-l border-white/10 flex flex-col z-50 shadow-2xl animate-in slide-in-from-right duration-500">
+          <div className="fixed inset-0 lg:relative lg:inset-auto lg:w-[600px] glass-dark border-l border-white/10 flex flex-col z-50 shadow-2xl animate-in slide-in-from-right duration-500">
             <div className="p-6 md:p-10 flex-1 space-y-4 md:space-y-6 flex flex-col">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] md:text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 md:gap-3">
                   <Code2 className="w-4 h-4" /> Logic & Coding Pad
                 </span>
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowCodePad(false)}><X className="w-5 h-5" /></Button>
+                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setShowCodePad(false)}><X className="w-5 h-5" /></Button>
               </div>
               <Textarea 
                 value={code} 
                 onChange={(e) => setCode(e.target.value)}
-                className="flex-1 bg-black/40 border-white/5 rounded-[1rem] md:rounded-[2rem] p-6 md:p-10 font-code text-green-400 resize-none focus:ring-1 focus:ring-primary/30 text-sm md:text-base"
+                className="flex-1 bg-black/40 border-white/5 rounded-[1rem] md:rounded-[2rem] p-6 md:p-10 font-code text-green-400 resize-none focus:ring-1 focus:ring-primary/30 text-base"
                 placeholder="Write your code or architectural explanation here..."
               />
               <p className="text-[9px] text-slate-500 italic">This content will be submitted along with your verbal response automatically.</p>
@@ -466,7 +466,7 @@ export default function InterviewSessionPage() {
           </div>
         )}
 
-        <div className="w-full md:w-[380px] lg:w-[480px] glass-dark md:border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden max-h-[40vh] md:max-h-none">
+        <div className="w-full lg:w-[480px] glass-dark lg:border-l border-white/5 flex flex-col z-30 shadow-2xl overflow-hidden max-h-[50vh] lg:max-h-none">
           <div className="p-6 md:p-10 space-y-6 md:space-y-10 flex-1 overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Biometric Feed</span>
