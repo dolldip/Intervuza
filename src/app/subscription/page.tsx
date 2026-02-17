@@ -21,7 +21,8 @@ import {
   IndianRupee,
   Sparkles,
   Copy,
-  Smartphone
+  Smartphone,
+  ExternalLink
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -111,10 +112,15 @@ export default function SubscriptionPage() {
   }
 
   const copyUPI = () => {
-    navigator.clipboard.writeText("intervuza.pay@okaxis");
+    navigator.clipboard.writeText("7003799866@ybl");
     setCopied(true);
     toast({ title: "UPI Copied", description: "Neural VPA copied to clipboard." });
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  const handleUPILink = () => {
+    const upiLink = `upi://pay?pa=7003799866@ybl&pn=Intervuza&am=${selectedPlan?.price}&cu=INR`;
+    window.open(upiLink, '_blank');
   }
 
   const handleCheckout = async () => {
@@ -124,7 +130,6 @@ export default function SubscriptionPage() {
     try {
       const now = new Date().toISOString()
       
-      // 1. Record Transaction
       await addDoc(collection(db, "users", user.uid, "paymentTransactions"), {
         userId: user.uid,
         amount: selectedPlan.price,
@@ -136,7 +141,6 @@ export default function SubscriptionPage() {
         createdAt: now
       });
 
-      // 2. Create/Update Subscription Record
       await addDoc(collection(db, "users", user.uid, "userSubscriptions"), {
         userId: user.uid,
         planId: selectedPlan.id,
@@ -148,7 +152,6 @@ export default function SubscriptionPage() {
         updatedAt: now
       });
 
-      // 3. Update User Profile for Global Access
       await updateDoc(doc(db, "users", user.uid), {
         subscription: selectedPlan.id,
         updatedAt: now
@@ -323,7 +326,7 @@ export default function SubscriptionPage() {
               <div className="flex justify-between items-center">
                 <span className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Neural VPA</span>
                 <div className="flex items-center gap-3">
-                  <span className="font-black text-white text-base">intervuza.pay@okaxis</span>
+                  <span className="font-black text-white text-base">7003799866@ybl</span>
                   <Button variant="ghost" size="icon" onClick={copyUPI} className="h-8 w-8 text-primary hover:bg-primary/10">
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -340,10 +343,20 @@ export default function SubscriptionPage() {
             </div>
 
             <div className="space-y-6">
+              <Button 
+                variant="outline" 
+                className="w-full h-14 rounded-2xl font-black glass border-primary/20 text-primary flex items-center justify-center gap-3 hover:bg-primary/10"
+                onClick={handleUPILink}
+              >
+                <ExternalLink className="w-4 h-4" />
+                OPEN UPI APP
+              </Button>
+              
               <div className="flex items-center gap-5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 bg-blue-500/5 p-5 rounded-2xl border border-blue-500/15">
                 <Lock className="w-5 h-5 text-blue-400 shrink-0" />
                 <span>Pay via any UPI app and confirm below to recalibrate Aria instantly.</span>
               </div>
+              
               <Button 
                 className="w-full h-20 rounded-[2rem] text-xl font-black shadow-[0_20px_50px_rgba(var(--primary),0.4)] hover:scale-[1.02] transition-all bg-primary" 
                 onClick={handleCheckout} 
