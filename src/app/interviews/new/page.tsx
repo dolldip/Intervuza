@@ -1,9 +1,9 @@
 
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, addDoc, query, orderBy, limit, doc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,15 +13,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { 
-  ShieldCheck, 
   UploadCloud,
   Loader2,
   Sparkles,
   FileText,
   X,
   Zap,
-  BrainCircuit,
-  Crown
+  BrainCircuit
 } from "lucide-react"
 import { resumeJobDescriptionAnalysis } from "@/ai/flows/resume-job-description-analysis-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -44,9 +42,7 @@ export default function NewInterviewPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user])
   const { data: profile } = useDoc(userDocRef)
-  const isPro = profile?.subscription === 'pro' || profile?.subscription === 'enterprise';
 
-  // "Learning Brain" - Fetch past performance
   const plansQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return query(
@@ -110,19 +106,6 @@ export default function NewInterviewPage() {
       return
     }
 
-    if (!isPro && (roundType === 'technical' || roundType === 'both')) {
-      toast({
-        title: "Pro Calibration Required",
-        description: "Technical Logic Mastery and Comprehensive Audits require a Pro subscription.",
-        action: (
-          <Button variant="outline" size="sm" onClick={() => router.push('/subscription')}>
-            Upgrade
-          </Button>
-        )
-      })
-      return;
-    }
-
     setLoading(true)
     
     sessionStorage.setItem('demo_role', role);
@@ -159,8 +142,7 @@ export default function NewInterviewPage() {
           status: "in-progress",
           createdAt: new Date().toISOString(),
           resumeText: resumeText,
-          pastPerformanceUsed: !!pastPerformanceSummary,
-          isProSession: isPro
+          pastPerformanceUsed: !!pastPerformanceSummary
         });
         router.push(`/interviews/session/${sessionRef.id}`)
       } else {
@@ -181,7 +163,7 @@ export default function NewInterviewPage() {
           <Sparkles className="w-4 h-4" /> Neural Calibration Center
         </Badge>
         <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter text-white leading-tight">Initialize Audit</h1>
-        <p className="text-slate-400 text-2xl max-w-3xl mx-auto font-medium">Aria will calibrate her technical depth based on your resume and subscription tier.</p>
+        <p className="text-slate-400 text-2xl max-w-3xl mx-auto font-medium">Aria will calibrate her technical depth based on your resume and target role.</p>
         
         {pastPerformanceSummary && (
           <div className="max-w-2xl mx-auto p-6 glass bg-primary/5 border border-primary/25 rounded-[2rem] flex items-center gap-6 text-left animate-pulse shadow-2xl">
@@ -230,20 +212,15 @@ export default function NewInterviewPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <Label htmlFor="round" className="font-black text-xs uppercase tracking-[0.3em] text-slate-500">Focus Sector</Label>
-                  {!isPro && <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] uppercase tracking-widest px-3 py-1 flex gap-2"><Crown className="w-3 h-3" /> PRO UPGRADE RECOMMENDED</Badge>}
-                </div>
+                <Label htmlFor="round" className="font-black text-xs uppercase tracking-[0.3em] text-slate-500">Focus Sector</Label>
                 <Select value={roundType} onValueChange={setRoundType}>
                   <SelectTrigger id="round" className="h-16 rounded-[1.5rem] glass bg-white/5 border-white/10 px-8 font-black text-lg">
                     <SelectValue placeholder="Select round focus" />
                   </SelectTrigger>
                   <SelectContent className="glass-dark border-white/15">
-                    <SelectItem value="technical" className="flex justify-between items-center">
-                      Technical / Logic Mastery {!isPro && "(PRO)"}
-                    </SelectItem>
+                    <SelectItem value="technical">Technical / Logic Mastery</SelectItem>
                     <SelectItem value="hr">Behavioral / Leadership Depth</SelectItem>
-                    <SelectItem value="both">Comprehensive Performance Audit {!isPro && "(PRO)"}</SelectItem>
+                    <SelectItem value="both">Comprehensive Performance Audit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

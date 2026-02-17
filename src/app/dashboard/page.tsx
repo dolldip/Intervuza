@@ -16,8 +16,7 @@ import {
   Zap,
   History,
   AlertCircle,
-  Sparkles,
-  Crown
+  Sparkles
 } from "lucide-react"
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
@@ -137,23 +136,14 @@ export default function DashboardPage() {
   }
 
   const welcomeName = profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate";
-  const isPro = profile?.subscription === 'pro' || profile?.subscription === 'enterprise';
 
   return (
     <div className="p-8 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div>
           <div className="flex items-center gap-3 mb-2 animate-sudden">
-            {isPro ? (
-              <Badge className="bg-primary text-white font-black uppercase tracking-[0.3em] text-[10px] px-5 py-2 flex gap-3 shadow-xl shadow-primary/20">
-                <Crown className="w-4 h-4" /> PRO CALIBRATION ACTIVE
-              </Badge>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Intelligence Portal | Standard Access</span>
-              </div>
-            )}
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Intelligence Portal | Standard Access</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tight leading-tight">
             <AnimatedText text="Welcome back," /> <br /> 
@@ -162,13 +152,6 @@ export default function DashboardPage() {
           <p className="text-slate-400 text-xl mt-4 font-medium animate-entrance [animation-delay:800ms]">Ready for your professional audit today?</p>
         </div>
         <div className="flex items-center gap-6 animate-sudden [animation-delay:1000ms]">
-          {!isPro && (
-            <Button variant="outline" asChild className="h-16 rounded-[1.5rem] px-10 glass font-black border-primary/40 text-primary shadow-xl hover:bg-primary hover:text-white transition-all">
-              <Link href="/subscription">
-                UPGRADE TO PRO
-              </Link>
-            </Button>
-          )}
           <Button asChild className="h-16 rounded-[1.5rem] px-10 font-black shadow-[0_20px_50px_rgba(var(--primary),0.3)] transition-all hover:scale-105 active:scale-95">
             <Link href="/interviews/new">
               <Video className="mr-3 w-6 h-6" />
