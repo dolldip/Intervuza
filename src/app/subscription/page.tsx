@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, addDoc, orderBy } from "firebase/firestore"
+import { collection, query, where, addDoc, orderBy, doc, updateDoc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -71,7 +71,7 @@ export default function SubscriptionPage() {
   }, [db])
   const { data: plans, isLoading: plansLoading } = useCollection(plansQuery)
 
-  const currentPlan = activeSubs?.[0]
+  const currentPlanId = activeSubs?.[0]?.planId || "free"
 
   const defaultPlans = [
     { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "Aria Lite Logic"], icon: Star },
@@ -82,11 +82,11 @@ export default function SubscriptionPage() {
   const displayPlans = plans?.length ? plans : defaultPlans
 
   const handlePlanSelect = (plan: any) => {
-    if (plan.id === "free" && !currentPlan) {
+    if (plan.id === "free" && currentPlanId === "free") {
       toast({ title: "Free Plan Active", description: "You are already using the standard tier." });
       return;
     }
-    if (currentPlan?.planId === plan.id) return;
+    if (currentPlanId === plan.id) return;
     
     setSelectedPlan(plan);
     setIsCheckoutOpen(true);
@@ -99,6 +99,7 @@ export default function SubscriptionPage() {
     try {
       const now = new Date().toISOString()
       
+      // 1. Record Transaction
       await addDoc(collection(db, "users", user.uid, "paymentTransactions"), {
         userId: user.uid,
         amount: selectedPlan.price || selectedPlan.priceMonthly,
@@ -110,6 +111,7 @@ export default function SubscriptionPage() {
         createdAt: now
       });
 
+      // 2. Create Subscription Record
       await addDoc(collection(db, "users", user.uid, "userSubscriptions"), {
         userId: user.uid,
         planId: selectedPlan.id,
@@ -118,6 +120,12 @@ export default function SubscriptionPage() {
         nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: "active",
         createdAt: now,
+        updatedAt: now
+      });
+
+      // 3. Update User Profile for Global Visibility
+      await updateDoc(doc(db, "users", user.uid), {
+        subscription: selectedPlan.id,
         updatedAt: now
       });
 
@@ -158,8 +166,8 @@ export default function SubscriptionPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {displayPlans.map((plan: any, i) => (
-          <Card key={i} className={`glass-card border-none shadow-2xl overflow-hidden relative group hover:scale-[1.03] transition-all duration-500 ${plan.name === 'Pro' || plan.popular ? 'ring-2 ring-primary/50' : ''}`}>
-            { (plan.name === 'Pro' || plan.popular) && (
+          <Card key={i} className={`glass-card border-none shadow-2xl overflow-hidden relative group hover:scale-[1.03] transition-all duration-500 ${plan.id === 'pro' || plan.popular ? 'ring-2 ring-primary/50' : ''}`}>
+            { (plan.id === 'pro' || plan.popular) && (
               <div className="absolute top-0 right-0 bg-primary text-white px-8 py-2.5 rounded-bl-[2rem] font-black text-[10px] uppercase tracking-widest z-10 shadow-xl">
                 Most Popular
               </div>
@@ -189,11 +197,11 @@ export default function SubscriptionPage() {
             </CardContent>
             <CardFooter className="p-10 bg-white/5">
               <Button 
-                className={`w-full h-16 rounded-2xl font-black text-lg transition-all ${currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? 'bg-white/10 text-slate-500 cursor-default pointer-events-none' : 'shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95'}`}
-                disabled={currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan)}
+                className={`w-full h-16 rounded-2xl font-black text-lg transition-all ${currentPlanId === plan.id ? 'bg-white/10 text-slate-500 cursor-default pointer-events-none' : 'shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95'}`}
+                disabled={currentPlanId === plan.id}
                 onClick={() => handlePlanSelect(plan)}
               >
-                {currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? "CURRENT CALIBRATION" : "UPGRADE Master"}
+                {currentPlanId === plan.id ? "CURRENT CALIBRATION" : "UPGRADE Master"}
               </Button>
             </CardFooter>
           </Card>

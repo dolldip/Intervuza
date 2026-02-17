@@ -17,7 +17,8 @@ import {
   Zap,
   History,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Crown
 } from "lucide-react"
 import Link from "next/link"
 import { useFirestore, useDoc, useUser, useCollection, useMemoFirebase } from "@/firebase"
@@ -63,7 +64,6 @@ export default function DashboardPage() {
   }, [db, user])
   const { data: streaks } = useCollection(streaksQuery)
 
-  // Streak Management Logic
   useEffect(() => {
     if (!user || !db || !streaks) return;
 
@@ -93,7 +93,6 @@ export default function DashboardPage() {
       }
 
       const { lastActiveDate, currentStreak, longestStreak } = currentStreakDoc;
-
       if (lastActiveDate === today) return;
 
       let newStreak = 1;
@@ -122,13 +121,11 @@ export default function DashboardPage() {
       : 0
     
     const dailyStreak = streaks?.find(s => s.id === 'dailyPractice');
-    const currentStreak = dailyStreak?.currentStreak || 0
-
     return {
       total,
       completed: completed.length,
       avgScore,
-      currentStreak
+      currentStreak: dailyStreak?.currentStreak || 0
     }
   }, [sessions, streaks])
 
@@ -141,14 +138,23 @@ export default function DashboardPage() {
   }
 
   const welcomeName = profile?.fullName?.split(' ')[0] || user?.displayName?.split(' ')[0] || "Candidate";
+  const isPro = profile?.subscription === 'pro';
 
   return (
     <div className="p-8 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div>
-          <div className="flex items-center gap-2 mb-2 animate-sudden">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
+          <div className="flex items-center gap-3 mb-2 animate-sudden">
+            {isPro ? (
+              <Badge className="bg-primary text-white font-black uppercase tracking-[0.2em] text-[10px] px-3 py-1 flex gap-2">
+                <Crown className="w-3 h-3" /> PRO CALIBRATION
+              </Badge>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Intelligence Portal</span>
+              </div>
+            )}
           </div>
           <h1 className="text-4xl md:text-5xl font-headline font-black tracking-tight leading-tight">
             <AnimatedText text="Welcome back," /> <br /> 
@@ -157,12 +163,13 @@ export default function DashboardPage() {
           <p className="text-slate-400 text-xl mt-2 font-medium animate-entrance [animation-delay:800ms]">Ready for your professional audit today?</p>
         </div>
         <div className="flex items-center gap-4 animate-sudden [animation-delay:1000ms]">
-          <Button variant="outline" asChild className="hidden sm:flex h-14 rounded-2xl px-8 glass font-bold">
-            <Link href="/profile">
-              <UserPen className="mr-2 w-5 h-5" />
-              AI Profile
-            </Link>
-          </Button>
+          {!isPro && (
+            <Button variant="outline" asChild className="h-14 rounded-2xl px-8 glass font-black border-primary/30 text-primary">
+              <Link href="/subscription">
+                UPGRADE
+              </Link>
+            </Button>
+          )}
           <Button asChild className="h-14 rounded-2xl px-8 font-black shadow-2xl shadow-primary/40 transition-all hover:scale-105">
             <Link href="/interviews/new">
               <Video className="mr-2 w-5 h-5" />

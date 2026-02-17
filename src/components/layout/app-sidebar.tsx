@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -14,7 +15,8 @@ import {
   CreditCard,
   LogOut,
   Loader2,
-  ShieldAlert
+  ShieldAlert,
+  Crown
 } from "lucide-react"
 
 import {
@@ -89,12 +91,14 @@ export function AppSidebar() {
   const auth = useAuth()
 
   // Use the roles_admin check defined in our security logic
-  const adminDocRef = useMemoFirebase(() => user ? doc(db!, "roles_admin", user.uid) : null, [db, user])
-  const { data: adminDoc } = useDoc(adminDocRef)
+  const userDocRef = useMemoFirebase(() => user ? doc(db!, "users", user.uid) : null, [db, user])
+  const { data: profile } = useDoc(userDocRef)
 
   const isAdmin = React.useMemo(() => {
-    return user?.email === "dollyjajra123@gmail.com" || !!adminDoc
-  }, [user, adminDoc])
+    return user?.email === "dollyjajra123@gmail.com" || profile?.role === 'admin'
+  }, [user, profile])
+
+  const isPro = profile?.subscription === 'pro';
 
   const handleLogout = async () => {
     try {
@@ -179,12 +183,18 @@ export function AppSidebar() {
               </div>
             ) : user ? (
               <div className="flex items-center gap-3 h-12 w-full px-2">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={`https://picsum.photos/seed/${user.uid}/40/40`} />
-                  <AvatarFallback className="rounded-lg">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={`https://picsum.photos/seed/${user.uid}/40/40`} />
+                    <AvatarFallback className="rounded-lg">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
+                  {isPro && <Crown className="w-3 h-3 text-primary absolute -top-1 -right-1 fill-primary animate-pulse" />}
+                </div>
                 <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:hidden flex-1">
-                  <span className="text-sm font-bold truncate w-full">{user.displayName || "Candidate"}</span>
+                  <div className="flex items-center gap-1.5 w-full">
+                    <span className="text-sm font-bold truncate">{user.displayName || "Candidate"}</span>
+                    {isPro && <span className="text-[7px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-black uppercase">Pro</span>}
+                  </div>
                   <span className="text-[10px] text-muted-foreground truncate w-full">{user.email}</span>
                 </div>
                 <button 
