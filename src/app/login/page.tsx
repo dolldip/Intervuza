@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BrainCircuit, Mail, Lock, Loader2 } from 'lucide-react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { 
   signInWithEmailAndPassword, 
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const db = useFirestore();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,11 +74,27 @@ export default function LoginPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Ensure user profile exists in Firestore
+      const userDoc = await getDoc(doc(db!, "users", user.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db!, "users", user.uid), {
+          id: user.uid,
+          email: user.email,
+          fullName: user.displayName || "Candidate",
+          role: "candidate",
+          experienceLevel: "mid",
+          createdAt: new Date().toISOString(),
+          dataDeletionRequested: false
+        });
+      }
+
       toast({ title: "Authenticated", description: "Successfully signed in via Google." });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Auth Failed", description: error.message });
+      toast({ variant: "destructive", title: "Sign In Failed", description: error.message });
     } finally {
       setLoading(false);
     }
@@ -118,7 +136,7 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Google Login
+              Google Sign In
             </Button>
 
             <div className="relative">
