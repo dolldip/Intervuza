@@ -54,8 +54,8 @@ export default function SubscriptionPage() {
 
   const defaultPlans = [
     { id: "free", name: "Free", description: "Standard mock interviews for everyone.", price: 0, features: ["5 Interviews / mo", "Basic Feedback", "Aria Lite Logic"], icon: Star },
-    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 29, features: ["Unlimited Interviews", "High-Stakes Biometrics", "Aria Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
-    { id: "enterprise", name: "Enterprise", description: "Custom logic for high-tier recruitment.", price: 99, features: ["Custom Roles", "Recruiter Dashboard", "Team Analytics", "Priority AI"], icon: ShieldCheck },
+    { id: "pro", name: "Pro", description: "Deep technical analysis and biometrics.", price: 49, features: ["Unlimited Interviews", "High-Stakes Biometrics", "Aria Elite Logic", "Coding Task Access"], icon: Crown, popular: true },
+    { id: "enterprise", name: "Enterprise", description: "Custom logic for high-tier recruitment.", price: 199, features: ["Custom Roles", "Recruiter Dashboard", "Team Analytics", "Priority AI"], icon: ShieldCheck },
   ]
 
   const displayPlans = plans?.length ? plans : defaultPlans
@@ -79,7 +79,7 @@ export default function SubscriptionPage() {
       await addDoc(collection(db, "users", user.uid, "paymentTransactions"), {
         userId: user.uid,
         amount: selectedPlan.price || selectedPlan.priceMonthly,
-        currency: "USD",
+        currency: "INR",
         transactionDate: new Date().toISOString(),
         status: "succeeded",
         paymentGatewayReference: `sim_${Math.random().toString(36).substring(7)}`,
@@ -150,7 +150,7 @@ export default function SubscriptionPage() {
             </CardHeader>
             <CardContent className="p-8 space-y-8 bg-white">
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black">${plan.priceMonthly || plan.price || 0}</span>
+                <span className="text-5xl font-black">₹{plan.priceMonthly || plan.price || 0}</span>
                 <span className="text-muted-foreground font-bold">/mo</span>
               </div>
               <ul className="space-y-4">
@@ -189,12 +189,12 @@ export default function SubscriptionPage() {
             <div className="p-6 bg-muted/20 rounded-2xl border border-dashed border-primary/20 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="font-medium">{selectedPlan?.name} Subscription</span>
-                <span className="font-black text-xl">${selectedPlan?.price || selectedPlan?.priceMonthly}/mo</span>
+                <span className="font-black text-xl">₹{selectedPlan?.price || selectedPlan?.priceMonthly}/mo</span>
               </div>
               <div className="h-px bg-border w-full" />
               <div className="flex justify-between items-center text-primary font-black">
                 <span>Total Due Today</span>
-                <span>${selectedPlan?.price || selectedPlan?.priceMonthly}</span>
+                <span>₹{selectedPlan?.price || selectedPlan?.priceMonthly}</span>
               </div>
             </div>
 

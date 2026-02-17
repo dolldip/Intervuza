@@ -65,7 +65,7 @@ export default function PaymentManagement() {
         <Card className="rounded-[2rem] border-none shadow-sm bg-primary text-white p-8 overflow-hidden relative">
           <DollarSign className="w-24 h-24 absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 opacity-10" />
           <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Aggregate Revenue</p>
-          <h2 className="text-5xl font-black">${stats.total.toLocaleString()}</h2>
+          <h2 className="text-5xl font-black">₹{stats.total.toLocaleString()}</h2>
           <p className="text-xs mt-4 opacity-70">Total processed through AI simulated gateway.</p>
         </Card>
         <Card className="rounded-[2rem] border-none shadow-sm bg-white p-8 flex items-center justify-between">
@@ -107,7 +107,7 @@ export default function PaymentManagement() {
                       <p className="text-xs text-muted-foreground truncate max-w-[120px]">{payment.userId}</p>
                     </TableCell>
                     <TableCell>
-                      <p className="font-black text-primary">${payment.amount}</p>
+                      <p className="font-black text-primary">₹{payment.amount}</p>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="rounded-lg px-3 border-green-200 bg-green-50 text-green-700 font-bold">

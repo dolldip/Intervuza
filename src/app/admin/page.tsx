@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -71,7 +70,7 @@ export default function AdminDashboard() {
         {[
           { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
           { label: "Paid Members", value: stats.paidUsers, icon: UserPlus, color: "text-green-600", bg: "bg-green-100" },
-          { label: "Total Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+          { label: "Total Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
         ].map((stat, i) => (
           <Card key={i} className="border-none shadow-sm rounded-[2rem] overflow-hidden bg-white">
             <CardContent className="p-8 flex items-center justify-between">
@@ -148,7 +147,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-primary">${payment.amount}</p>
+                    <p className="font-black text-primary">₹{payment.amount}</p>
                     <p className="text-[9px] font-bold text-green-600 uppercase">Succeeded</p>
                   </div>
                 </div>
