@@ -51,7 +51,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Welcome back!",
-        description: "Successfully logged into the intelligence portal.",
+        description: "Successfully signed in to the intelligence portal.",
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -113,14 +113,14 @@ export default function LoginPage() {
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Sign In</h2>
-            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Welcome back to your intelligence dashboard.</p>
+            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Access your professional audit profile.</p>
           </div>
         </div>
 
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
             <CardTitle className="font-headline text-3xl font-black">Login</CardTitle>
-            <CardDescription className="text-lg">Access your professional audit.</CardDescription>
+            <CardDescription className="text-lg">Secure entry to the grid.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
             <Button 
@@ -140,7 +140,7 @@ export default function LoginPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-[#0a0c1a] px-4 text-slate-500">Email Sign In</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-slate-950 px-4 text-slate-500">OR</span></div>
             </div>
 
             <form onSubmit={handleEmailLogin} className="space-y-6">
@@ -168,12 +168,11 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
-              New here? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Sign Up Now</Link>
+              New to Intervuza? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Sign Up Now</Link>
             </p>
           </CardFooter>
         </Card>
       </div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
     </div>
   );
 }

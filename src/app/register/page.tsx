@@ -70,22 +70,22 @@ export default function RegisterPage() {
 
       toast({
         title: "Profile Created",
-        description: "Welcome to Intervuza. Your professional audit profile is ready.",
+        description: "Welcome to Intervuza. Your professional profile is ready.",
       });
       
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Enrollment Error:", error);
-      let message = "Neural enrollment failed. System error.";
+      let message = "Registration failed. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
-        message = "Identity already exists. Sign in to your existing sector.";
+        message = "Identity already exists. Sign in instead.";
       } else if (error.code === 'auth/weak-password') {
         message = "Credential strength insufficient (minimum 6 characters).";
       }
       
       toast({
         variant: "destructive",
-        title: "Enrollment Denied",
+        title: "Registration Denied",
         description: message,
       });
     } finally {
@@ -100,7 +100,6 @@ export default function RegisterPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user already exists in Firestore
       const userDoc = await getDoc(doc(db!, "users", user.uid));
       
       if (!userDoc.exists()) {
@@ -138,14 +137,14 @@ export default function RegisterPage() {
           </Link>
           <div className="space-y-1">
             <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Sign Up</h2>
-            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Initialize your professional audit profile.</p>
+            <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Join the professional audit network.</p>
           </div>
         </div>
 
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
             <CardTitle className="font-headline text-3xl font-black">Register</CardTitle>
-            <CardDescription className="text-lg">Join the high-stakes neural grid.</CardDescription>
+            <CardDescription className="text-lg">Initialize your secure profile.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
             <Button 
@@ -165,7 +164,7 @@ export default function RegisterPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-[#0a0c1a] px-4 text-slate-500">Email Sign Up</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-slate-950 px-4 text-slate-500">OR</span></div>
             </div>
 
             <form onSubmit={handleRegister} className="space-y-6">
@@ -204,12 +203,11 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
-              Already have an account? <Link href="/login" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Login Now</Link>
+              Already have an account? <Link href="/login" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Sign In Now</Link>
             </p>
           </CardFooter>
         </Card>
       </div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
     </div>
   );
 }

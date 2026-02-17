@@ -32,10 +32,10 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased overflow-x-hidden;
+    @apply bg-slate-950 text-foreground font-body selection:bg-primary/30 antialiased overflow-x-hidden;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.15) 0, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(260, 55%, 45%, 0.1) 0, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.1) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(260, 55%, 45%, 0.08) 0, transparent 50%),
       radial-gradient(at 50% 50%, hsla(230, 45% , 8%, 1) 0, transparent 100%);
     background-attachment: fixed;
   }

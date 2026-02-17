@@ -48,7 +48,7 @@ export default function Home() {
           </Link>
           <div className="flex gap-4">
             <Button variant="ghost" size="sm" asChild className="font-bold">
-              <Link href="/login">Login</Link>
+              <Link href="/login">Sign In</Link>
             </Button>
             <Button size="sm" asChild className="rounded-xl px-6 font-bold shadow-lg shadow-primary/30">
               <Link href="/register">Sign Up</Link>

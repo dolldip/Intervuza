@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect } from "react"
@@ -143,7 +142,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-3 mb-2 animate-sudden">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Intelligence Portal | Standard Access</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Intelligence Portal</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tight leading-tight">
             <AnimatedText text="Welcome back," /> <br /> 
@@ -210,7 +209,6 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full group-hover:bg-primary/20 transition-all pointer-events-none" />
               </div>
             </CardContent>
           </Card>
@@ -222,7 +220,6 @@ export default function DashboardPage() {
                   <History className="w-10 h-10 text-primary" />
                   Audit History
                 </CardTitle>
-                <Link href="/dashboard" className="text-xs font-black uppercase tracking-[0.3em] text-primary hover:underline">Full History</Link>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -248,7 +245,7 @@ export default function DashboardPage() {
                       </div>
                       <Button variant="outline" className="rounded-[1.5rem] h-18 px-10 font-black glass hover:bg-primary hover:text-white hover:border-transparent transition-all text-lg" asChild>
                         <Link href={item.status === 'completed' ? `/results/${item.id}` : `/interviews/session/${item.id}`}>
-                          {item.status === 'completed' ? 'VIEW AUDIT' : 'RESUME TURN'}
+                          {item.status === 'completed' ? 'VIEW AUDIT' : 'RESUME'}
                         </Link>
                       </Button>
                     </div>
@@ -282,10 +279,8 @@ export default function DashboardPage() {
                 <Button className="w-full h-22 rounded-[2rem] font-black bg-primary text-2xl shadow-[0_20px_50px_rgba(var(--primary),0.3)] transition-all hover:scale-[1.03]" asChild>
                   <Link href="/interviews/new">NEW SESSION</Link>
                 </Button>
-                <p className="text-[10px] text-center text-slate-600 font-black uppercase tracking-[0.4em]">Biometric sensors standing by.</p>
               </div>
             </CardContent>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
           </Card>
         </div>
       </div>
