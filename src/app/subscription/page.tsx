@@ -19,7 +19,9 @@ import {
   History,
   Calendar,
   IndianRupee,
-  Sparkles
+  Sparkles,
+  Copy,
+  Smartphone
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -46,6 +48,7 @@ export default function SubscriptionPage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
   const [processing, setProcessing] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const subQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -107,6 +110,13 @@ export default function SubscriptionPage() {
     setIsCheckoutOpen(true);
   }
 
+  const copyUPI = () => {
+    navigator.clipboard.writeText("intervuza.pay@okaxis");
+    setCopied(true);
+    toast({ title: "UPI Copied", description: "Neural VPA copied to clipboard." });
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   const handleCheckout = async () => {
     if (!user || !db || !selectedPlan) return;
     
@@ -122,7 +132,7 @@ export default function SubscriptionPage() {
         transactionDate: now,
         status: "succeeded",
         paymentGatewayReference: `INTV_${Math.random().toString(36).substring(7).toUpperCase()}`,
-        description: `${selectedPlan.name} Calibration Payment`,
+        description: `${selectedPlan.name} Calibration Payment (UPI)`,
         createdAt: now
       });
 
@@ -301,22 +311,27 @@ export default function SubscriptionPage() {
         <DialogContent className="max-w-md glass-dark border-white/10 rounded-[3rem] p-12 shadow-[0_0_100px_rgba(0,0,0,0.9)]">
           <DialogHeader className="space-y-6">
             <div className="w-20 h-20 glass bg-primary/25 rounded-[1.5rem] flex items-center justify-center text-primary mx-auto shadow-inner">
-              <ShieldCheck className="w-10 h-10" />
+              <Smartphone className="w-10 h-10" />
             </div>
-            <DialogTitle className="text-4xl font-headline font-black text-center text-white">Secure Neural Funding</DialogTitle>
+            <DialogTitle className="text-4xl font-headline font-black text-center text-white">UPI Neural Gateway</DialogTitle>
             <DialogDescription className="text-center text-slate-400 font-medium text-lg leading-relaxed">
-              Unlock the <span className="font-black text-primary uppercase">{selectedPlan?.name}</span> engine depth for your profile.
+              Scan or pay via UPI to unlock the <span className="font-black text-primary uppercase">{selectedPlan?.name}</span> engine.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-10 space-y-10">
-            <div className="p-10 glass bg-white/5 rounded-[2rem] border border-dashed border-white/15 space-y-8 shadow-inner">
+          <div className="py-10 space-y-8">
+            <div className="p-8 glass bg-white/5 rounded-[2rem] border border-dashed border-white/15 space-y-6 shadow-inner">
               <div className="flex justify-between items-center">
-                <span className="font-black text-[11px] uppercase tracking-[0.3em] text-slate-500">Tier Selected</span>
-                <span className="font-black text-white text-lg">{selectedPlan?.name}</span>
+                <span className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Neural VPA</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-black text-white text-base">intervuza.pay@okaxis</span>
+                  <Button variant="ghost" size="icon" onClick={copyUPI} className="h-8 w-8 text-primary hover:bg-primary/10">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div className="h-px bg-white/10 w-full" />
               <div className="flex justify-between items-center text-primary font-black">
-                <span className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Investment</span>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Total Investment</span>
                 <div className="flex items-center gap-1 text-3xl">
                   <IndianRupee className="w-5 h-5" />
                   {selectedPlan?.price}
@@ -324,23 +339,24 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            <div className="space-y-8">
-              <div className="flex items-center gap-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 bg-blue-500/5 p-6 rounded-2xl border border-blue-500/15">
-                <Lock className="w-6 h-6 text-blue-400 shrink-0" />
-                <span>Simulated Secure Checkout. Pay to recalibrate Aria instantly.</span>
+            <div className="space-y-6">
+              <div className="flex items-center gap-5 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 bg-blue-500/5 p-5 rounded-2xl border border-blue-500/15">
+                <Lock className="w-5 h-5 text-blue-400 shrink-0" />
+                <span>Pay via any UPI app and confirm below to recalibrate Aria instantly.</span>
               </div>
               <Button 
-                className="w-full h-22 rounded-[2rem] text-2xl font-black shadow-[0_20px_50px_rgba(var(--primary),0.4)] hover:scale-[1.02] transition-all bg-primary" 
+                className="w-full h-20 rounded-[2rem] text-xl font-black shadow-[0_20px_50px_rgba(var(--primary),0.4)] hover:scale-[1.02] transition-all bg-primary" 
                 onClick={handleCheckout} 
                 disabled={processing}
               >
-                {processing ? <Loader2 className="animate-spin w-10 h-10" /> : (
+                {processing ? <Loader2 className="animate-spin w-8 h-8" /> : (
                   <>
                     CONFIRM & UPGRADE
-                    <CreditCard className="ml-4 w-7 h-7" />
+                    <CreditCard className="ml-4 w-6 h-6" />
                   </>
                 )}
               </Button>
+              <p className="text-center text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">Secure simulated hand-shake enabled.</p>
             </div>
           </div>
         </DialogContent>
