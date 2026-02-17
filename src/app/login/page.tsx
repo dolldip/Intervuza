@@ -95,14 +95,14 @@ export default function LoginPage() {
             </span>
           </Link>
           <div className="space-y-1">
-            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Portal Login</h2>
+            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4 animate-entrance [animation-delay:400ms]">Sign In</h2>
             <p className="text-slate-500 font-medium animate-entrance [animation-delay:600ms]">Welcome back to your intelligence dashboard.</p>
           </div>
         </div>
 
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
-            <CardTitle className="font-headline text-3xl font-black">Sign In</CardTitle>
+            <CardTitle className="font-headline text-3xl font-black">Login</CardTitle>
             <CardDescription className="text-lg">Access your professional audit.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10 space-y-8">
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-[#0a0c1a] px-4 text-slate-500">Email Login</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-[#0a0c1a] px-4 text-slate-500">Email Sign In</span></div>
             </div>
 
             <form onSubmit={handleEmailLogin} className="space-y-6">
@@ -151,7 +151,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
-              New here? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Register Now</Link>
+              New here? <Link href="/register" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Sign Up Now</Link>
             </p>
           </CardFooter>
         </Card>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from 'react';
@@ -85,14 +84,14 @@ export default function RegisterPage() {
             <span className="font-headline font-black text-4xl tracking-tighter">Intervuza</span>
           </Link>
           <div className="space-y-1">
-            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Security Enrollment</h2>
+            <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-white mt-4">Sign Up</h2>
             <p className="text-slate-500 font-medium">Join 50k+ elite candidates on the neural grid.</p>
           </div>
         </div>
 
         <Card className="glass-dark border-white/10 shadow-2xl rounded-[3rem] overflow-hidden">
           <CardHeader className="bg-white/5 pb-10 border-b border-white/5">
-            <CardTitle className="font-headline text-3xl font-black">Join Platform</CardTitle>
+            <CardTitle className="font-headline text-3xl font-black">Sign Up</CardTitle>
             <CardDescription className="text-lg">Initialize your professional audit profile.</CardDescription>
           </CardHeader>
           <CardContent className="pt-10">
@@ -142,13 +141,13 @@ export default function RegisterPage() {
                 </div>
               </div>
               <Button className="w-full h-16 rounded-[1.5rem] font-black text-xl shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95" type="submit" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "INITIALIZE PROFILE"}
+                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "SIGN UP"}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="justify-center border-t border-white/5 py-8 bg-white/5">
             <p className="text-sm text-slate-500 font-medium">
-              Identity already exists? <Link href="/login" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Secure Access</Link>
+              Identity already exists? <Link href="/login" className="text-primary font-black uppercase tracking-widest text-xs hover:underline ml-2">Login</Link>
             </p>
           </CardFooter>
         </Card>

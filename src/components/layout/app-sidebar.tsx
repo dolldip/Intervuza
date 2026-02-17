@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -199,7 +198,7 @@ export function AppSidebar() {
               <SidebarMenuButton asChild>
                 <Link href="/login">
                   <LogOut />
-                  <span>Log In</span>
+                  <span>Login</span>
                 </Link>
               </SidebarMenuButton>
             )}

@@ -48,10 +48,10 @@ export default function Home() {
           </Link>
           <div className="flex gap-4">
             <Button variant="ghost" size="sm" asChild className="font-bold">
-              <Link href="/login">Log In</Link>
+              <Link href="/login">Login</Link>
             </Button>
             <Button size="sm" asChild className="rounded-xl px-6 font-bold shadow-lg shadow-primary/30">
-              <Link href="/register">Join Platform</Link>
+              <Link href="/register">Sign Up</Link>
             </Button>
           </div>
         </nav>
@@ -159,7 +159,7 @@ export default function Home() {
                 Join 50k+ candidates who have transformed their interview performance with Intervuza.
               </p>
               <Button size="lg" variant="secondary" className="h-18 px-12 text-2xl rounded-2xl font-black bg-white text-primary hover:scale-105 transition-transform shadow-2xl animate-sudden [animation-delay:400ms]" asChild>
-                <Link href="/register">Get Started Now</Link>
+                <Link href="/register">Sign Up Now</Link>
               </Button>
             </div>
           </div>
