@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
  * @fileOverview A touch-responsive canvas background featuring neural ripples and floating DOM bubbles.
  * Inspired by the glass-ripple and bubble-pop aesthetic.
  * Revised: Removed text labels from bubbles for a purely visual experience.
+ * Mobile Optimization: Reduced size of interaction elements.
  */
 
 export function NeuralBackground() {
@@ -37,16 +38,18 @@ export function NeuralBackground() {
 
       // Draw Glass Ripples
       ripples.forEach((r, i) => {
-        r.radius += 2.5
-        r.opacity = 1 - r.radius / 150
+        r.radius += 2.0
+        // Max radius reduced for mobile clarity
+        const maxRadius = 100
+        r.opacity = 1 - r.radius / maxRadius
         
         ctx.beginPath()
         ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(59, 130, 246, ${r.opacity * 0.5})`
-        ctx.lineWidth = 2
+        ctx.strokeStyle = `rgba(59, 130, 246, ${r.opacity * 0.4})`
+        ctx.lineWidth = 1.5
         ctx.stroke()
         
-        if (r.radius > 150) ripples.splice(i, 1)
+        if (r.radius > maxRadius) ripples.splice(i, 1)
       })
 
       requestAnimationFrame(draw)
@@ -59,16 +62,17 @@ export function NeuralBackground() {
       bubble.style.left = `${x}px`
       bubble.style.top = `${y}px`
       bubble.style.transform = 'translate(-50%, -50%) scale(0)'
-      bubble.style.width = '70px'
-      bubble.style.height = '70px'
+      // Reduced size for phone/tablet clarity
+      bubble.style.width = '40px'
+      bubble.style.height = '40px'
       bubble.style.borderRadius = '50%'
       bubble.style.background = 'rgba(59, 130, 246, 0.12)'
-      bubble.style.backdropFilter = 'blur(12px)'
-      bubble.style.border = '1px solid rgba(255, 255, 255, 0.25)'
+      bubble.style.backdropFilter = 'blur(8px)'
+      bubble.style.border = '1px solid rgba(255, 255, 255, 0.2)'
       bubble.style.pointerEvents = 'none'
       bubble.style.zIndex = '9999'
-      bubble.style.transition = 'transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.9s ease'
-      bubble.style.boxShadow = 'inset 0 0 25px rgba(255, 255, 255, 0.15), 0 15px 45px rgba(0, 0, 0, 0.4)'
+      bubble.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease'
+      bubble.style.boxShadow = 'inset 0 0 15px rgba(255, 255, 255, 0.1), 0 10px 30px rgba(0, 0, 0, 0.3)'
       
       document.body.appendChild(bubble)
       
@@ -79,12 +83,12 @@ export function NeuralBackground() {
       
       // Float up and vanish
       setTimeout(() => {
-        bubble.style.transform = 'translate(-50%, -250%) scale(1.4)'
+        bubble.style.transform = 'translate(-50%, -200%) scale(1.2)'
         bubble.style.opacity = '0'
         setTimeout(() => {
           if (bubble.parentNode) bubble.remove()
         }, 800)
-      }, 900)
+      }, 700)
     }
 
     const handleInteraction = (x: number, y: number) => {
