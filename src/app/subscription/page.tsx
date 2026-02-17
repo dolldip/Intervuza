@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from "react"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, addDoc } from "firebase/firestore"
+import { collection, query, where, addDoc, orderBy } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,10 @@ import {
   Crown, 
   Star, 
   CreditCard,
-  Lock
+  Lock,
+  History,
+  Calendar,
+  IndianRupee
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -24,6 +28,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
 
 export default function SubscriptionPage() {
   const { user, isUserLoading } = useUser()
@@ -44,6 +56,15 @@ export default function SubscriptionPage() {
 
   const { data: activeSubs, isLoading: subLoading } = useCollection(subQuery)
   
+  const txQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "paymentTransactions"),
+      orderBy("createdAt", "desc")
+    )
+  }, [db, user])
+  const { data: transactions, isLoading: txLoading } = useCollection(txQuery)
+
   const plansQuery = useMemoFirebase(() => {
     if (!db) return null
     return collection(db, "subscriptionPlans")
@@ -76,26 +97,28 @@ export default function SubscriptionPage() {
     
     setProcessing(true);
     try {
+      const now = new Date().toISOString()
+      
       await addDoc(collection(db, "users", user.uid, "paymentTransactions"), {
         userId: user.uid,
         amount: selectedPlan.price || selectedPlan.priceMonthly,
         currency: "INR",
-        transactionDate: new Date().toISOString(),
+        transactionDate: now,
         status: "succeeded",
         paymentGatewayReference: `sim_${Math.random().toString(36).substring(7)}`,
         description: `${selectedPlan.name} Subscription Payment`,
-        createdAt: new Date().toISOString()
+        createdAt: now
       });
 
       await addDoc(collection(db, "users", user.uid, "userSubscriptions"), {
         userId: user.uid,
         planId: selectedPlan.id,
         planName: selectedPlan.name,
-        startDate: new Date().toISOString(),
+        startDate: now,
         nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: "active",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: now,
+        updatedAt: now
       });
 
       toast({
@@ -124,90 +147,170 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 space-y-10 animate-fade-in max-w-7xl mx-auto">
+    <div className="p-6 lg:p-10 space-y-12 animate-fade-in max-w-7xl mx-auto pb-24">
       <div className="text-center space-y-4">
-        <Badge variant="secondary" className="px-4 py-1.5 rounded-full font-bold text-primary">
-          <Zap className="mr-2 w-3 h-3" /> Billing & Tiers
+        <Badge variant="secondary" className="glass px-6 py-2 rounded-full font-black text-primary gap-2 uppercase tracking-[0.2em] text-[10px]">
+          <Zap className="w-4 h-4" /> Billing & Tiers
         </Badge>
-        <h1 className="text-5xl font-headline font-bold tracking-tight">Manage Your Intelligence Plan</h1>
-        <p className="text-muted-foreground text-xl max-w-2xl mx-auto">Select the tier that matches your career ambitions. Aria's logic scales with your choice.</p>
+        <h1 className="text-5xl md:text-6xl font-headline font-black tracking-tight text-white">Neural Intelligence Plans</h1>
+        <p className="text-slate-400 text-xl max-w-2xl mx-auto font-medium">Calibrate Aria's reasoning depth to your career ambitions.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {displayPlans.map((plan: any, i) => (
-          <Card key={i} className={`rounded-[2.5rem] border-none shadow-xl overflow-hidden relative group hover:scale-[1.02] transition-transform ${plan.name === 'Pro' || plan.popular ? 'ring-2 ring-primary' : ''}`}>
+          <Card key={i} className={`glass-card border-none shadow-2xl overflow-hidden relative group hover:scale-[1.03] transition-all duration-500 ${plan.name === 'Pro' || plan.popular ? 'ring-2 ring-primary/50' : ''}`}>
             { (plan.name === 'Pro' || plan.popular) && (
-              <div className="absolute top-0 right-0 bg-primary text-white px-6 py-2 rounded-bl-3xl font-black text-[10px] uppercase tracking-widest z-10">
+              <div className="absolute top-0 right-0 bg-primary text-white px-8 py-2.5 rounded-bl-[2rem] font-black text-[10px] uppercase tracking-widest z-10 shadow-xl">
                 Most Popular
               </div>
             )}
-            <CardHeader className="p-8 bg-muted/20">
-              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-primary">
-                {plan.icon ? <plan.icon className="w-6 h-6" /> : <Star className="w-6 h-6" />}
+            <CardHeader className="p-10 bg-white/5 border-b border-white/5">
+              <div className="w-14 h-14 glass bg-white/10 rounded-2xl shadow-inner flex items-center justify-center mb-6 text-primary">
+                {plan.icon ? <plan.icon className="w-7 h-7" /> : <Star className="w-7 h-7" />}
               </div>
-              <CardTitle className="font-headline text-3xl">{plan.name}</CardTitle>
-              <CardDescription className="text-base">{plan.description}</CardDescription>
+              <CardTitle className="font-headline text-3xl font-black">{plan.name}</CardTitle>
+              <CardDescription className="text-slate-400 text-lg font-medium">{plan.description}</CardDescription>
             </CardHeader>
-            <CardContent className="p-8 space-y-8 bg-white">
-              <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black">₹{plan.priceMonthly || plan.price || 0}</span>
-                <span className="text-muted-foreground font-bold">/mo</span>
+            <CardContent className="p-10 space-y-10">
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-black text-white">₹{plan.priceMonthly || plan.price || 0}</span>
+                <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">/ month</span>
               </div>
-              <ul className="space-y-4">
+              <ul className="space-y-5">
                 {(plan.features || []).map((feature: string, idx: number) => (
-                  <li key={idx} className="flex items-center gap-3 text-sm font-medium">
-                    <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                      <Check className="w-3 h-3" />
+                  <li key={idx} className="flex items-center gap-4 text-slate-300 font-medium text-sm">
+                    <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-primary shadow-inner">
+                      <Check className="w-3.5 h-3.5" />
                     </div>
                     {feature}
                   </li>
                 ))}
               </ul>
             </CardContent>
-            <CardFooter className="p-8 bg-muted/5">
+            <CardFooter className="p-10 bg-white/5">
               <Button 
-                className={`w-full h-14 rounded-2xl font-black text-lg ${currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? 'bg-muted text-muted-foreground cursor-default' : 'shadow-lg shadow-primary/20'}`}
+                className={`w-full h-16 rounded-2xl font-black text-lg transition-all ${currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? 'bg-white/10 text-slate-500 cursor-default pointer-events-none' : 'shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95'}`}
                 disabled={currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan)}
                 onClick={() => handlePlanSelect(plan)}
               >
-                {currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? "CURRENT PLAN" : "UPGRADE NOW"}
+                {currentPlan?.planId === plan.id || (plan.name === 'Free' && !currentPlan) ? "CURRENT CALIBRATION" : "UPGRADE Master"}
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
 
+      <div className="space-y-8 mt-16">
+        <div className="flex items-center gap-4 px-2">
+          <div className="w-12 h-12 glass bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+            <History className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-headline font-black text-white">Transaction Logs</h2>
+            <p className="text-slate-500 font-medium">Your historical neural access investments.</p>
+          </div>
+        </div>
+
+        <Card className="glass-card overflow-hidden border-none shadow-2xl">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="bg-white/5 border-b border-white/5">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="font-black uppercase tracking-widest text-[10px] h-16 pl-10 text-slate-500">Transaction ID</TableHead>
+                  <TableHead className="font-black uppercase tracking-widest text-[10px] h-16 text-slate-500">Plan / Service</TableHead>
+                  <TableHead className="font-black uppercase tracking-widest text-[10px] h-16 text-slate-500 text-center">Amount</TableHead>
+                  <TableHead className="font-black uppercase tracking-widest text-[10px] h-16 text-slate-500 text-center">Status</TableHead>
+                  <TableHead className="font-black uppercase tracking-widest text-[10px] h-16 pr-10 text-slate-500 text-right">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {txLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center text-slate-500 font-black uppercase tracking-widest text-xs">
+                      <Loader2 className="animate-spin w-6 h-6 mx-auto mb-4" /> Syncing Neural Ledger...
+                    </TableCell>
+                  </TableRow>
+                ) : transactions && transactions.length > 0 ? (
+                  transactions.map((tx) => (
+                    <TableRow key={tx.id} className="hover:bg-white/5 transition-colors border-white/5">
+                      <TableCell className="pl-10 py-8">
+                        <p className="font-mono text-xs font-bold text-primary">{tx.paymentGatewayReference || 'N/A'}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-black text-white text-sm">{tx.description || 'Neural Upgrade'}</p>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1 font-black text-lg text-white">
+                          <IndianRupee className="w-3 h-3 text-slate-500" />
+                          {tx.amount}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="rounded-lg px-4 py-1.5 border-green-500/30 bg-green-500/10 text-green-400 font-black text-[10px] uppercase tracking-widest">
+                          {tx.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="pr-10 text-right">
+                        <div className="flex items-center justify-end gap-3 text-slate-500 font-bold text-xs uppercase tracking-widest">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(tx.createdAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center py-12">
+                      <div className="flex flex-col items-center justify-center gap-4 text-slate-700">
+                        <History className="w-12 h-12 opacity-20" />
+                        <p className="font-black uppercase tracking-widest text-[10px]">No transaction data found in the grid.</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] p-8">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-headline">Secure Checkout</DialogTitle>
-            <DialogDescription>
-              Complete your upgrade to the <span className="font-bold text-primary">{selectedPlan?.name}</span> plan.
+        <DialogContent className="max-w-md glass-dark border-white/10 rounded-[3rem] p-10 shadow-2xl">
+          <DialogHeader className="space-y-4">
+            <div className="w-16 h-16 glass bg-primary/20 rounded-2xl flex items-center justify-center text-primary mx-auto shadow-inner">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <DialogTitle className="text-3xl font-headline font-black text-center text-white">Secure Neural Link</DialogTitle>
+            <DialogDescription className="text-center text-slate-400 font-medium">
+              Complete your calibration to the <span className="font-black text-primary uppercase">{selectedPlan?.name}</span> plan.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-6 space-y-6">
-            <div className="p-6 bg-muted/20 rounded-2xl border border-dashed border-primary/20 space-y-4">
+          <div className="py-8 space-y-8">
+            <div className="p-8 glass bg-white/5 rounded-3xl border border-dashed border-white/10 space-y-6 shadow-inner">
               <div className="flex justify-between items-center">
-                <span className="font-medium">{selectedPlan?.name} Subscription</span>
-                <span className="font-black text-xl">₹{selectedPlan?.price || selectedPlan?.priceMonthly}/mo</span>
+                <span className="font-black text-[10px] uppercase tracking-widest text-slate-500">Subscription Tier</span>
+                <span className="font-black text-white">{selectedPlan?.name} Access</span>
               </div>
-              <div className="h-px bg-border w-full" />
-              <div className="flex justify-between items-center text-primary font-black">
-                <span>Total Due Today</span>
-                <span>₹{selectedPlan?.price || selectedPlan?.priceMonthly}</span>
+              <div className="h-px bg-white/5 w-full" />
+              <div className="flex justify-between items-center text-primary font-black text-2xl">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total Due Today</span>
+                <div className="flex items-center gap-1">
+                  <IndianRupee className="w-4 h-4" />
+                  {selectedPlan?.price || selectedPlan?.priceMonthly}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-xs text-muted-foreground bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                <Lock className="w-4 h-4 text-blue-600" />
-                <span>Secure 256-bit encrypted transaction. This is a payment simulation.</span>
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-blue-500/5 p-5 rounded-2xl border border-blue-500/10">
+                <Lock className="w-5 h-5 text-blue-400 shrink-0" />
+                <span>Simulated Secure Gateway Active. Performance audit funding initialized.</span>
               </div>
-              <Button className="w-full h-16 rounded-2xl text-xl font-black shadow-xl" onClick={handleCheckout} disabled={processing}>
-                {processing ? <Loader2 className="animate-spin" /> : (
+              <Button className="w-full h-20 rounded-[1.5rem] text-xl font-black shadow-[0_20px_50px_rgba(var(--primary),0.3)] hover:scale-[1.02] transition-all" onClick={handleCheckout} disabled={processing}>
+                {processing ? <Loader2 className="animate-spin w-8 h-8" /> : (
                   <>
-                    PAY & ACTIVATE
-                    <CreditCard className="ml-2 w-5 h-5" />
+                    CONFIRM & CALIBRATE
+                    <CreditCard className="ml-3 w-6 h-6" />
                   </>
                 )}
               </Button>
