@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    --background: 230 45% 6%;
+    --background: 230 45% 8%;
     --foreground: 210 40% 98%;
-    --card: 230 45% 8%;
+    --card: 230 45% 10%;
     --card-foreground: 210 40% 98%;
-    --popover: 230 45% 6%;
+    --popover: 230 45% 8%;
     --popover-foreground: 210 40% 98%;
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 230 45% 10%;
+    --secondary: 230 45% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 230 45% 12%;
+    --muted: 230 45% 15%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 180 55% 45%;
     --accent-foreground: 210 40% 98%;
@@ -34,9 +34,9 @@
   body {
     @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased overflow-x-hidden;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.18) 0, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(260, 55%, 45%, 0.12) 0, transparent 50%),
-      radial-gradient(at 50% 50%, hsla(230, 45% , 6%, 1) 0, transparent 100%);
+      radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.15) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(260, 55%, 45%, 0.1) 0, transparent 50%),
+      radial-gradient(at 50% 50%, hsla(230, 45% , 8%, 1) 0, transparent 100%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {

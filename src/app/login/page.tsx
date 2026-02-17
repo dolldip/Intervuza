@@ -77,7 +77,6 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Ensure user profile exists in Firestore
       const userDoc = await getDoc(doc(db!, "users", user.uid));
       if (!userDoc.exists()) {
         await setDoc(doc(db!, "users", user.uid), {
