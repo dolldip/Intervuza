@@ -112,14 +112,14 @@ export default function SubscriptionPage() {
   }
 
   const copyUPI = () => {
-    navigator.clipboard.writeText("7003799866@ybl");
+    navigator.clipboard.writeText("intervuza.pay@ybl");
     setCopied(true);
     toast({ title: "UPI Copied", description: "Neural VPA copied to clipboard." });
     setTimeout(() => setCopied(false), 2000);
   }
 
   const handleUPILink = () => {
-    const upiLink = `upi://pay?pa=7003799866@ybl&pn=Intervuza&am=${selectedPlan?.price}&cu=INR`;
+    const upiLink = `upi://pay?pa=intervuza.pay@ybl&pn=Intervuza&am=${selectedPlan?.price}&cu=INR`;
     window.open(upiLink, '_blank');
   }
 
@@ -326,7 +326,7 @@ export default function SubscriptionPage() {
               <div className="flex justify-between items-center">
                 <span className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Neural VPA</span>
                 <div className="flex items-center gap-3">
-                  <span className="font-black text-white text-base">7003799866@ybl</span>
+                  <span className="font-black text-white text-base">intervuza.pay@ybl</span>
                   <Button variant="ghost" size="icon" onClick={copyUPI} className="h-8 w-8 text-primary hover:bg-primary/10">
                     <Copy className="w-4 h-4" />
                   </Button>
